@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -36,7 +37,41 @@ export async function generateMetadata({ params }: PageProps<"/products/[handle]
   };
 }
 
-export default async function ProductPage({ params }: PageProps<"/products/[handle]">) {
+/**
+ * The page itself never reads `params`: the product is read inside <Suspense>. With Partial
+ * Prefetching that lets Next.js serve an instant shell for any product, including ones added to the
+ * store after the last deploy, and cache the finished page after the first visit.
+ */
+export default function ProductPage({ params }: PageProps<"/products/[handle]">) {
+  return (
+    <Suspense fallback={<ProductSkeleton />}>
+      <ProductDetails params={params} />
+    </Suspense>
+  );
+}
+
+function ProductSkeleton() {
+  return (
+    <div aria-hidden="true">
+      <Container className="pt-5 pb-4 lg:pt-[2.125rem]">
+        <div className="h-5 w-48 animate-pulse bg-white/10" />
+      </Container>
+      <section className="mx-auto max-w-(--container) bg-cream px-(--gutter) py-6 sm:px-6 lg:px-10 lg:py-10">
+        <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
+          <div className="aspect-(--card-ratio) animate-pulse rounded-[0.375rem] bg-sand" />
+          <div className="space-y-4">
+            <div className="h-4 w-32 animate-pulse bg-sand" />
+            <div className="h-14 w-4/5 animate-pulse bg-sand" />
+            <div className="h-6 w-24 animate-pulse bg-sand" />
+            <div className="h-12 w-full animate-pulse bg-sand" />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, "params">) {
   const { handle } = await params;
   if (!isSafeHandle(handle)) notFound();
 

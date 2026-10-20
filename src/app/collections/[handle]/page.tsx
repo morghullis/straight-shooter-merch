@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { Reveal } from "@/components/motion/Reveal";
 import { RevealText } from "@/components/motion/RevealText";
@@ -24,7 +25,36 @@ export async function generateMetadata({ params }: PageProps<"/collections/[hand
   return { title: collection.title, description: collection.description || undefined };
 }
 
-export default async function CollectionPage({ params }: PageProps<"/collections/[handle]">) {
+/** `params` is read inside <Suspense> so any collection, even one created after the deploy, gets an instant shell. */
+export default function CollectionPage({ params }: PageProps<"/collections/[handle]">) {
+  return (
+    <Suspense fallback={<CollectionSkeleton />}>
+      <CollectionContent params={params} />
+    </Suspense>
+  );
+}
+
+function CollectionSkeleton() {
+  return (
+    <div aria-hidden="true">
+      <Container className="pt-8 pb-8 lg:pt-12">
+        <div className="h-16 w-2/3 max-w-[30rem] animate-pulse bg-white/10" />
+      </Container>
+      <section className="mx-auto max-w-(--container) bg-cream px-(--gutter) pt-5 pb-10 sm:px-6 xl:px-10">
+        <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }, (_, i) => (
+            <li key={i}>
+              <div className="aspect-(--card-ratio) animate-pulse rounded-[0.375rem] bg-sand" />
+              <div className="mt-2 h-4 w-2/3 animate-pulse bg-sand" />
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+async function CollectionContent({ params }: Pick<PageProps<"/collections/[handle]">, "params">) {
   const { handle } = await params;
   if (!isSafeHandle(handle)) notFound();
 

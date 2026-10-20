@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useAnimationControls } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { useCart } from "@/components/cart/CartProvider";
 import { useMotionEnabled } from "@/components/motion/motion-preference";
@@ -151,9 +151,8 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 }
 
 /** Search, account and cart icons (plus the menu toggle below lg). */
-export function HeaderActions() {
+function Actions({ pathname }: { pathname: string }) {
   const { count, open: openCart } = useCart();
-  const pathname = usePathname();
 
   // A panel only counts as open on the route where it was opened, so navigating
   // closes it without needing an effect.
@@ -226,5 +225,22 @@ export function HeaderActions() {
       {panel === "search" && <SearchPanel onClose={closePanel} />}
       <AnimatePresence>{panel === "menu" && <MobileMenu onClose={closePanel} />}</AnimatePresence>
     </>
+  );
+}
+
+function ActionsAtRoute() {
+  const pathname = usePathname();
+  return <Actions pathname={pathname} />;
+}
+
+/**
+ * The current route is read inside <Suspense>, so pages rendered on demand (a product added after the
+ * last deploy) can still be prerendered with an instant shell; the fallback is the same bar.
+ */
+export function HeaderActions() {
+  return (
+    <Suspense fallback={<Actions pathname="" />}>
+      <ActionsAtRoute />
+    </Suspense>
   );
 }
