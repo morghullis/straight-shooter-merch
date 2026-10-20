@@ -1,39 +1,35 @@
 /**
  * How the pinned 3D showroom behaves. Everything that decides its pace lives here.
  *
- * The scroll never drives the picture directly. It only decides WHICH product should be shown;
- * a small state machine (`useSequencedChange`) performs every change the same way, at the same
- * speed, however fast the visitor scrolls: the current product leaves, the next one arrives, and
- * only one is ever on stage.
+ * While the showroom is pinned it takes the scroll gesture (wheel, trackpad, swipe, keys): one
+ * gesture = one product, never more, however hard the scroll. Each change is the same animation:
+ * the product spins on its axis as it leaves the stage, the next one spins in and settles. Above
+ * the first product and below the last one the page scrolls normally.
  */
 export const showroomMotion = {
-  /** Scroll distance spent on each product, in screens (svh). */
+  /** Scroll distance per product while the section is pinned, in screens (svh). */
   pageSvh: 100,
-  /** Extra scroll after the last product, so the section does not unpin the moment it is reached. */
+  /** Extra scroll after the last product before the section unpins. */
   tailSvh: 40,
-  /** A product only gives way after the scroll is this far (in products) past the halfway point. */
-  hysteresis: 0.12,
 
-  /** The scroll has to be still this long before a change starts... */
-  calmMs: 140,
-  /** ...unless a change has been waiting this long (slow, continuous scrolling). */
-  maxWaitMs: 900,
-  /** The product leaves (fast, ease-in) ... */
-  outMs: 480,
-  /** ...and the next one arrives (slower, ease-out). */
-  inMs: 900,
-  /** After a change nothing else may start for this long: the product gets to be seen. */
-  dwellMs: 700,
-  /** Longest the stage waits for a model to finish loading before showing it anyway. */
+  /** Wheel distance (px) that counts as a deliberate gesture. */
+  wheelThreshold: 24,
+  /** Touch travel (px) that counts as a swipe. */
+  swipeThreshold: 40,
+  /** A new gesture is only accepted after the wheel has been still this long (swallows trackpad inertia). */
+  quietMs: 220,
+
+  /** The product spins out... */
+  exitMs: 750,
+  /** ...the next one spins in, starting this long before the first one is gone... */
+  overlapMs: 380,
+  /** ...and settles. */
+  enterMs: 950,
+  /** Longest wait for the next model to be ready before changing anyway. */
   loadWaitMs: 6000,
 
-  /** Scrolling through a product's page turns it by this many radians in total (half each way). */
-  yawRange: 0.9,
-  /** How quickly that turn follows the scroll, per second. */
-  yawEase: 5,
-  /** While leaving or arriving the product drifts this far sideways (scene units) and turns this much (radians). */
-  slideUnits: 0.9,
-  slideYaw: 0.5,
-  /** Scale of the product at the moment it is invisible. */
-  hiddenScale: 0.9,
+  /** Turns the product makes while leaving or arriving. */
+  spinTurns: 0.9,
+  /** Scale while leaving or arriving (the product is slightly smaller off-centre). */
+  travelScale: 0.92,
 } as const;

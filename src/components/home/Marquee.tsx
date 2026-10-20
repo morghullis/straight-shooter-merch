@@ -5,5 +5,5 @@ import { MarqueeBands } from "./MarqueeBands";
 
 /** Two crossing bands of catchphrases. The copy is documented once for screen readers. */
 export function Marquee() {
-  return <MarqueeBands phrases={[...catchphrases]} label={copy.marquee.label} pause={copy.marquee.pause} play={copy.marquee.play} />;
+  return <MarqueeBands phrases={[...catchphrases]} label={copy.marquee.label} />;
 }

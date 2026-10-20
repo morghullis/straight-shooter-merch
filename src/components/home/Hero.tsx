@@ -87,6 +87,7 @@ export function Hero() {
         >
           <Button
             href={hero.cta.href}
+            variant="solid"
             size="none"
             arrow
             style={delay(800)}

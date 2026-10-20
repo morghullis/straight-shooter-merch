@@ -98,7 +98,7 @@ export function CartDrawer() {
               {copy.cart.emptyTitle}
             </p>
             <p className="text-sm text-white/60">{copy.cart.emptyBody}</p>
-            <Button href="/collections/all" onClick={close}>
+            <Button href="/collections/all" onClick={close} variant="solid">
               {copy.cart.emptyCta}
             </Button>
           </div>

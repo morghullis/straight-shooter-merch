@@ -49,14 +49,12 @@ function Band({ phrases, tone, speed, paused, className }: BandProps) {
 interface MarqueeBandsProps {
   phrases: string[];
   label: string;
-  pause: string;
-  play: string;
 }
 
-export function MarqueeBands({ phrases, label, pause, play }: MarqueeBandsProps) {
-  const [manual, setManual] = useState(false);
+/** The two taped catchphrase bands. They hold still while the pointer or keyboard focus is on them. */
+export function MarqueeBands({ phrases, label }: MarqueeBandsProps) {
   const [hovering, setHovering] = useState(false);
-  const paused = manual || hovering;
+  const paused = hovering;
 
   return (
     <section
@@ -81,14 +79,6 @@ export function MarqueeBands({ phrases, label, pause, play }: MarqueeBandsProps)
         <Art name="stampBlasphemous" sizes="(min-width: 1326px) 15.1vw, 200px" className="h-auto w-full opacity-80" />
       </div>
 
-      <button
-        type="button"
-        aria-pressed={manual}
-        onClick={() => setManual((m) => !m)}
-        className="absolute right-(--gutter) bottom-2 z-[4] border border-white/25 bg-black px-3 py-1.5 font-nav text-[0.6875rem] font-semibold tracking-[0.12em] text-white uppercase transition-colors hover:border-gold hover:text-gold"
-      >
-        {manual ? play : pause}
-      </button>
     </section>
   );
 }

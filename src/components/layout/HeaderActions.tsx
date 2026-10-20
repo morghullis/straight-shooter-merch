@@ -135,7 +135,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       </nav>
 
       <motion.div {...item(nav.length)} className="mt-auto pt-8">
-        <Button href="/collections/all" onClick={onClose} size="lg" arrow className="w-full">
+        <Button href="/collections/all" onClick={onClose} variant="solid" size="lg" arrow className="w-full">
           {copy.header.menuCta}
         </Button>
         <div className="mt-5 flex items-center justify-between text-[0.8125rem] text-white/55">

@@ -1,11 +1,13 @@
 "use client";
 
-import { motion, useInView, useMotionValueEvent, useScroll, useTransform } from "motion/react";
+import { AnimatePresence, motion, useInView, useMotionValueEvent, useScroll, useTransform } from "motion/react";
 import dynamic from "next/dynamic";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useMotionEnabled } from "@/components/motion/motion-preference";
-import { useSequencedChange } from "@/components/motion/useSequencedChange";
+import { TextSwap } from "@/components/motion/TextSwap";
+import { useProductTransition } from "@/components/motion/useProductTransition";
+import { useStepScroll } from "@/components/motion/useStepScroll";
 import { Art, textureStyle } from "@/components/ui/Art";
 import { Button } from "@/components/ui/Button";
 import { Tape } from "@/components/ui/Tape";
@@ -29,11 +31,11 @@ function productAt(scrollProgress: number, n: number): number {
 }
 
 /**
- * Pinned scroll story. The section is N screens tall and the stage stays put. The scroll only
- * decides WHICH product belongs on stage; `useSequencedChange` performs every change the same calm
- * way (leave, swap while invisible, arrive, rest), so the speed of the scroll never changes the speed
- * of the show and only one product is ever on screen. Scrolling inside a product's page turns it a
- * little; dragging turns it further. The rail jumps to a product.
+ * Pinned 3D showroom. While it is pinned, one scroll gesture (wheel, trackpad, swipe or key) moves
+ * exactly one product, whatever its strength: the product spins on its axis as it leaves and the next
+ * one spins in and settles (`useProductTransition`). Only the number, name, price and spec text change;
+ * the tape, rules and button stay where they are. Coming from above it always starts on the first
+ * product; above the first and below the last the page scrolls on normally.
  */
 export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   const n = items.length;
@@ -42,11 +44,11 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   const desktop = useMediaQuery("(min-width: 1024px)", true);
 
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
-  const near = useInView(section, { once: true, margin: "700px 0px" });
+  // The models load right after the page itself, so the cap is ready before the visitor arrives.
   const loaded = useAfterLoad();
   const visible = useInView(section, { margin: "120px 0px" });
 
-  // Which models are loaded and uploaded, as reported by the 3D stage.
+  // Which models are loaded and warmed, as reported by the 3D stage.
   const readyItems = useRef(new Set<number>());
   const [anyReady, setAnyReady] = useState(false);
   const onItemReady = useCallback((i: number) => {
@@ -58,45 +60,63 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   }, []);
   const isReady = useCallback((i: number) => readyItems.current.has(i), []);
 
-  const { active, settled, reveal, slide, waiting, request, touch } = useSequencedChange({ timing: motionCfg, isReady });
-  const [wanted, setWanted] = useState(0);
-  const wantedNow = useRef(0);
-  const jumping = useRef<number | null>(null);
+  const show = useProductTransition({ timing: motionCfg, isReady });
+  const { active, leaving, preparing, settled, direction, exit, enter, busy, goTo, jump } = show;
+  // The product the showroom is on or heading to (updated before the animation catches up).
+  const activeNow = useRef(0);
+  useEffect(() => {
+    activeNow.current = active;
+  }, [active]);
 
-  const want = (i: number) => {
-    wantedNow.current = i;
-    setWanted(i);
-    request(i);
-  };
-
-  // The scroll position along the products. A product gives way only once the scroll is clearly past
-  // the halfway point (hysteresis), so a hovering scroll never flips back and forth.
-  const position = useTransform(scrollYProgress, (p) => productAt(p, n));
-  useMotionValueEvent(position, "change", (v) => {
-    touch();
-    if (jumping.current !== null) {
-      if (Math.abs(v - jumping.current) < 0.2) jumping.current = null;
-      return;
-    }
-    if (Math.abs(v - wantedNow.current) > 0.5 + motionCfg.hysteresis) want(clamp(Math.round(v), 0, n - 1));
+  // One gesture = one product while the section is pinned.
+  useStepScroll({
+    section,
+    count: n,
+    pageSvh: motionCfg.pageSvh,
+    tailSvh: motionCfg.tailSvh,
+    getIndex: () => activeNow.current,
+    onStep: (dir) => {
+      // Never leave a product that has not been shown yet (the cap, on a slow connection).
+      if (busy() || !isReady(activeNow.current)) return false;
+      const next = clamp(activeNow.current + dir, 0, n - 1);
+      activeNow.current = next;
+      goTo(next);
+      return true;
+    },
+    onEnter: (from) => {
+      const target = from > 0 ? 0 : n - 1;
+      if (activeNow.current !== target && !busy()) {
+        activeNow.current = target;
+        jump(target);
+      }
+    },
+    isBusy: busy,
+    wheelThreshold: motionCfg.wheelThreshold,
+    swipeThreshold: motionCfg.swipeThreshold,
+    quietMs: motionCfg.quietMs,
+    enabled: motionOn,
   });
 
-  // What leaves and arrives with the change.
-  const copyShift = useTransform(slide, (v) => `${v * 1.4}rem`);
-  const stickerScale = useTransform(reveal, [0, 1], [0.9, 1]);
+  // While the section is off screen, keep the right product ready for the side the page will come
+  // back from: the first one above the section, the last one below it.
+  const position = useTransform(scrollYProgress, (p) => productAt(p, n));
+  useMotionValueEvent(position, "change", (v) => {
+    if (visible || busy()) return;
+    const target = v < (n - 1) / 2 ? 0 : n - 1;
+    if (target === activeNow.current) return;
+    activeNow.current = target;
+    jump(target);
+  });
+
+  const stickerKey = items[active].handle;
 
   const jumpTo = (i: number) => {
     const el = section.current;
-    if (!el) return;
-    // While the page scrolls there, the scroll must not "vote" for the products it passes.
-    jumping.current = i;
-    window.setTimeout(() => {
-      jumping.current = null;
-    }, 3000);
-    want(i);
-    touch();
+    if (!el || i === activeNow.current || busy()) return;
+    activeNow.current = i;
     const top = el.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: top + (i * motionCfg.pageSvh * window.innerHeight) / 100, behavior: motionOn ? "smooth" : "auto" });
+    window.scrollTo({ top: top + (i * motionCfg.pageSvh * window.innerHeight) / 100, behavior: "instant" });
+    goTo(i);
   };
 
   return (
@@ -111,22 +131,23 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
         <div aria-hidden="true" className="absolute inset-0 opacity-90" style={textureStyle("concrete")} />
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0.1)_40%,rgba(0,0,0,0.65))]" />
 
-        {/* 3D stage: the canvas fades as a whole, so the models stay opaque and never blend with each other */}
+        {/* 3D stage: one product at a time, spinning out and in on every change */}
         <div
           role="img"
           aria-label={copy.showroom.stage(items[active].title)}
           className="absolute inset-0 z-[1] cursor-grab active:cursor-grabbing"
         >
-          <motion.div data-showroom-stage style={{ opacity: reveal }} className="absolute inset-0">
-            {near && loaded && (
+          <div data-showroom-stage className="absolute inset-0">
+            {loaded && (
               <ScrubStage
                 models={items.map((i) => i.model)}
                 activeIndex={active}
+                leavingIndex={leaving}
+                preparingIndex={preparing}
                 anchorIndex={settled}
-                wantedIndex={wanted}
-                position={position}
-                reveal={reveal}
-                slide={slide}
+                direction={direction}
+                exit={exit}
+                enter={enter}
                 active={visible}
                 offsetX={desktop ? 0.95 : 0}
                 offsetY={desktop ? 0 : 0.55}
@@ -134,12 +155,12 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
                 onItemGone={onItemGone}
               />
             )}
-          </motion.div>
+          </div>
           <div
-            aria-hidden={anyReady && !waiting}
+            aria-hidden={anyReady}
             className={cn(
               "pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-500",
-              anyReady && !waiting ? "opacity-0" : "opacity-100",
+              anyReady ? "opacity-0" : "opacity-100",
             )}
           >
             <span className="relative grid h-10 w-10 place-items-center">
@@ -154,18 +175,25 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
 
         {/* Everything below is aligned to the content column. The wrapper ignores the pointer so the model stays draggable. */}
         <div className="pointer-events-none relative z-10 mx-auto flex h-full w-full max-w-(--container) flex-col px-(--gutter) xl:px-1">
-        {/* Stamp or sticker stuck on the stage: it comes and goes with the product */}
-        {items[active].art && (
-          <div aria-hidden="true" className={cn("pointer-events-none absolute z-[2]", items[active].art.className)}>
-            <motion.div style={{ opacity: reveal, scale: stickerScale }}>
+        {/* Stamp or sticker stuck on the stage: peeled off with the product, the next one pressed on */}
+        <AnimatePresence initial={false}>
+          {items[active].art && (
+            <motion.div
+              key={stickerKey}
+              aria-hidden="true"
+              initial={{ opacity: 0, scale: 0.6, rotate: -12 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0, transition: { delay: 0.35, type: "spring", stiffness: 260, damping: 18 } }}
+              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.25 } }}
+              className={cn("pointer-events-none absolute z-[2]", items[active].art.className)}
+            >
               <Art
                 name={items[active].art.art}
                 sizes="(min-width: 1326px) 19.6vw, 260px"
                 className="h-auto w-full drop-shadow-[0_8px_14px_rgba(0,0,0,0.5)]"
               />
             </motion.div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
 
         {/* Title on a strip of tape */}
         <div className="pointer-events-auto pt-[calc(var(--header-h)+1rem)] lg:pt-10">
@@ -216,36 +244,42 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
 
         {/* Copy */}
         <div className="pointer-events-auto relative -mx-(--gutter) bg-[linear-gradient(0deg,#000_30%,rgba(0,0,0,0.85)_70%,transparent)] px-(--gutter) pt-16 pb-[calc(var(--gutter)+env(safe-area-inset-bottom))] lg:absolute lg:inset-y-[12.5rem] lg:left-(--gutter) xl:left-1 lg:mx-0 lg:mt-0 lg:flex lg:w-[40%] lg:items-start lg:bg-none lg:px-0 lg:pt-0 lg:pb-[2.5rem]">
-          {/* The copy belongs to the product on stage and comes and goes with it (same clock as the 3D). */}
-          <motion.div
-            aria-live="polite"
-            style={{ opacity: reveal, y: copyShift }}
-            className="w-full"
-          >
+          {/* The frame (tape, rules, button) stays put; only the product's text rolls to the next one. */}
+          <div aria-live="polite" className="w-full">
             <Tape className="-rotate-[2deg] py-1 [--tape-end:1.1rem] lg:[--tape-end:1.5rem]">
               <p className="flex items-baseline gap-2 font-display leading-none font-extrabold uppercase">
-                <span className="text-[3.5rem] lg:text-[min(7rem,13svh)]">{String(active + 1).padStart(2, "0")}</span>
+                <span className="text-[3.5rem] lg:text-[min(7rem,13svh)]">
+                  <TextSwap value={String(active + 1).padStart(2, "0")} direction={direction} />
+                </span>
                 <span className="text-[1.25rem] text-[#14110a]/60 lg:text-[1.875rem]">/{String(n).padStart(2, "0")}</span>
               </p>
             </Tape>
             <h3 className="mt-3 font-display text-[clamp(2.375rem,9vw,4rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-5">
-              {items[active].title}
+              <TextSwap value={items[active].title} direction={direction} display="block" />
             </h3>
-            <p className="mt-2 text-[1.0625rem] text-white/85">{items[active].price}</p>
+            <p className="mt-2 text-[1.0625rem] text-white/85">
+              <TextSwap value={items[active].price} direction={direction} />
+            </p>
 
             <ul aria-label={copy.showroom.specs} className="mt-4 hidden border-t border-white/20 lg:block [@media(max-height:48rem)]:lg:hidden [@media(min-aspect-ratio:8/5)_and_(min-width:1326px)]:lg:hidden">
-              {items[active].specs.map((spec) => (
-                <li key={spec} className="flex gap-3 border-b border-white/15 py-3 text-[0.875rem] leading-snug text-white/75">
-                  <span aria-hidden="true" className="mt-[0.4375rem] size-1.5 flex-none bg-gold" />
-                  {spec}
-                </li>
-              ))}
+              {[0, 1, 2].map((row) => {
+                const spec = items[active].specs[row] ?? "";
+                return (
+                  <li
+                    key={row}
+                    className={cn("flex gap-3 border-b border-white/15 py-3 text-[0.875rem] leading-snug text-white/75", !spec && "hidden")}
+                  >
+                    <span aria-hidden="true" className="mt-[0.4375rem] size-1.5 flex-none bg-gold" />
+                    <TextSwap value={spec} direction={direction} display="block" />
+                  </li>
+                );
+              })}
             </ul>
 
             <Button href={items[active].href} arrow className="mt-5 w-full sm:w-auto">
               {copy.showroom.shop}
             </Button>
-          </motion.div>
+          </div>
         </div>
         </div>
       </div>

@@ -128,13 +128,12 @@ export const copy = {
     officialBody: "Every order ships from our fulfilment partner. Questions about an order? Reach out from your account page.",
     account: "My account",
     rights: "All rights reserved.",
-    motion: (on: boolean) => `Animations ${on ? "on" : "off"}`,
   },
 
   showroom: {
     kicker: "Showroom",
     title: "The Showroom",
-    lead: "Every piece, in 3D. Scroll to turn them, drag to take a closer look.",
+    lead: "Every piece, in 3D. Scroll for the next one, drag to take a closer look.",
     piece: (n: number, total: number) => `Piece ${String(n).padStart(2, "0")} of ${String(total).padStart(2, "0")}`,
     shop: "Shop it",
     scrollHint: "Scroll",
@@ -147,8 +146,6 @@ export const copy = {
 
   marquee: {
     label: "Catchphrases",
-    pause: "Pause",
-    play: "Play",
   },
 
   rundown: {

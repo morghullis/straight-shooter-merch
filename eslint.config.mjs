@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Offline 3D tooling, not part of the storefront.
     "tools/**",
+    // Netlify build output.
+    ".netlify/**",
   ]),
 ]);
 

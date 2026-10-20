@@ -73,6 +73,8 @@ export const metadata: Metadata = {
     title: `${site.shortName} | Official Merch`,
     description: site.description,
   },
+  // Preview deployments set SITE_PREVIEW=1 so they stay out of search engines.
+  ...(process.env.SITE_PREVIEW === "1" ? { robots: { index: false, follow: false } } : {}),
 };
 
 export const viewport: Viewport = {

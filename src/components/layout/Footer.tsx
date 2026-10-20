@@ -2,7 +2,6 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 
 import { Logo } from "@/components/brand/Logo";
-import { MotionToggle } from "@/components/motion/motion-preference";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
@@ -60,7 +59,6 @@ export function Footer() {
           <p className="py-2 text-xs text-white/40">
             © <CurrentYear /> {site.name}. {copy.footer.rights}
           </p>
-          <MotionToggle />
         </Container>
       </div>
     </footer>

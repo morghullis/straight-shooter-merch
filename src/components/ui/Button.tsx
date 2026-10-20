@@ -6,14 +6,18 @@ import { cn } from "@/lib/cn";
 
 import { ArrowRightIcon } from "./Icons";
 
-export type ButtonVariant = "gold" | "outline" | "ink" | "ghost";
+export type ButtonVariant = "solid" | "gold" | "outline" | "ink" | "ghost";
 export type ButtonSize = "none" | "sm" | "md" | "lg";
 
 const base =
   "inline-flex items-center justify-center gap-2 font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-[filter,background-color,border-color,color,transform,rotate,translate] duration-200 select-none active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50";
 
-/** Gold and ink buttons are strips of gaffer tape, like the showroom title (see `.tape-surface`). */
+/**
+ * `solid` is a real button: the flat gold rectangle of the reference design (used for "Shop all merch").
+ * Gold and ink buttons are strips of gaffer tape, like the showroom title (see `.tape-surface`).
+ */
 const variants: Record<ButtonVariant, string> = {
+  solid: "rounded-[0.1875rem] bg-gold text-[#1a1a1a] hover:brightness-110",
   gold: "tape-surface -rotate-[0.7deg] text-[#14110a] hover:-translate-y-px hover:rotate-0",
   outline: "border border-white/30 text-white hover:border-gold hover:text-gold",
   ink: "tape-surface tape-ink rotate-[0.6deg] text-white hover:-translate-y-px hover:rotate-0",
