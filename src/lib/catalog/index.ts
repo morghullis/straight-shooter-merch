@@ -1,10 +1,13 @@
 import { cacheLife, cacheTag } from "next/cache";
 
+import { isSafeHandle, normalizeQuery } from "@/lib/format";
+
 import { mockCollections, mockProducts } from "./mock";
 import {
   fetchCollectionProducts,
   fetchCollections,
   fetchProduct,
+  fetchProductHandles,
   fetchProducts,
   isShopifyConfigured,
 } from "./shopify";
@@ -16,14 +19,40 @@ export type { Collection, Product } from "./types";
  * Data access used by every page. All functions are cached with the Cache
  * Components model; call `revalidateTag("products")` (e.g. from a Shopify
  * webhook route) to refresh after catalog changes.
+ *
+ * Anything keyed by a value from the URL (a product or collection handle, a search
+ * term) is checked or normalised BEFORE it reaches a cache entry or Shopify, so random
+ * URLs cannot create unbounded cache entries or upstream requests.
  */
 
-export async function getProducts(opts: { collection?: string } = {}): Promise<Product[]> {
+/** Every product handle in the catalog. */
+async function getProductHandles(): Promise<string[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
 
-  const { collection } = opts;
+  if (isShopifyConfigured) return fetchProductHandles();
+  return mockProducts.map((p) => p.handle);
+}
+
+async function isKnownProduct(handle: string): Promise<boolean> {
+  return isSafeHandle(handle) && (await getProductHandles()).includes(handle);
+}
+
+async function isKnownCollection(handle: string): Promise<boolean> {
+  return isSafeHandle(handle) && (await getCollections()).some((c) => c.handle === handle);
+}
+
+export async function getProducts(opts: { collection?: string } = {}): Promise<Product[]> {
+  const collection = opts.collection ?? "all";
+  if (collection !== "all" && !(await isKnownCollection(collection))) return [];
+  return getProductsIn(collection);
+}
+
+async function getProductsIn(collection: string): Promise<Product[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products");
 
   if (isShopifyConfigured) {
     if (!collection || collection === "all") return fetchProducts();
@@ -46,6 +75,11 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
 }
 
 export async function getProduct(handle: string): Promise<Product | null> {
+  if (!(await isKnownProduct(handle))) return null;
+  return getKnownProduct(handle);
+}
+
+async function getKnownProduct(handle: string): Promise<Product | null> {
   "use cache";
   cacheLife("hours");
   cacheTag("products", `product:${handle}`);
@@ -67,6 +101,11 @@ export async function getCollections(): Promise<Collection[]> {
 }
 
 export async function getCollection(handle: string): Promise<Collection | null> {
+  if (handle !== "all" && !(await isKnownCollection(handle))) return null;
+  return getKnownCollection(handle);
+}
+
+async function getKnownCollection(handle: string): Promise<Collection | null> {
   "use cache";
   cacheLife("hours");
   cacheTag("collections", `collection:${handle}`);
@@ -81,16 +120,19 @@ export async function getCollection(handle: string): Promise<Collection | null> 
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
+  const q = normalizeQuery(query);
+  if (!q) return [];
+  return searchNormalized(q);
+}
+
+async function searchNormalized(q: string): Promise<Product[]> {
   "use cache";
   cacheLife("minutes");
   cacheTag("products");
 
-  const q = query.trim().slice(0, 80);
-  if (!q) return [];
-
   if (isShopifyConfigured) return fetchProducts(q, 24);
 
-  const needle = q.toLowerCase();
+  const needle = q;
   return mockProducts.filter(
     (p) =>
       p.title.toLowerCase().includes(needle) ||

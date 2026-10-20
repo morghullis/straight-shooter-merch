@@ -118,7 +118,16 @@ const COLLECTION_PRODUCTS_QUERY = /* GraphQL */ `
 
 const COLLECTIONS_QUERY = /* GraphQL */ `
   query Collections {
-    collections(first: 20) { nodes { handle title description } }
+    collections(first: 100) { nodes { handle title description } }
+  }
+`;
+
+const PRODUCT_HANDLES_QUERY = /* GraphQL */ `
+  query ProductHandles($after: String) {
+    products(first: 250, after: $after) {
+      nodes { handle }
+      pageInfo { hasNextPage endCursor }
+    }
   }
 `;
 
@@ -255,6 +264,21 @@ export async function fetchCollectionProducts(
   if (!data.collection) return null;
   const { products, ...collection } = data.collection;
   return { collection, products: products.nodes.map(mapProduct) };
+}
+
+/** Every product handle in the store (paginated, capped so a huge store cannot run away). */
+export async function fetchProductHandles(max = 5000): Promise<string[]> {
+  const handles: string[] = [];
+  let after: string | null = null;
+  while (handles.length < max) {
+    const data: {
+      products: { nodes: { handle: string }[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
+    } = await shopifyFetch(PRODUCT_HANDLES_QUERY, { after });
+    handles.push(...data.products.nodes.map((n) => n.handle));
+    if (!data.products.pageInfo.hasNextPage) break;
+    after = data.products.pageInfo.endCursor;
+  }
+  return handles;
 }
 
 export async function fetchCollections(): Promise<Collection[]> {

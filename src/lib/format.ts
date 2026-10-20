@@ -10,7 +10,24 @@ export function formatMoney(amount: string | number, currency = "USD"): string {
   return f.format(Number(amount));
 }
 
-/** Product handles/ids are interpolated into URLs and cache tags; keep them boring. */
+/**
+ * Product and collection handles are interpolated into URLs and cache tags; keep them boring.
+ * Lowercase only, as Shopify generates them, so one product can never have two cache keys.
+ */
 export function isSafeHandle(value: string): boolean {
-  return /^[a-z0-9][a-z0-9-]{0,127}$/i.test(value);
+  return /^[a-z0-9][a-z0-9-]{0,127}$/.test(value);
+}
+
+/**
+ * Search terms are normalised before they reach the cache or Shopify (lowercase, letters, digits,
+ * spaces, short), so trivial variations of one query share a single cache entry.
+ */
+export function normalizeQuery(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9 '-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60);
 }
