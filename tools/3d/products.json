@@ -1,0 +1,90 @@
+{
+  "_comment": "Camera and turntable per product. glb = file name (without .glb) in the models folder. angles maps each image name to a yaw in degrees (0 = the model's front).",
+  "blasphemous-hat": {
+    "glb": "hat-8k",
+    "pitch": 10,
+    "frame": 0.76,
+    "lift": -0.09,
+    "minZoom": 0.86,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "straight-shooter-tee": {
+    "glb": "tee-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "culture-table-tumbler": {
+    "glb": "tumbler-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "culture-table-hoodie": {
+    "glb": "hoodie-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "stephen-a-smith-hoodie": {
+    "glb": "sas-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "potus-hoodie": {
+    "glb": "potus-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "the-silhouette-hoodie": {
+    "glb": "silhouette-8k-front-repaired",
+    "pitch": 4,
+    "angles": {
+      "back": 180,
+      "quarter-back-right": 135,
+      "side-right": 90,
+      "front": 0,
+      "side-left": -90,
+      "quarter-back-left": -135
+    }
+  }
+}

@@ -1,0 +1,390 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens measured from the reference screenshot (1320px wide capture,
+ * 1152px content column).
+ */
+@theme inline {
+  --color-ink: #000000;
+  --color-gold: #f0ac28;
+  --color-gold-soft: #d9a02b;
+  --color-cream: #f8f7f2;
+  --color-sand: #efebe0;
+  --color-tile-cream: #e8e4d8;
+  --color-tile-dark: #1c1c20;
+  --color-tile-sand: #e4d8c8;
+  --color-ghost: #28282c;
+
+  --font-sans: var(--ff-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--ff-display), "Arial Narrow", Impact, sans-serif;
+  --font-nav: var(--ff-nav), "Arial Narrow", Arial, sans-serif;
+  --font-serif: var(--ff-serif), Georgia, serif;
+  --font-script: var(--ff-script), cursive;
+  --font-type: var(--ff-type), "Courier New", monospace;
+
+  --breakpoint-xs: 30rem;
+}
+
+:root {
+  color-scheme: dark;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-circ: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /*
+   * Measurements of the reference design (1320px capture, 1152px column).
+   * Components read these variables, so the clone is tuned in one place.
+   */
+  --container: 72rem;
+  --gutter: 1rem;
+  /* Phones get a compact sticky bar; from lg up it is the 83px bar of the reference. */
+  --header-h: 4.5rem;
+  /* Logo: the mark is --logo-w wide; the MERCH tag hangs under it, as in the reference. */
+  --logo-w: 3.75rem;
+  --logo-top: 0.3125rem;
+  --nav-top: 2.75rem;
+  --icons-top: 1.6875rem;
+  --icons-right: 3.03125rem;
+
+  --hero-h: 19.5rem;
+  --hero-photo-left: 22.5625rem;
+  --hero-photo-w: 39.25rem;
+  --hero-headline-top: 2.375rem;
+  --hero-headline-left: 0.25rem;
+  --hero-headline-size: 4.05625rem;
+  --hero-headline-lh: 3.1875rem;
+  --hero-cta-top: 14.125rem;
+  --hero-cta-w: 11.75rem;
+  --hero-cta-h: 2.25rem;
+  --hero-sig-left: 44.75rem;
+  --hero-sig-top: 2.8125rem;
+  --hero-ghost-left: 62.125rem;
+  --hero-ghost-top: 1.125rem;
+  --hero-ghost-size: 2.55rem;
+  --hero-ghost-lh: 2.225rem;
+  --hero-bar-left: 62.1875rem;
+  --hero-bar-top: 17.3125rem;
+  --hero-bar-w: 2.6875rem;
+  --hero-bar-h: 0.375rem;
+  --hero-wall-w: 11.875rem;
+  --hero-photo-fade-l: 5.625rem;
+  --hero-photo-fade-r: 2.125rem;
+  /* The photo's frame cuts the top of the head; it sits this far down with its top edge melting into black. */
+  --hero-photo-drop: 1.5rem;
+  --hero-photo-fade-t: 2.5rem;
+
+  --strip-tile-h: 8.125rem;
+  --strip-cols: 288fr 282fr 282fr 288fr;
+  --card-ratio: 173 / 141;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 5.1875rem;
+    --logo-w: 5.25rem;
+    --logo-top: 0.5rem;
+  }
+}
+
+html {
+  background: #000;
+  /*
+   * Big screens: everything is sized in rem, so from the reference width up the root grows with the
+   * viewport and the whole page scales as one piece (same shape, same margins) instead of floating
+   * in a black field. 16px up to 1326px wide, capped at 2.6x. Breakpoints stay in viewport pixels.
+   */
+  font-size: clamp(100%, calc(100vw * 16 / 1326), 41.6px);
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  /* Anchored sections clear the sticky mobile header. */
+  scroll-padding-top: var(--header-h);
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: #000;
+}
+
+:focus-visible {
+  outline: 0.125rem solid var(--color-gold);
+  outline-offset: 0.125rem;
+}
+
+/* Hero photo: fades into black at the top (the source frame crops the hairline), into the headline below on phones, and at both sides on desktop. */
+.hero-photo-mask {
+  mask-image: linear-gradient(180deg, transparent 0, transparent calc(var(--hero-photo-drop) - 0.125rem), #000 calc(var(--hero-photo-drop) + var(--hero-photo-fade-t)), #000 70%, transparent 100%);
+}
+
+@media (min-width: 1024px) {
+  .hero-photo-mask {
+    mask-image:
+      linear-gradient(90deg, transparent 0, #000 var(--hero-photo-fade-l), #000 calc(100% - var(--hero-photo-fade-r)), transparent 100%),
+      linear-gradient(180deg, transparent 0, transparent calc(var(--hero-photo-drop) - 0.125rem), #000 calc(var(--hero-photo-drop) + var(--hero-photo-fade-t)));
+    mask-composite: intersect;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Gaffer tape: a surface for the showroom title, numerals and buttons. */
+/* The torn ends keep their shape while the middle stretches, so any    */
+/* size reads as a real strip. Set --tape (a url()) on the element; the  */
+/* tone classes recolour it, the content stays crisp on top.            */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+.tape-surface {
+  --tape-end: 0.85rem;
+  --tape-tone: brightness(1);
+  --tape-shadow: drop-shadow(0 0.3rem 0.45rem rgb(0 0 0 / 0.42));
+  position: relative;
+  isolation: isolate;
+  padding-inline: calc(var(--tape-end) + 0.5rem);
+}
+.tape-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--tape-end);
+  /* slice: the serrated 70px / 50px of the source ends, full height; the middle stretches */
+  border-image: var(--tape) 0 50 0 70 fill / 0 var(--tape-end) / 0 stretch;
+  filter: var(--tape-tone) var(--tape-shadow);
+  transition: filter 0.25s ease;
+}
+.tape-ink {
+  --tape-tone: grayscale(1) brightness(0.18) contrast(1.35);
+  --tape-shadow: drop-shadow(0 0.3rem 0.45rem rgb(0 0 0 / 0.5));
+}
+.tape-paper {
+  --tape-tone: grayscale(1) brightness(2.3) contrast(0.85);
+  --tape-shadow: drop-shadow(0 0.2rem 0.3rem rgb(0 0 0 / 0.3));
+}
+a.tape-surface:hover::before,
+button.tape-surface:hover:not(:disabled)::before {
+  filter: var(--tape-tone) brightness(1.08) var(--tape-shadow);
+}
+}
+
+/* The hero's show words on phones: a slow horizontal ticker. */
+@keyframes ghost-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ghost-marquee {
+  animation: ghost-marquee 36s linear infinite;
+}
+
+/* Brushed-silver lettering (the MERCH tag of the logo). */
+@utility text-silver {
+  background-image: linear-gradient(180deg, #ffffff 0%, #dfe2e6 50%, #9aa0a7 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero intro (CSS only, so it plays before React hydrates).           */
+/* Every keyframe ends on the exact static layout of the design.       */
+/* ------------------------------------------------------------------ */
+
+@keyframes line-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+    transform: translateY(1rem);
+  }
+  to {
+    clip-path: inset(-0.875rem -0.875rem -0.875rem -0.875rem);
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.125rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ghost-in {
+  from {
+    opacity: 0;
+    transform: translateX(1.625rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bar-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes sig-wipe {
+  from {
+    clip-path: inset(-12% 100% -12% -12%);
+  }
+  to {
+    clip-path: inset(-12% -12% -12% -12%);
+  }
+}
+
+@keyframes photo-in {
+  from {
+    opacity: 0;
+    transform: scale(1.07);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 130% 0;
+  }
+  16%,
+  100% {
+    background-position: -30% 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.anim-line {
+  animation: line-in 1s var(--ease-out-expo) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+.anim-pop {
+  animation: pop-in 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+.anim-ghost {
+  animation: ghost-in 0.9s var(--ease-out-expo) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+.anim-bar {
+  transform-origin: left center;
+  animation: bar-in 0.9s var(--ease-out-expo) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+.anim-sig {
+  animation: sig-wipe 1.4s var(--ease-in-out-circ) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+.anim-photo {
+  animation: photo-in 1.9s var(--ease-out-expo) both;
+}
+
+/* Light sweeping across the gold headline line every few seconds. */
+.shimmer-gold {
+  background: linear-gradient(
+      100deg,
+      var(--color-gold) 45%,
+      #ffe39a 50%,
+      var(--color-gold) 55%
+    )
+    0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 0.03125rem var(--color-gold);
+  animation: shimmer 9s ease-in-out 2.6s infinite;
+}
+
+/* Product tiles: a diagonal shine passes over the photo on hover. */
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.28) 50%, transparent 62%);
+  transform: translateX(-120%);
+}
+.group:hover .shine::after,
+.group:focus-within .shine::after {
+  transform: translateX(120%);
+  transition: transform 0.9s var(--ease-out-expo);
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion off: OS "reduce motion" or the footer switch.                */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+  .shimmer-gold {
+    background: none;
+    color: var(--color-gold);
+  }
+}
+
+html[data-motion="off"] {
+  scroll-behavior: auto;
+}
+html[data-motion="off"] *,
+html[data-motion="off"] *::before,
+html[data-motion="off"] *::after {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}
+html[data-motion="off"] .shimmer-gold {
+  background: none;
+  color: var(--color-gold);
+}

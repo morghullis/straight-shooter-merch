@@ -1,0 +1,479 @@
+{
+  "generator": "Meshy text-to-image",
+  "model": "gpt-image-2",
+  "creditsPerImage": 9,
+  "totalCredits": 117,
+  "generatedOn": "2026-10-20",
+  "note": "Originals (PNG/GLB) live in assets-src/. public/ holds web-optimized versions: WebP for photos, trimmed PNG for logos, catalog photos with 6% extra margin baked in, GLBs compressed with gltf-transform (meshopt, 1024px WebP textures).",
+  "assets": [
+    {
+      "name": "Header/footer logo",
+      "file": "public/images/brand/logo-straight-shooter.png",
+      "taskId": "01a15a3c-fa6d-76bb-b6b4-b893f4c5d8d5",
+      "aspect": "1:1",
+      "transparent": true
+    },
+    {
+      "name": "Culture Table script logo",
+      "file": "public/images/brand/logo-culture-table.png",
+      "taskId": "01a15a3d-0275-71d6-8df5-cb2d0252dfd2",
+      "aspect": "1:1",
+      "transparent": true
+    },
+    {
+      "name": "Hero photo (replaced)",
+      "file": "assets-src/hero/hero-fictional.png",
+      "taskId": "01a15a3d-0cbb-7177-9c92-96071321054f",
+      "aspect": "16:9",
+      "note": "Fictional-person image generated first. No longer used: the live hero uses public/images/hero/hero-photo.webp, cut from the reference screenshot (signature removed)."
+    },
+    {
+      "name": "Tile: Straight Shooter (cap)",
+      "file": "public/images/collections/straight-shooter.webp",
+      "taskId": "01a15a3d-1331-72ed-b9ec-33d3b7e5eed5",
+      "aspect": "1:1"
+    },
+    {
+      "name": "Tile: Stephen A. Smith Show (black hoodie)",
+      "file": "public/images/collections/sas-show.webp",
+      "taskId": "01a15a3d-1987-7316-9d06-36a3a37aeef8",
+      "aspect": "1:1"
+    },
+    {
+      "name": "Tile: POTUS (model in hoodie)",
+      "file": "public/images/collections/potus.webp",
+      "taskId": "01a15a3d-218d-71d0-80bc-4788c1c00520",
+      "aspect": "1:1"
+    },
+    {
+      "name": "Tile: Culture Table (tumbler + hoodie)",
+      "file": "public/images/collections/culture-table.webp",
+      "taskId": "01a15a3d-298b-756b-88e0-29fe0a87e57c",
+      "aspect": "1:1",
+      "note": "Not used by the tile any more; the tile composes the two product photos instead."
+    },
+    {
+      "name": "Product: The Silhouette Hoodie",
+      "file": "public/images/products/silhouette-hoodie.webp",
+      "taskId": "01a15a3d-2fe9-769f-8680-9a9d15825128",
+      "aspect": "4:3"
+    },
+    {
+      "name": "Product: Blasphemous Hat",
+      "file": "public/images/products/blasphemous-hat.webp",
+      "taskId": "01a15a3d-3657-7219-9f8a-2ec049ad12d4",
+      "aspect": "4:3"
+    },
+    {
+      "name": "Product: Stephen A. Smith Hoodie",
+      "file": "public/images/products/sas-hoodie.webp",
+      "taskId": "01a15a3d-3b16-7276-8a1c-7e2e62626bea",
+      "aspect": "4:3"
+    },
+    {
+      "name": "Product: Culture Table Tumbler",
+      "file": "public/images/products/culture-table-tumbler.webp",
+      "taskId": "01a15a3d-4182-71b3-a496-080d5ba1dc7d",
+      "aspect": "4:3"
+    },
+    {
+      "name": "Product: Culture Table Hoodie",
+      "file": "public/images/products/culture-table-hoodie.webp",
+      "taskId": "01a15a3d-47f1-7621-84fc-eeb44b442974",
+      "aspect": "4:3"
+    },
+    {
+      "name": "Product: Straight Shooter Tee",
+      "file": "public/images/products/straight-shooter-tee.webp",
+      "taskId": "01a15a3d-4b73-72da-91ce-b691550acc6f",
+      "aspect": "4:3"
+    }
+  ],
+  "models3d": {
+    "generator": "Meshy image-to-3D",
+    "model": "meshy-7.1",
+    "creditsPerModel": 30,
+    "totalCredits": 120,
+    "options": "textured, remeshed to 25k triangles, image_enhancement off, GLB only",
+    "items": [
+      {
+        "name": "Blasphemous Hat",
+        "source": "assets-src/products/blasphemous-hat.png",
+        "taskId": "01a15a5e-5e3e-7754-9237-5d70333a2e13",
+        "glb": "public/models/hat.glb"
+      },
+      {
+        "name": "Culture Table Tumbler",
+        "source": "assets-src/products/culture-table-tumbler.png",
+        "taskId": "01a15a5e-6530-7120-b844-b8b8730bf625",
+        "glb": "public/models/tumbler.glb"
+      },
+      {
+        "name": "Culture Table Hoodie",
+        "source": "assets-src/products/culture-table-hoodie.png",
+        "taskId": "01a15a5e-69ae-7438-ac42-25e8bc55bfe5",
+        "glb": "public/models/hoodie.glb"
+      },
+      {
+        "name": "Straight Shooter Tee",
+        "source": "assets-src/products/straight-shooter-tee.png",
+        "taskId": "01a15a5e-6eb0-7197-896c-a84de6088373",
+        "glb": "public/models/tee.glb"
+      }
+    ],
+    "superseded": "Superseded by round3.models3d (8K + Ultra 4K)."
+  },
+  "round2": {
+    "generatedOn": "2026-10-20",
+    "purpose": "Less 'AI-looking' visual language (print and broadcast ephemera), garment-alone + on-model product photos for the card hover, and higher-quality 3D models.",
+    "approach": "Every image was generated twice (gpt-image-2 and nano-banana-pro) and the better one shipped; both originals are kept in assets-src/round2/.",
+    "creditsApprox": 470,
+    "creditsBreakdown": {
+      "images": "34 images (17 prompts x 2 models) at 9-12 credits",
+      "models3d": "4 models x 35 credits (meshy-7.1, 2K texture + Ultra 2K geometry)"
+    },
+    "productImages": [
+      {
+        "name": "Garment alone: The Silhouette Hoodie (card default)",
+        "file": "public/images/products/the-silhouette-hoodie.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-bc39-7473-af9f-0d90662ea868",
+          "nano-banana-pro": "01a15aa4-1a11-7360-82f3-67df6bec6b06"
+        },
+        "originals": [
+          "assets-src/round2/products/silhouette-alone__gpt.png",
+          "assets-src/round2/products/silhouette-alone__nano.png"
+        ]
+      },
+      {
+        "name": "Garment alone: Stephen A. Smith Hoodie (card default)",
+        "file": "public/images/products/stephen-a-smith-hoodie.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-c313-7310-9672-b3e8780be945",
+          "nano-banana-pro": "01a15aa4-2286-71d2-9331-e0da3b4ebcf1"
+        },
+        "originals": [
+          "assets-src/round2/products/sas-alone__gpt.png",
+          "assets-src/round2/products/sas-alone__nano.png"
+        ]
+      },
+      {
+        "name": "Garment alone: POTUS Hoodie (card default)",
+        "file": "public/images/products/potus-hoodie.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-ca49-72e3-9033-d06d82c79197",
+          "nano-banana-pro": "01a15aa4-29ef-769b-b62d-9c93600ed33f"
+        },
+        "originals": [
+          "assets-src/round2/products/potus-alone__gpt.png",
+          "assets-src/round2/products/potus-alone__nano.png"
+        ]
+      },
+      {
+        "name": "On model: Blasphemous Hat (card hover)",
+        "file": "public/images/products/on-model/blasphemous-hat.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-95f6-7608-865e-311f20da4757",
+          "nano-banana-pro": "01a15aa3-fd11-722a-ab51-4a663cdde910"
+        },
+        "originals": [
+          "assets-src/round2/products/hat-on-model__gpt.png",
+          "assets-src/round2/products/hat-on-model__nano.png"
+        ]
+      },
+      {
+        "name": "On model: Straight Shooter Tee (card hover)",
+        "file": "public/images/products/on-model/straight-shooter-tee.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-9f1f-737a-ac84-34762358b165",
+          "nano-banana-pro": "01a15aa4-0415-735a-ac65-93e0fe1a4f87"
+        },
+        "originals": [
+          "assets-src/round2/products/tee-on-model__gpt.png",
+          "assets-src/round2/products/tee-on-model__nano.png"
+        ]
+      },
+      {
+        "name": "On model: Culture Table Hoodie (card hover)",
+        "file": "public/images/products/on-model/culture-table-hoodie.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-a713-76bc-bf00-77c341bdcfa2",
+          "nano-banana-pro": "01a15aa4-0be4-7386-9937-391db0bb343a"
+        },
+        "originals": [
+          "assets-src/round2/products/ct-hoodie-on-model__gpt.png",
+          "assets-src/round2/products/ct-hoodie-on-model__nano.png"
+        ]
+      },
+      {
+        "name": "On model: Culture Table Tumbler held (card hover)",
+        "file": "public/images/products/on-model/culture-table-tumbler.webp",
+        "picked": "nano-banana-pro",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-b23d-7606-9861-2d3406e4218f",
+          "nano-banana-pro": "01a15aa4-1238-752b-8a8b-a11c6e1cab1a"
+        },
+        "originals": [
+          "assets-src/round2/products/tumbler-held__gpt.png",
+          "assets-src/round2/products/tumbler-held__nano.png"
+        ]
+      },
+      {
+        "name": "On model: POTUS Hoodie (card hover)",
+        "file": "public/images/products/on-model/potus-hoodie.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa3-d16a-7012-82ca-229d2bbdd4e6",
+          "nano-banana-pro": "01a15aa4-31cf-77d9-98e8-1137c95cfb2f"
+        },
+        "originals": [
+          "assets-src/round2/products/potus-on-model__gpt.png",
+          "assets-src/round2/products/potus-on-model__nano.png"
+        ]
+      }
+    ],
+    "graphics": [
+      {
+        "name": "Gold tape band (section titles, showroom)",
+        "file": "public/images/art/tape-gold.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-41ab-725e-9924-07b1521ac7d8",
+          "nano-banana-pro": "01a15aa4-a9bd-7256-896b-4ac011d0fdac"
+        },
+        "originals": [
+          "assets-src/round2/graphics/tape-gold__gpt.png",
+          "assets-src/round2/graphics/tape-gold__nano.png"
+        ],
+        "note": "Brand-text variant (tape-gold__gpt-brand.png) shipped"
+      },
+      {
+        "name": "ON AIR stamp (studio-pass tickets)",
+        "file": "public/images/art/stamp-on-air.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-3801-74e5-bb06-7f825cadb64c",
+          "nano-banana-pro": "01a15aa4-a137-77db-9784-28a461f6e407"
+        },
+        "originals": [
+          "assets-src/round2/graphics/stamp-on-air__gpt.png",
+          "assets-src/round2/graphics/stamp-on-air__nano.png"
+        ]
+      },
+      {
+        "name": "BLASPHEMOUS stamp (hat in showroom)",
+        "file": "public/images/art/stamp-blasphemous.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-3ce6-7648-9d69-5db70ff98691",
+          "nano-banana-pro": "01a15aa4-a4ff-7425-bfec-9270944ec9d0"
+        },
+        "originals": [
+          "assets-src/round2/graphics/stamp-blasphemous__gpt.png",
+          "assets-src/round2/graphics/stamp-blasphemous__nano.png"
+        ]
+      },
+      {
+        "name": "OFFICIAL sticker (showroom)",
+        "file": "public/images/art/sticker-official.webp",
+        "picked": "gpt-image-2",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-4825-75e3-bee1-ee8e70c9154a",
+          "nano-banana-pro": "01a15aa4-ae89-75d3-9385-da17006df299"
+        },
+        "originals": [
+          "assets-src/round2/graphics/sticker-official__gpt.png",
+          "assets-src/round2/graphics/sticker-official__nano.png"
+        ]
+      },
+      {
+        "name": "Studio microphone (Sports lane)",
+        "file": "public/images/art/art-mic.webp",
+        "picked": "nano-banana-pro",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-4f5c-744a-ad35-e1129bf52cd6",
+          "nano-banana-pro": "01a15aa4-b334-77e6-bd0b-40b6574d3528"
+        },
+        "originals": [
+          "assets-src/round2/graphics/art-mic__gpt.png",
+          "assets-src/round2/graphics/art-mic__nano.png"
+        ]
+      },
+      {
+        "name": "Capitol dome (Politics lane)",
+        "file": "public/images/art/art-capitol.webp",
+        "picked": "nano-banana-pro",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-522a-73aa-84c1-37ed4ca74f4c",
+          "nano-banana-pro": "01a15aa4-b65f-7677-92e0-f83b2f985aee"
+        },
+        "originals": [
+          "assets-src/round2/graphics/art-capitol__gpt.png",
+          "assets-src/round2/graphics/art-capitol__nano.png"
+        ]
+      },
+      {
+        "name": "Round table (Culture lane)",
+        "file": "public/images/art/art-table.webp",
+        "picked": "nano-banana-pro",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-56b1-754c-ab79-3c6e0e546965",
+          "nano-banana-pro": "01a15aa4-bb37-73bc-affc-cf24b956dee7"
+        },
+        "originals": [
+          "assets-src/round2/graphics/art-table__gpt.png",
+          "assets-src/round2/graphics/art-table__nano.png"
+        ]
+      },
+      {
+        "name": "Paper texture (tickets, ballot)",
+        "file": "public/images/art/tex-paper.webp",
+        "picked": "nano-banana-pro",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-59ee-7759-ae62-bf27f4ae7121",
+          "nano-banana-pro": "01a15aa4-bff3-7447-b57a-7af8c037c343"
+        },
+        "originals": [
+          "assets-src/round2/graphics/tex-paper__gpt.png",
+          "assets-src/round2/graphics/tex-paper__nano.png"
+        ]
+      },
+      {
+        "name": "Concrete texture (showroom wall)",
+        "file": "public/images/art/tex-concrete.webp",
+        "picked": "nano-banana-pro",
+        "taskIds": {
+          "gpt-image-2": "01a15aa4-5cf5-75d9-9b4a-ebe044eeb0fc",
+          "nano-banana-pro": "01a15aa4-c194-70e9-82a0-6c7206c005d4"
+        },
+        "originals": [
+          "assets-src/round2/graphics/tex-concrete__gpt.png",
+          "assets-src/round2/graphics/tex-concrete__nano.png"
+        ]
+      }
+    ],
+    "models3d": {
+      "generator": "Meshy image-to-3D",
+      "model": "meshy-7.1",
+      "options": "textured 2K, geometry_resolution 2k (Ultra), GLB only. Web copies compressed with gltf-transform (meshopt, WebP textures).",
+      "replaces": "models3d (round 1)",
+      "items": [
+        {
+          "name": "Blasphemous Hat",
+          "taskId": "01a15aa3-7cc6-724f-acbd-bbcfda10c1c6",
+          "original": "assets-src/round2/models/hat.glb",
+          "glb": "public/models/hat.glb"
+        },
+        {
+          "name": "Straight Shooter Tee",
+          "taskId": "01a15aa3-82f1-7545-9f31-f629f255adb6",
+          "original": "assets-src/round2/models/tee.glb",
+          "glb": "public/models/tee.glb"
+        },
+        {
+          "name": "Culture Table Hoodie",
+          "taskId": "01a15aa3-87ce-733a-8aed-487472e2fcea",
+          "original": "assets-src/round2/models/hoodie.glb",
+          "glb": "public/models/hoodie.glb"
+        },
+        {
+          "name": "Culture Table Tumbler",
+          "taskId": "01a15aa3-8e00-740d-9e71-152edef18140",
+          "original": "assets-src/round2/models/tumbler.glb",
+          "glb": "public/models/tumbler.glb"
+        }
+      ],
+      "superseded": "Superseded by round3.models3d."
+    },
+    "notFromMeshy": [
+      "public/images/products/on-model/the-silhouette-hoodie.webp and stephen-a-smith-hoodie.webp are the round-1 Meshy product photos (gpt-image-2, assets-src/products/), reused as the on-model hover images because those two products were already worn by a model.",
+      "public/images/hero/hero-photo.webp is cut from the reference screenshot."
+    ],
+    "caveat": "On-model and garment photos are AI-generated mockups of the merch, not photographs. Replace them with real product photography before launch; the file names and the custom.on_model_image metafield make that a drop-in swap.",
+    "creditsNote": "Measured from the account balance: 3,633 before round 2, 3,163 after."
+  },
+  "round3": {
+    "generatedOn": "2026-10-20",
+    "purpose": "3D renders of every product at the highest detail Meshy offers, the source of the card angle carousel, the 7-product showroom and the product-page viewer.",
+    "settings": "meshy-7.1, texture_resolution 8k, geometry_resolution 4k (Ultra), enable_pbr true (metallic, roughness and normal maps), image_enhancement false, GLB only.",
+    "credits": {
+      "models": "7 x 40 = 280",
+      "silhouetteFixAttempt": "12 (front photo) + 40 (multi-view model) = 52, discarded",
+      "total": 332,
+      "balanceAfter": 2831
+    },
+    "models3d": [
+      {
+        "name": "Blasphemous Hat",
+        "taskId": "01a15ae4-4e91-77d1-8e70-e329beae94d1",
+        "source": "assets-src/products/blasphemous-hat.png",
+        "original": "assets-src/round3/models/hat-8k.glb",
+        "web": "public/models/hat.glb",
+        "hd": "public/models/hat-hd.glb"
+      },
+      {
+        "name": "Straight Shooter Tee",
+        "taskId": "01a15ae4-5495-73b5-a630-3fbd33ff0e9e",
+        "source": "assets-src/products/straight-shooter-tee.png",
+        "original": "assets-src/round3/models/tee-8k.glb",
+        "web": "public/models/tee.glb",
+        "hd": "public/models/tee-hd.glb"
+      },
+      {
+        "name": "Culture Table Hoodie",
+        "taskId": "01a15ae4-5918-77ce-b118-2813b8b777d4",
+        "source": "assets-src/products/culture-table-hoodie.png",
+        "original": "assets-src/round3/models/hoodie-8k.glb",
+        "web": "public/models/hoodie.glb",
+        "hd": "public/models/hoodie-hd.glb"
+      },
+      {
+        "name": "Culture Table Tumbler",
+        "taskId": "01a15ae4-5e89-71d3-aebf-8f34721c5317",
+        "source": "assets-src/products/culture-table-tumbler.png",
+        "original": "assets-src/round3/models/tumbler-8k.glb",
+        "web": "public/models/tumbler.glb",
+        "hd": "public/models/tumbler-hd.glb"
+      },
+      {
+        "name": "The Silhouette Hoodie",
+        "taskId": "01a15ae4-6346-7751-803b-9edde9ae4210",
+        "source": "assets-src/round2/products/silhouette-alone__gpt.png",
+        "original": "assets-src/round3/models/silhouette-8k-front-repaired.glb",
+        "web": "public/models/silhouette.glb",
+        "hd": "public/models/silhouette-hd.glb",
+        "note": "Built from a back-view photo, so Meshy invented a messy front. The original GLB was repaired with tools/3d/repair-front.mjs: front-facing triangles are painted plain black in the base colour, normal and roughness maps. The back graphic is untouched. Faint relief specks of the invented front remain in the geometry."
+      },
+      {
+        "name": "Stephen A. Smith Hoodie",
+        "taskId": "01a15ae4-698e-7009-ba64-3e87c60cda24",
+        "source": "assets-src/round2/products/sas-alone__gpt.png",
+        "original": "assets-src/round3/models/sas-8k.glb",
+        "web": "public/models/sas.glb",
+        "hd": "public/models/sas-hd.glb"
+      },
+      {
+        "name": "POTUS Hoodie",
+        "taskId": "01a15ae4-6e6d-7782-9e1d-d8daf645aab1",
+        "source": "assets-src/round2/products/potus-alone__gpt.png",
+        "original": "assets-src/round3/models/potus-8k.glb",
+        "web": "public/models/potus.glb",
+        "hd": "public/models/potus-hd.glb"
+      }
+    ],
+    "silhouetteFixAttempt": {
+      "frontImageTask": "01a15aee-119d-7709-9b33-464b20356451",
+      "frontImage": "assets-src/round3/silhouette-front__gpt.png",
+      "multiViewModelTask": "01a15aee-b3a6-71ee-a564-218c8a10e44a",
+      "result": "Discarded: the multi-view model came out flat like a sheet of paper, with the back graphic on both sides."
+    },
+    "webVariants": "tools/3d/optimize.mjs: web = 60k triangles, 2048 base colour, 1024 normal and roughness; hd = 160k triangles, 4096 base colour, 2048 normal. Meshopt compressed, WebP.",
+    "renders": "tools/3d/render.mjs renders six angles per product from the 8K originals (public/images/products/angles/<handle>/). Same sand background as the cards."
+  }
+}

@@ -1,0 +1,14 @@
+# Netlify: the Next.js runtime is detected automatically (OpenNext adapter).
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# This deployment is a preview for showing the design: keep it out of search engines.
+# Remove this block when the site goes live on its real domain.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

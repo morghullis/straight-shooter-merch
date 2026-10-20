@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#efebe0}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const W = 1500, H = Math.round(1500 * 141 / 173);   // card ratio 173/141
+const SS = 2;                                       // render at 2x then downscale
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W * SS, H * SS);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#efebe0");
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+const key = new THREE.DirectionalLight("#fff4e6", 1.6); key.position.set(3, 5, 4); scene.add(key);
+const rim = new THREE.DirectionalLight("#ffe2b8", 0.9); rim.position.set(-4, 2.5, -3); scene.add(rim);
+const fill = new THREE.DirectionalLight("#ffffff", 0.5); fill.position.set(-3, 1, 4); scene.add(fill);
+scene.add(new THREE.HemisphereLight("#ffffff", "#d8cfc0", 0.3));
+
+const camera = new THREE.PerspectiveCamera(24, W / H, 0.1, 100);
+
+// soft contact shadow: radial gradient disc under the product
+function blobTexture() {
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const g = c.getContext("2d"); const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grad.addColorStop(0, "rgba(40,30,20,0.55)"); grad.addColorStop(0.55, "rgba(40,30,20,0.22)"); grad.addColorStop(1, "rgba(40,30,20,0)");
+  g.fillStyle = grad; g.fillRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const blob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false, toneMapped: false }));
+blob.rotation.x = -Math.PI / 2; scene.add(blob);
+
+let pivot = null, info = null;
+
+window.loadModel = async (url, opts = {}) => {
+  if (pivot) { scene.remove(pivot); pivot = null; }
+  const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder); const gltf = await loader.loadAsync(url);
+  const obj = gltf.scene;
+  obj.traverse((n) => { if (n.isMesh) { n.material.side = THREE.DoubleSide; if (opts.normalScale != null && n.material.normalScale) n.material.normalScale.setScalar(opts.normalScale); if (n.material.map) n.material.map.anisotropy = 16; } });
+  // center + scale to 2 units tall/long
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  const s = (opts.fit ?? 2.4) / Math.max(size.x, size.y, size.z);
+  obj.scale.setScalar(s);
+  obj.position.copy(center.multiplyScalar(-s));
+  obj.rotation.set(0, (opts.baseYaw ?? 0) * Math.PI / 180, 0);
+  const holder = new THREE.Group(); holder.add(obj);
+  pivot = new THREE.Group(); pivot.add(holder); scene.add(pivot);
+  // measure radius around the y axis and height of the final object
+  const b2 = new THREE.Box3().setFromObject(pivot);
+  let r = 0; const v = new THREE.Vector3(); const pts = [];
+  obj.updateMatrixWorld(true);
+  obj.traverse((n) => { if (n.isMesh) { const pos = n.geometry.attributes.position; const step = Math.max(1, Math.floor(pos.count / 20000)); for (let i = 0; i < pos.count; i += step) { v.fromBufferAttribute(pos, i).applyMatrix4(n.matrixWorld); r = Math.max(r, Math.hypot(v.x, v.z)); pts.push(v.x, v.z); } } });
+  info = { pts, height: b2.max.y - b2.min.y, top: b2.max.y, bottom: b2.min.y, radius: r, pitch: opts.pitch ?? 6, frame: opts.frame ?? 0.8, lift: opts.lift ?? 0, minZoom: opts.minZoom };
+  const { pts: _p, ...rest } = info; return rest;
+};
+
+window.shot = (yawDeg) => {
+  pivot.rotation.y = yawDeg * Math.PI / 180;
+  const { pts, height, bottom, top, radius, pitch, frame, lift } = info;
+  const th = yawDeg * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+  let projW = 0, projD = 0;
+  for (let i = 0; i < pts.length; i += 2) {
+    const x = pts[i], z = pts[i + 1];
+    projW = Math.max(projW, Math.abs(x * c + z * sn));
+    projD = Math.max(projD, Math.abs(-x * sn + z * c));
+  }
+  projW *= 2; projD *= 2;
+  const fov = camera.fov * Math.PI / 180, k = 2 * Math.tan(fov / 2);
+  const distFor = (w) => Math.max((height / frame) / k, (w / frame) / (k * camera.aspect));
+  const distMax = distFor(2 * radius);
+  const dist = Math.max(distFor(projW), distMax * (info.minZoom ?? 0.72));
+  const cy = (top + bottom) / 2 + lift;
+  const p = pitch * Math.PI / 180;
+  camera.position.set(0, cy + Math.sin(p) * dist, Math.cos(p) * dist);
+  camera.lookAt(0, cy, 0);
+  blob.position.set(0, bottom - 0.02, 0);
+  blob.scale.set(Math.max(projW * 1.5, 0.8), Math.max(projD * 1.2, 0.5), 1);
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL("image/png");
+};
+window.ready = true;
+</script></body></html>
