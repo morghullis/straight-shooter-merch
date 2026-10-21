@@ -25,8 +25,6 @@ interface Seed {
   title: string;
   description: string;
   price: number;
-  /** Product photos, in order (the store's own photography). Without them, the 3D turntable renders. */
-  photos?: CatalogImage[];
   /** On-model shot shown on hover (and last in the product gallery). */
   hover?: CatalogImage;
   collections: string[];
@@ -59,9 +57,8 @@ function build(seed: Seed, index: number): Product {
     selectedOptions,
   }));
 
-  // The store's photos when it has them; otherwise the turntable renders of the 3D model, in carousel
-  // order, with the on-model photo last.
-  const angles = seed.photos ?? anglesFor(seed.handle).map((angle) =>
+  // The turntable renders of the 3D model, in carousel order; the on-model photo goes last.
+  const angles = anglesFor(seed.handle).map((angle) =>
     image(
       angleUrl(seed.handle, angle),
       copy.product.viewAlt(seed.title, copy.product.angles[angle]),
@@ -78,7 +75,7 @@ function build(seed: Seed, index: number): Product {
     availableForSale: true,
     featuredImage: angles[0],
     hoverImage: seed.hover ?? null,
-    images: seed.hover && !seed.photos ? [...angles, seed.hover] : angles,
+    images: seed.hover ? [...angles, seed.hover] : angles,
     options,
     variants,
     price: { amount: seed.price.toFixed(2), currencyCode: CURRENCY },
@@ -87,28 +84,19 @@ function build(seed: Seed, index: number): Product {
   };
 }
 
-/** Photos from the store (kvh0hd-f0.myshopify.com), cropped to the card frame: public/images/products/store/. */
-const store = (handle: string, n: number, altText: string, width: number, height: number) =>
-  image(`/images/products/store/${handle}/${n}.webp`, altText, width, height);
-
 const STORE_TEE_SIZES = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 const CROP_TEE_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
 
 const seeds: Seed[] = [
-  // The store's products (same handles, titles and prices as on Shopify).
+  // The store's products (same handles, titles and prices as on Shopify). Like ours: the garment alone,
+  // rendered from its 3D model (Meshy, made from the store's photos), and the store's on-model photo on hover.
   {
     handle: "hoodie",
     title: "Blasphemous! Hoodie",
     description:
       "That's just BLASPHEMOUS! A clean, minimalist hoodie with BLASPHEMOUS in bold type across the chest and the signature silhouette graphic on the upper chest. Adjustable drawstring hood. Wear it bold. Wear it unapologetically.",
     price: 54.99,
-    photos: [
-      store("hoodie", 1, "Man wearing the black Blasphemous! hoodie", 1121, 914),
-      store("hoodie", 2, "Man wearing the white Blasphemous! hoodie", 1121, 914),
-      store("hoodie", 3, "The black Blasphemous! hoodie, worn with the hood down", 1121, 914),
-      store("hoodie", 4, "The Blasphemous! hoodie in white and in black", 1200, 979),
-    ],
-    hover: store("hoodie", 4, "The Blasphemous! hoodie in white and in black", 1200, 979),
+    hover: image("/images/products/on-model/hoodie.webp", "Man wearing the black Blasphemous! hoodie", 1121, 914),
     collections: ["straight-shooter", "stephen-a-smith"],
     tags: ["hoodie", "blasphemous", "featured"],
     options: [
@@ -122,12 +110,7 @@ const seeds: Seed[] = [
     description:
       "That's just BLASPHEMOUS! A clean, minimalist tee with BLASPHEMOUS in bold type across the chest and the signature silhouette graphic on the upper chest. Black or white. Wear it bold. Wear it unapologetically.",
     price: 34.99,
-    photos: [
-      store("blasphemous-t-shirt", 1, "Man wearing the black Blasphemous! tee", 1121, 914),
-      store("blasphemous-t-shirt", 2, "Man wearing the white Blasphemous! tee", 1121, 914),
-      store("blasphemous-t-shirt", 3, "The Blasphemous! tee in black and in white", 1200, 979),
-    ],
-    hover: store("blasphemous-t-shirt", 3, "The Blasphemous! tee in black and in white", 1200, 979),
+    hover: image("/images/products/on-model/blasphemous-t-shirt.webp", "Man wearing the black Blasphemous! tee", 1121, 914),
     collections: ["straight-shooter", "stephen-a-smith"],
     tags: ["tee", "blasphemous", "featured"],
     options: [
@@ -141,13 +124,7 @@ const seeds: Seed[] = [
     description:
       "Women's graphic crop tee. A little flirty, a little bold: \"I would date the bus driver\" in script and bold type with a heart, printed on the back, and The Culture Table logo on the front. Cropped, relaxed fit.",
     price: 34.99,
-    photos: [
-      store("i-would-date-the-bus-driver", 1, "Back of the black crop tee: I would date the bus driver", 967, 788),
-      store("i-would-date-the-bus-driver", 2, "Back of the white crop tee: I would date the bus driver", 966, 788),
-      store("i-would-date-the-bus-driver", 3, "Front of the black crop tee with The Culture Table logo", 1011, 824),
-      store("i-would-date-the-bus-driver", 4, "Front of the white crop tee with The Culture Table logo", 1011, 824),
-    ],
-    hover: store("i-would-date-the-bus-driver", 3, "Front of the black crop tee with The Culture Table logo", 1011, 824),
+    hover: image("/images/products/on-model/i-would-date-the-bus-driver.webp", "Woman wearing the black crop tee, seen from behind: I would date the bus driver", 967, 788),
     collections: ["culture-table"],
     tags: ["tee", "crop", "featured"],
     options: [
@@ -161,11 +138,7 @@ const seeds: Seed[] = [
     description:
       "Women's graphic crop tee. Sweet, bold and a little rebellious: \"I'm not above an Edible\" in pink, white and gold lettering with candy details on the back, The Culture Table logo on the front.",
     price: 34.99,
-    photos: [
-      store("i-m-not-above-an-edible", 1, "Back of the black crop tee: I'm not above an Edible", 1200, 979),
-      store("i-m-not-above-an-edible", 2, "Front of the black crop tee with The Culture Table logo", 1011, 824),
-    ],
-    hover: store("i-m-not-above-an-edible", 2, "Front of the black crop tee with The Culture Table logo", 1011, 824),
+    hover: image("/images/products/on-model/i-m-not-above-an-edible.webp", "Woman wearing the black crop tee, seen from behind: I'm not above an Edible", 1200, 979),
     collections: ["culture-table"],
     tags: ["tee", "crop", "featured"],
     options: [
@@ -179,11 +152,7 @@ const seeds: Seed[] = [
     description:
       "Women's graphic crop tee. Three perspectives, one reality: \"There's Right, There's Wrong & There's REALITY\" in flowing script and serif lettering, in soft pink, teal and cream, printed on the back; The Culture Table logo on the front.",
     price: 34.99,
-    photos: [
-      store("theres-right-theres-wrongs-theres-reality", 1, "Back of the white crop tee: There's Right, There's Wrong & There's Reality", 1024, 835),
-      store("theres-right-theres-wrongs-theres-reality", 2, "Front of the white crop tee with The Culture Table logo", 1011, 824),
-    ],
-    hover: store("theres-right-theres-wrongs-theres-reality", 2, "Front of the white crop tee with The Culture Table logo", 1011, 824),
+    hover: image("/images/products/on-model/theres-right-theres-wrongs-theres-reality.webp", "Woman wearing the white crop tee, seen from behind: There's Right, There's Wrong & There's Reality", 1024, 835),
     collections: ["culture-table"],
     tags: ["tee", "crop", "featured"],
     options: [

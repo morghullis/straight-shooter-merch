@@ -23,6 +23,13 @@ export const models: Record<string, ModelSpec> = {
   "potus-hoodie": { src: "/models/potus.glb", hd: "/models/potus-hd.glb", label: "POTUS", fit: 2.35, rotation: [0, 0, 0] },
   "culture-table-hoodie": { src: "/models/hoodie.glb", hd: "/models/hoodie-hd.glb", label: "Table hoodie", fit: 2.35, rotation: [0, 0, 0] },
   "culture-table-tumbler": { src: "/models/tumbler.glb", hd: "/models/tumbler-hd.glb", label: "Tumbler", fit: 2.4, rotation: [0, 0, 0] },
+  // The store's products (Meshy round 5, made from the store's photos). The crop tees face their back
+  // first, where the print is.
+  hoodie: { src: "/models/blasphemous-hoodie.glb", hd: "/models/blasphemous-hoodie-hd.glb", label: "Blasphemous! Hoodie", fit: 2.35, rotation: [0, 0, 0] },
+  "blasphemous-t-shirt": { src: "/models/blasphemous-tee.glb", hd: "/models/blasphemous-tee-hd.glb", label: "Blasphemous! Tee", fit: 2.3, rotation: [0, 0, 0] },
+  "i-would-date-the-bus-driver": { src: "/models/busdriver-crop.glb", hd: "/models/busdriver-crop-hd.glb", label: "Bus Driver Crop", fit: 2.3, rotation: [0, Math.PI, 0] },
+  "i-m-not-above-an-edible": { src: "/models/edible-crop.glb", hd: "/models/edible-crop-hd.glb", label: "Edible Crop", fit: 2.3, rotation: [0, Math.PI, 0] },
+  "theres-right-theres-wrongs-theres-reality": { src: "/models/reality-crop.glb", hd: "/models/reality-crop-hd.glb", label: "Reality Crop", fit: 2.3, rotation: [0, Math.PI, 0] },
 };
 
 /**

@@ -17,9 +17,15 @@ export type AngleName =
 /** One full turn, in the order a visitor swipes through it. */
 const TURNTABLE: readonly AngleName[] = ["front", "quarter-right", "side-right", "back", "side-left", "quarter-left"];
 
-/** Products whose first photo is not the front: The Silhouette Hoodie is all about its back. */
+/** Back first: products whose graphic is on the back (The Silhouette Hoodie, the Culture Table crop tees). */
+const BACK_FIRST: readonly AngleName[] = ["back", "quarter-back-right", "side-right", "front", "side-left", "quarter-back-left"];
+
+/** Products whose first photo is not the front. */
 const ANGLE_OVERRIDES: Record<string, readonly AngleName[]> = {
-  "the-silhouette-hoodie": ["back", "quarter-back-right", "side-right", "front", "side-left", "quarter-back-left"],
+  "the-silhouette-hoodie": BACK_FIRST,
+  "i-would-date-the-bus-driver": BACK_FIRST,
+  "i-m-not-above-an-edible": BACK_FIRST,
+  "theres-right-theres-wrongs-theres-reality": BACK_FIRST,
 };
 
 export const ANGLE_IMAGE_SIZE = { width: 1500, height: 1223 } as const;

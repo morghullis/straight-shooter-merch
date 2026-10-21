@@ -86,5 +86,65 @@
       "side-left": -90,
       "quarter-back-left": -135
     }
+  },
+  "hoodie": {
+    "glb": "blasphemous-hoodie-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "blasphemous-t-shirt": {
+    "glb": "blasphemous-tee-8k",
+    "pitch": 4,
+    "angles": {
+      "front": 0,
+      "quarter-right": 45,
+      "side-right": 90,
+      "back": 180,
+      "side-left": -90,
+      "quarter-left": -45
+    }
+  },
+  "i-would-date-the-bus-driver": {
+    "glb": "busdriver-8k-front",
+    "pitch": 4,
+    "angles": {
+      "back": 180,
+      "quarter-back-right": 135,
+      "side-right": 90,
+      "front": 0,
+      "side-left": -90,
+      "quarter-back-left": -135
+    }
+  },
+  "i-m-not-above-an-edible": {
+    "glb": "edible-8k-both",
+    "pitch": 4,
+    "angles": {
+      "back": 180,
+      "quarter-back-right": 135,
+      "side-right": 90,
+      "front": 0,
+      "side-left": -90,
+      "quarter-back-left": -135
+    }
+  },
+  "theres-right-theres-wrongs-theres-reality": {
+    "glb": "reality-8k-front",
+    "pitch": 4,
+    "angles": {
+      "back": 180,
+      "quarter-back-right": 135,
+      "side-right": 90,
+      "front": 0,
+      "side-left": -90,
+      "quarter-back-left": -135
+    }
   }
 }

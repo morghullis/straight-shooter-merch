@@ -527,5 +527,74 @@
         "note": "Ink turned into an alpha mask; the bright core (the cut-out tongue) is a second mask. Animated in CSS (.cart-flame)."
       }
     ]
+  },
+  "round5": {
+    "generatedOn": "2026-10-20",
+    "purpose": "The store's five products (kvh0hd-f0.myshopify.com) treated exactly like ours: the garment alone, a 3D model, a six-angle turntable on the card, the store's on-model photo on hover, a 3D view on the product page.",
+    "credits": {
+      "garmentImages": "7 x 12 = 84 (image-to-image, gpt-image-2)",
+      "models": "5 x 40 = 200 (meshy-7.1, 8K texture, Ultra 4K, PBR)",
+      "cropTeeRetry": "3 x 40 = 120 (front+back multi-view came out as flat sheets; redone from the back photo)",
+      "total": 404,
+      "balanceAfter": 2391
+    },
+    "garmentImages": {
+      "from": "assets-src/store/img (the store's photos)",
+      "files": "assets-src/round5/alone/*.png",
+      "taskIds": [
+        "01a15c7e-2696-72f7-abf2-d671c1b171c4",
+        "01a15c7e-2fb9-734f-90e7-ad437c5a87c8",
+        "01a15c7e-39fd-74e3-9dbd-2c3ee8c6fcf1",
+        "01a15c7e-44c0-717f-82c1-aea82ba77369",
+        "01a15c7e-4e15-772f-8605-651f3415757c",
+        "01a15c7e-5899-727f-b718-638bc7e8f5f2",
+        "01a15c7e-617a-7445-a746-e28789803bf4"
+      ]
+    },
+    "models": [
+      {
+        "handle": "hoodie",
+        "taskId": "01a15c7f-bd81-77c2-8534-9eb1cfe8c2f2",
+        "original": "assets-src/round5/models/blasphemous-hoodie-8k.glb",
+        "web": "public/models/blasphemous-hoodie.glb"
+      },
+      {
+        "handle": "blasphemous-t-shirt",
+        "taskId": "01a15c7f-c3ac-75e0-82a2-bb04f3326271",
+        "original": "assets-src/round5/models/blasphemous-tee-8k.glb",
+        "web": "public/models/blasphemous-tee.glb"
+      },
+      {
+        "handle": "i-would-date-the-bus-driver",
+        "taskId": "01a15c87-27ca-7503-92ab-f6eb05d557a3",
+        "original": "assets-src/round5/models/busdriver-8k.glb",
+        "fixed": "busdriver-8k-front.glb (real front projected)",
+        "web": "public/models/busdriver-crop.glb"
+      },
+      {
+        "handle": "i-m-not-above-an-edible",
+        "taskId": "01a15c87-2da7-7390-864d-f2e22af162f7",
+        "original": "assets-src/round5/models/edible-8k.glb",
+        "fixed": "edible-8k-both.glb (real front and real back projected; Meshy garbled the back print)",
+        "web": "public/models/edible-crop.glb"
+      },
+      {
+        "handle": "theres-right-theres-wrongs-theres-reality",
+        "taskId": "01a15c87-3458-753c-acb5-713207ce9a3b",
+        "original": "assets-src/round5/models/reality-8k.glb",
+        "fixed": "reality-8k-front.glb (real front projected)",
+        "web": "public/models/reality-crop.glb"
+      }
+    ],
+    "failedMultiView": {
+      "taskIds": [
+        "01a15c7f-cce9-7361-ad19-122dd1c5782d",
+        "01a15c7f-d581-743b-80bd-5e67235cc369",
+        "01a15c7f-dcb5-7382-8d68-cade0137a0dd"
+      ],
+      "files": "assets-src/round5/models/failed-multiview/",
+      "result": "Flat sheets, discarded."
+    },
+    "frontFix": "A model made from one photo of its back invents its front (a blurred copy of the print). tools/3d/project-front.mjs projects the real front photo onto that side and evens out the roughness map (Meshy makes the invented print shinier)."
   }
 }
