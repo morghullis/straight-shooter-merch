@@ -25,6 +25,8 @@ interface Seed {
   title: string;
   description: string;
   price: number;
+  /** Product photos, in order (the store's own photography). Without them, the 3D turntable renders. */
+  photos?: CatalogImage[];
   /** On-model shot shown on hover (and last in the product gallery). */
   hover?: CatalogImage;
   collections: string[];
@@ -57,8 +59,9 @@ function build(seed: Seed, index: number): Product {
     selectedOptions,
   }));
 
-  // The turntable renders of the 3D model, in carousel order; the on-model photo goes last.
-  const angles = anglesFor(seed.handle).map((angle) =>
+  // The store's photos when it has them; otherwise the turntable renders of the 3D model, in carousel
+  // order, with the on-model photo last.
+  const angles = seed.photos ?? anglesFor(seed.handle).map((angle) =>
     image(
       angleUrl(seed.handle, angle),
       copy.product.viewAlt(seed.title, copy.product.angles[angle]),
@@ -75,7 +78,7 @@ function build(seed: Seed, index: number): Product {
     availableForSale: true,
     featuredImage: angles[0],
     hoverImage: seed.hover ?? null,
-    images: seed.hover ? [...angles, seed.hover] : angles,
+    images: seed.hover && !seed.photos ? [...angles, seed.hover] : angles,
     options,
     variants,
     price: { amount: seed.price.toFixed(2), currencyCode: CURRENCY },
@@ -84,14 +87,119 @@ function build(seed: Seed, index: number): Product {
   };
 }
 
+/** Photos from the store (kvh0hd-f0.myshopify.com), cropped to the card frame: public/images/products/store/. */
+const store = (handle: string, n: number, altText: string, width: number, height: number) =>
+  image(`/images/products/store/${handle}/${n}.webp`, altText, width, height);
+
+const STORE_TEE_SIZES = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
+const CROP_TEE_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
+
 const seeds: Seed[] = [
+  // The store's products (same handles, titles and prices as on Shopify).
+  {
+    handle: "hoodie",
+    title: "Blasphemous! Hoodie",
+    description:
+      "That's just BLASPHEMOUS! A clean, minimalist hoodie with BLASPHEMOUS in bold type across the chest and the signature silhouette graphic on the upper chest. Adjustable drawstring hood. Wear it bold. Wear it unapologetically.",
+    price: 54.99,
+    photos: [
+      store("hoodie", 1, "Man wearing the black Blasphemous! hoodie", 1121, 914),
+      store("hoodie", 2, "Man wearing the white Blasphemous! hoodie", 1121, 914),
+      store("hoodie", 3, "The black Blasphemous! hoodie, worn with the hood down", 1121, 914),
+      store("hoodie", 4, "The Blasphemous! hoodie in white and in black", 1200, 979),
+    ],
+    hover: store("hoodie", 4, "The Blasphemous! hoodie in white and in black", 1200, 979),
+    collections: ["straight-shooter", "stephen-a-smith"],
+    tags: ["hoodie", "blasphemous", "featured"],
+    options: [
+      { name: "Color", values: ["Black", "White"] },
+      { name: "Size", values: STORE_TEE_SIZES },
+    ],
+  },
+  {
+    handle: "blasphemous-t-shirt",
+    title: "Blasphemous! T Shirt",
+    description:
+      "That's just BLASPHEMOUS! A clean, minimalist tee with BLASPHEMOUS in bold type across the chest and the signature silhouette graphic on the upper chest. Black or white. Wear it bold. Wear it unapologetically.",
+    price: 34.99,
+    photos: [
+      store("blasphemous-t-shirt", 1, "Man wearing the black Blasphemous! tee", 1121, 914),
+      store("blasphemous-t-shirt", 2, "Man wearing the white Blasphemous! tee", 1121, 914),
+      store("blasphemous-t-shirt", 3, "The Blasphemous! tee in black and in white", 1200, 979),
+    ],
+    hover: store("blasphemous-t-shirt", 3, "The Blasphemous! tee in black and in white", 1200, 979),
+    collections: ["straight-shooter", "stephen-a-smith"],
+    tags: ["tee", "blasphemous", "featured"],
+    options: [
+      { name: "Color", values: ["Black", "White"] },
+      { name: "Size", values: STORE_TEE_SIZES },
+    ],
+  },
+  {
+    handle: "i-would-date-the-bus-driver",
+    title: "I Would Date The Bus Driver",
+    description:
+      "Women's graphic crop tee. A little flirty, a little bold: \"I would date the bus driver\" in script and bold type with a heart, printed on the back, and The Culture Table logo on the front. Cropped, relaxed fit.",
+    price: 34.99,
+    photos: [
+      store("i-would-date-the-bus-driver", 1, "Back of the black crop tee: I would date the bus driver", 967, 788),
+      store("i-would-date-the-bus-driver", 2, "Back of the white crop tee: I would date the bus driver", 966, 788),
+      store("i-would-date-the-bus-driver", 3, "Front of the black crop tee with The Culture Table logo", 1011, 824),
+      store("i-would-date-the-bus-driver", 4, "Front of the white crop tee with The Culture Table logo", 1011, 824),
+    ],
+    hover: store("i-would-date-the-bus-driver", 3, "Front of the black crop tee with The Culture Table logo", 1011, 824),
+    collections: ["culture-table"],
+    tags: ["tee", "crop", "featured"],
+    options: [
+      { name: "Color", values: ["Black", "White"] },
+      { name: "Size", values: CROP_TEE_SIZES },
+    ],
+  },
+  {
+    handle: "i-m-not-above-an-edible",
+    title: "I’m not above an Edible",
+    description:
+      "Women's graphic crop tee. Sweet, bold and a little rebellious: \"I'm not above an Edible\" in pink, white and gold lettering with candy details on the back, The Culture Table logo on the front.",
+    price: 34.99,
+    photos: [
+      store("i-m-not-above-an-edible", 1, "Back of the black crop tee: I'm not above an Edible", 1200, 979),
+      store("i-m-not-above-an-edible", 2, "Front of the black crop tee with The Culture Table logo", 1011, 824),
+    ],
+    hover: store("i-m-not-above-an-edible", 2, "Front of the black crop tee with The Culture Table logo", 1011, 824),
+    collections: ["culture-table"],
+    tags: ["tee", "crop", "featured"],
+    options: [
+      { name: "Color", values: ["Black", "White"] },
+      { name: "Size", values: CROP_TEE_SIZES },
+    ],
+  },
+  {
+    handle: "theres-right-theres-wrongs-theres-reality",
+    title: "There's Right, There's Wrongs & There's REALITY",
+    description:
+      "Women's graphic crop tee. Three perspectives, one reality: \"There's Right, There's Wrong & There's REALITY\" in flowing script and serif lettering, in soft pink, teal and cream, printed on the back; The Culture Table logo on the front.",
+    price: 34.99,
+    photos: [
+      store("theres-right-theres-wrongs-theres-reality", 1, "Back of the white crop tee: There's Right, There's Wrong & There's Reality", 1024, 835),
+      store("theres-right-theres-wrongs-theres-reality", 2, "Front of the white crop tee with The Culture Table logo", 1011, 824),
+    ],
+    hover: store("theres-right-theres-wrongs-theres-reality", 2, "Front of the white crop tee with The Culture Table logo", 1011, 824),
+    collections: ["culture-table"],
+    tags: ["tee", "crop", "featured"],
+    options: [
+      { name: "Color", values: ["Black", "White"] },
+      { name: "Size", values: CROP_TEE_SIZES },
+    ],
+  },
+
+  // Our own line (3D renders for the cards, the showroom and the product page).
   {
     handle: "the-silhouette-hoodie",
     title: "The Silhouette Hoodie",
     description:
       "Heavyweight pullover hoodie in black with the signature silhouette graphic across the back. Brushed fleece interior, double-lined hood and a relaxed boxy fit.",
     price: 70,
-    hover: image("/images/products/on-model/the-silhouette-hoodie.webp", "Model wearing the black hoodie from behind, showing the silhouette graphic"),
+    hover: image("/images/products/on-model/the-silhouette-hoodie.webp", "Man wearing the black hoodie, seen from behind, showing the silhouette graphic", 819, 668),
     collections: ["straight-shooter", "stephen-a-smith"],
     tags: ["hoodie", "featured"],
     options: [{ name: "Size", values: SIZES }],
@@ -104,7 +212,7 @@ const seeds: Seed[] = [
     price: 35,
     hover: image("/images/products/on-model/blasphemous-hat.webp", "Model wearing the black Blasphemous cap"),
     collections: ["straight-shooter", "stephen-a-smith"],
-    tags: ["hat", "featured"],
+    tags: ["hat"],
     options: [{ name: "Color", values: ["Black"] }],
   },
   {
@@ -113,7 +221,7 @@ const seeds: Seed[] = [
     description:
       "Midweight black pullover with a gold and orange Straight Shooter mark on the chest. Soft fleece lining, kangaroo pocket and ribbed cuffs.",
     price: 70,
-    hover: image("/images/products/on-model/stephen-a-smith-hoodie.webp", "Model wearing the black hoodie with a gold chest logo"),
+    hover: image("/images/products/on-model/stephen-a-smith-hoodie.webp", "Man wearing the black hoodie with the Stephen A. Smith chest logo", 819, 668),
     collections: ["stephen-a-smith", "straight-shooter"],
     tags: ["hoodie", "featured"],
     options: [{ name: "Size", values: SIZES }],
@@ -126,7 +234,7 @@ const seeds: Seed[] = [
     price: 30,
     hover: image("/images/products/on-model/culture-table-tumbler.webp", "Model holding the cream Culture Table tumbler"),
     collections: ["culture-table"],
-    tags: ["drinkware", "featured"],
+    tags: ["drinkware"],
     options: [{ name: "Color", values: ["Cream"] }],
   },
   {
@@ -135,7 +243,7 @@ const seeds: Seed[] = [
     description:
       "Cream pullover hoodie with the burgundy and gold Culture Table script logo. Heavyweight cotton blend with a soft brushed interior.",
     price: 70,
-    hover: image("/images/products/on-model/culture-table-hoodie.webp", "Model wearing the cream Culture Table hoodie"),
+    hover: image("/images/products/on-model/culture-table-hoodie.webp", "The Culture Table hoodie with the tumbler, tote and tee on a table", 1200, 979),
     collections: ["culture-table"],
     tags: ["hoodie", "featured"],
     options: [{ name: "Size", values: SIZES }],
@@ -148,7 +256,7 @@ const seeds: Seed[] = [
     price: 35,
     hover: image("/images/products/on-model/straight-shooter-tee.webp", "Model wearing the black Straight Shooter tee"),
     collections: ["straight-shooter"],
-    tags: ["tee", "featured"],
+    tags: ["tee"],
     options: [{ name: "Size", values: SIZES }],
   },
   {

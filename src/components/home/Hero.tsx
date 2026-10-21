@@ -27,7 +27,7 @@ export function Hero() {
         aria-labelledby="hero-title"
         className="relative isolate mx-auto flex max-w-(--container) flex-col overflow-hidden bg-black lg:block lg:h-(--hero-h)"
       >
-        {/* Photo: 628 x 312 at 1x (a 2x copy, upscaled and sharpened offline), dropped a little so the cropped top of the head melts into black; fades at the sides on desktop, into the headline on phones */}
+        {/* Photo: 1611 x 851 from the store banner (its printed signature taken out); fades at the top and sides on desktop, into the headline on phones */}
         <ScrollLayer
           scale={[1, 1.08]}
           opacity={[1, 0.35]}
@@ -59,12 +59,12 @@ export function Hero() {
             y={[0, -48]}
             opacity={[1, 0]}
             during={[0, 0.7]}
-            className="pointer-events-none absolute right-7 bottom-full mb-4 lg:hidden"
+            className="pointer-events-none absolute right-5 bottom-full mb-3 lg:hidden"
           >
             <Signature
               id="hero-signature-phone"
               delay={1150}
-              className="-rotate-[5deg] text-[clamp(2.5rem,12.5vw,4rem)] text-[#e8a92e] drop-shadow-[0_0.125rem_0.5rem_rgba(0,0,0,0.65)]"
+              className="w-[min(15rem,60vw)] -rotate-2 drop-shadow-[0_0.125rem_0.5rem_rgba(0,0,0,0.65)]"
             />
           </ScrollLayer>
 
@@ -135,7 +135,7 @@ export function Hero() {
           drift={-22}
           className="pointer-events-none absolute top-(--hero-sig-top) left-(--hero-sig-left) z-[3] hidden lg:block"
         >
-          <Signature id="hero-signature" delay={1050} className="text-[4.8125rem] text-[#e8a92e]" />
+          <Signature id="hero-signature" delay={1050} className="w-(--hero-sig-w)" />
         </ParallaxLayer>
 
         {/* Decoration only: it must never sit between the visitor and the button. */}

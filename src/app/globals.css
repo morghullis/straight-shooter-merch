@@ -55,8 +55,10 @@
   --hero-cta-top: 14.125rem;
   --hero-cta-w: 11.75rem;
   --hero-cta-h: 2.25rem;
-  --hero-sig-left: 44.75rem;
-  --hero-sig-top: 2.8125rem;
+  /* The real signature (2.8 : 1), its flourish ending at the dark wall. */
+  --hero-sig-left: 43.25rem;
+  --hero-sig-top: 2rem;
+  --hero-sig-w: 18.5rem;
   --hero-ghost-left: 62.125rem;
   --hero-ghost-top: 1.125rem;
   --hero-ghost-size: 2.55rem;
@@ -68,8 +70,8 @@
   --hero-wall-w: 11.875rem;
   --hero-photo-fade-l: 5.625rem;
   --hero-photo-fade-r: 2.125rem;
-  /* The photo's frame cuts the top of the head; it sits this far down with its top edge melting into black. */
-  --hero-photo-drop: 1.5rem;
+  /* The photo shows the whole head now; its top edge still melts into the black of the header. */
+  --hero-photo-drop: 0rem;
   --hero-photo-fade-t: 2.5rem;
 
   --strip-tile-h: 8.125rem;
@@ -79,6 +81,7 @@
 
 @media (min-width: 1024px) {
   :root {
+    --hero-photo-fade-t: 1.25rem;
     --header-h: 5.1875rem;
     --logo-w: 5.25rem;
     --logo-top: 0.5rem;

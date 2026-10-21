@@ -17,13 +17,15 @@ npm run build && npm start
 ## What is on the page
 
 **Scroll motion** (all from `src/components/motion/*`). Mouse wheels and trackpads get inertial smooth scrolling (Lenis, `SmoothScroll`), so the page and every scroll-linked effect glide; touch keeps the device's own scrolling. Overlays (cart, menu) pause it through one shared lock (`src/lib/scroll-lock.ts`).
-- Hero intro in pure CSS, so it plays before hydration: headline wipes in line by line, CTA pops, the gold bar draws, and the signature is **written by a pen**, stroke after stroke along the letters (on phones too, over the photo just above the headline). The pen strokes come from `tools/signature/build.cjs`, which thins the signature font's letters to a skeleton and follows it like a pen (`Signature`, `signature-paths.ts`).
+- Hero intro in pure CSS, so it plays before hydration: headline wipes in line by line, CTA pops, the gold bar draws, and **the real signature** (the brand's own artwork, `assets-src/signature/`) is written on as if by the pen, stroke after stroke along the route the pen takes, on phones too, over the photo just above the headline. The image itself is never redrawn, only revealed, so no detail changes. The pen routes are in `tools/signature/build.py` (snapped onto the centre of the ink; `Signature`, `signature-paths.ts`).
 - On desktop the dark wall behind the show words runs on to the right edge of the screen and melts into the header and the page (no box edges).
 - Hero layers drift at different speeds while you scroll, and respond to the pointer on desktop. The show words on the right are a vertical carousel (`GhostRoll`): they rest as the designed stack, then roll up one line at a time; on phones they are a slow horizontal ticker.
 - Section titles slide up from behind a mask; cards and tiles reveal with a stagger.
 - Two taped catchphrase bands whose speed and direction follow your scroll velocity; they hold still while the pointer is on them.
 - A thin gold progress rule at the top of the page.
 - **Reduced motion:** the operating system's "reduce motion" setting turns every animation off (CSS and JS); the page then shows the final static layout and the showroom becomes tabs.
+
+**The store's products.** The five products of the Shopify store (kvh0hd-f0.myshopify.com) are in the catalog with the same handles, titles and prices: Blasphemous! Hoodie and T Shirt, and the three Culture Table crop tees. Their photos (`public/images/products/store/`, originals in `assets-src/store/`) are cropped to the card frame on the garment and used like ours: a carousel of the colours and sides on the card, the group shot (or the front of a crop tee) on hover, the gallery and colour/size options on the product page. They are the featured products, with The Silhouette Hoodie. The store's real on-model photos replace the generated ones for The Silhouette Hoodie and the Stephen A. Smith Hoodie, and its Culture Table table shot is the Culture Table Hoodie's hover. None of the store's page design is copied. Once the Storefront API is connected (see `docs/SHOPIFY.md`) these come straight from Shopify.
 
 **Product cards** are carousels of the same product from several angles (front, three-quarter, sides, back), rendered from its 3D model. Swipe on a phone, arrows on hover on a desktop; only the first picture loads up front, the other angles load lazily and fade in. On desktop hover the first slide also cross-fades to the garment **worn by a model**. In horizontal phone rails the rail keeps the swipe.
 
@@ -72,7 +74,7 @@ Nothing user-facing is hard-coded in components: text, art, models and layout nu
 | `src/lib/catalog/*` | Shopify Storefront client, mock catalog, cached data access |
 | `src/app/api/revalidate/route.ts` | Shopify webhook receiver (HMAC-verified) |
 | `tools/3d/` | Offline scripts: optimise the GLBs, render the angle images from the 8K models, repair a model's front |
-| `tools/signature/` | Builds the pen strokes of the hero signature from the signature font (OFL, included) |
+| `tools/signature/` | `build.py`: the pen route that writes the real hero signature on (Python, numpy + Pillow) |
 | `docs/` | `SHOPIFY.md`, `meshy-assets.json` (what Meshy made and which model won), screenshots |
 | `assets-src/` | Original full-size images and GLBs from Meshy (not served) |
 
@@ -88,7 +90,7 @@ Short version (full walkthrough, with the metafield and webhook steps, in [docs/
 
 ## Before you launch
 
-- **Hero photo** (`public/images/hero/hero-photo.webp`) was cut from the reference screenshot (signature removed). The source is only 628 × 312; the site serves a 2x copy made with classic resampling and sharpening (Lanczos + unsharp mask, no generative AI, so the face is not altered). It is sharper than before but cannot add real detail: replace it with the original high-resolution photo and re-tune `object-position` in `Hero.tsx` if needed. You need the rights to use that photograph.
+- **Hero photo** (`public/images/hero/hero-photo.webp`, 1611 × 851) is cut from the store's own hero banner (`assets-src/hero/store-banner-original.jpg`), with the signature printed on it taken out (filled from the wall around it), so the page can write the real signature on top. The whole head is in frame now. For an even sharper hero, use the original photo file. You need the rights to use that photograph.
 - **Product photos**: the angle renders come from AI-generated 3D models, the on-model photos and the brand graphics are AI mockups made with Meshy. Swap in real photography in Shopify; no code change needed.
 - The 3D models are single-photo reconstructions: the back and sides are inferred, and tiny parts of the generated embroidery are imperfect (a few fragments on the cap's brim). The Silhouette Hoodie was made from a back-view photo; its front is repaired to plain black. Fine for a showroom, not for a catalog of record.
 - The *Shipping & returns* and *Contact* copy on `/account` is neutral placeholder text.
