@@ -54,12 +54,14 @@ export function Button(props: AsLink | AsButton) {
   const { variant = "gold", size = "md", arrow = false, className, children, style, ...rest } = props;
   const classes = cn(base, variants[variant], sizes[size], className);
   const tapeStyle = taped.includes(variant) ? ({ "--tape": `url(${art.tape.src})`, ...style } as CSSProperties) : style;
-  const content = (
+  const label = (
     <>
       {children}
       {arrow && <ArrowRightIcon size={18} strokeWidth={1.5} className="-mr-0.5 flex-none" />}
     </>
   );
+  // On tape, the label is printed into the tape (see `.tape-print`).
+  const content = taped.includes(variant) ? <span className="tape-print inline-flex items-center gap-[inherit]">{label}</span> : label;
 
   if ("href" in rest && rest.href !== undefined) {
     const { href, ...anchor } = rest as AsLink;

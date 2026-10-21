@@ -23,3 +23,12 @@ export const art = {
 } as const satisfies Record<string, ArtAsset>;
 
 export type ArtKey = keyof typeof art;
+
+/**
+ * The cart flame: a flame printed with a worn rubber stamp (Meshy, round 4), white on transparent, and
+ * its bright core as a second mask. Used as CSS masks (see `.cart-flame` in globals.css). 128px.
+ */
+export const flameArt = {
+  body: "/images/icons/flame.webp",
+  core: "/images/icons/flame-core.webp",
+} as const;

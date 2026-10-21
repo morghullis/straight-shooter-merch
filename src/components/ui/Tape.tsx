@@ -12,8 +12,9 @@ const tones: Record<TapeTone, string> = {
 };
 
 /**
- * A strip of gaffer tape (Meshy artwork) with whatever you put on it printed on top. The torn ends
- * keep their shape and the middle stretches to fit the content (see `.tape-surface` in globals.css).
+ * A strip of gaffer tape (Meshy artwork) with whatever you put on it printed into it (the ink takes
+ * the tape's creases and grain, see `.tape-print`). The torn ends keep their shape and the middle
+ * stretches to fit the content (see `.tape-surface` in globals.css).
  */
 export function Tape({
   children,
@@ -29,7 +30,7 @@ export function Tape({
       style={{ "--tape": `url(${art.tape.src})` } as CSSProperties}
       className={cn("tape-surface inline-block py-2.5 [--tape-end:1.6rem] sm:[--tape-end:2.1rem]", tones[tone], className)}
     >
-      {children}
+      <div className="tape-print">{children}</div>
     </div>
   );
 }

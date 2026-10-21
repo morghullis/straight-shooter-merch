@@ -34,6 +34,7 @@ export const hero = {
     { text: "Official Merch.", tone: "gold", tracking: "0em" },
   ],
   cta: { label: "Shop All Merch", href: "/collections/all" },
+  /** Drawn as pen strokes: after changing it, run `node tools/signature/build.cjs "<text>"`. */
   signature: "Stephen A.",
   ghostWords: [
     "Sports",

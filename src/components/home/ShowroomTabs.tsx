@@ -55,14 +55,6 @@ export function ShowroomTabs({ items }: { items: ShowroomItem[] }) {
           </p>
           <h3 className="mt-2 font-display text-[clamp(2.375rem,6vw,3.5rem)] leading-[0.92] font-extrabold uppercase">{item.title}</h3>
           <p className="mt-2 text-[1.0625rem] text-white/85">{item.price}</p>
-          <ul aria-label={copy.showroom.specs} className="mt-4 border-t border-white/20">
-            {item.specs.map((s) => (
-              <li key={s} className="flex gap-3 border-b border-white/15 py-3 text-[0.875rem] leading-snug text-white/75">
-                <span aria-hidden="true" className="mt-[0.4375rem] size-1.5 flex-none bg-gold" />
-                {s}
-              </li>
-            ))}
-          </ul>
           <Button href={item.href} arrow className="mt-5 self-start">
             {copy.showroom.shop}
           </Button>

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useMotionEnabled } from "@/components/motion/motion-preference";
+import { PriceRoll } from "@/components/motion/PriceRoll";
 import { TextSwap } from "@/components/motion/TextSwap";
 import { useProductPager } from "@/components/motion/useProductPager";
 import type { StageSlot } from "@/components/three/ScrubStage";
@@ -23,21 +24,21 @@ const ScrubStage = dynamic(() => import("@/components/three/ScrubStage"), { ssr:
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
-/** Space kept between the product and the title above it / the rail below it on phones, in px. */
+/** Space kept between the product and the title above it / the copy below it on phones, in px. */
 const SLOT_GAP = 12;
 
 /**
  * Pinned 3D showroom, one product per gesture. Each scroll, swipe or arrow key spins the current
  * product on its axis and carries it off the stage while the next one spins in from the other side,
- * always at the same easy pace (`useProductPager`). Only the number, name, price and spec text change;
- * the tape, rules and button stay put. Drag a product to turn it.
+ * always at the same easy pace (`useProductPager`). Only the price (on the tape, spinning like a cash
+ * register) and the name change; the tape and the button stay put. Drag a product to turn it.
  */
 export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   const n = items.length;
   const sectionRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
-  const railRef = useRef<HTMLElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
   const motionOn = useMotionEnabled();
   const desktop = useMediaQuery("(min-width: 1024px)", true);
 
@@ -67,24 +68,24 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
     setIndex(next);
   });
 
-  // Phones: the product rests in the free space between the title and the rail.
+  // Phones: the product rests in the free space between the title and the copy (the number tape).
   const [slot, setSlot] = useState<StageSlot | null>(null);
   useEffect(() => {
     const frame = frameRef.current;
     const title = titleRef.current;
-    const rail = railRef.current;
-    if (!frame || !title || !rail) return;
+    const copyBlock = copyRef.current;
+    if (!frame || !title || !copyBlock) return;
     const measure = () => {
       const box = frame.getBoundingClientRect();
       const top = title.getBoundingClientRect().bottom - box.top + SLOT_GAP;
-      const bottom = rail.getBoundingClientRect().top - box.top - SLOT_GAP;
+      const bottom = copyBlock.getBoundingClientRect().top - box.top - SLOT_GAP;
       if (box.height <= 0 || bottom - top < 80) return;
       setSlot({ x: 0.5, y: (top + bottom) / 2 / box.height, w: 0.88, h: (bottom - top) / box.height });
     };
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
     observer.observe(title);
-    observer.observe(rail);
+    observer.observe(copyBlock);
     return () => observer.disconnect();
   }, []);
 
@@ -174,11 +175,10 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
           <p className="mt-3 hidden max-w-[34ch] text-[0.875rem] leading-relaxed text-white/70 sm:block">{copy.showroom.lead}</p>
         </div>
 
-        {/* Rail: one stop per product */}
+        {/* Rail: one stop per product (desktop; on phones the number tape says where you are) */}
         <nav
-          ref={railRef}
           aria-label={copy.showroom.pickLabel}
-          className="pointer-events-auto relative z-10 mt-auto -mb-14 flex gap-1.5 lg:absolute lg:top-auto lg:right-(--gutter) xl:right-1 lg:bottom-8 lg:mt-0 lg:mb-0 lg:gap-6"
+          className="pointer-events-auto absolute right-(--gutter) bottom-8 z-10 hidden gap-6 lg:flex xl:right-1"
         >
           {items.map((it, i) => (
             <button
@@ -188,20 +188,17 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
               aria-label={copy.showroom.goTo(it.model.label)}
               aria-current={i === index ? "step" : undefined}
               className={cn(
-                "group flex h-10 min-w-10 flex-col items-center justify-center border px-2 font-nav text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors lg:h-auto lg:min-w-0 lg:items-start lg:border-0 lg:px-0",
-                i === index
-                  ? "border-gold bg-gold text-[#14110a] lg:bg-transparent lg:text-gold"
-                  : "border-white/25 bg-black/50 text-white/70 hover:border-white hover:text-white lg:bg-transparent lg:text-white/45",
+                "group flex flex-col items-start font-nav text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors",
+                i === index ? "text-gold" : "text-white/45 hover:text-white",
               )}
             >
-              <span className="tabular-nums lg:hidden">{String(i + 1).padStart(2, "0")}</span>
-              <span className="hidden lg:block">
+              <span>
                 <span className="tabular-nums">{String(i + 1).padStart(2, "0")}</span> {it.model.label}
               </span>
               <span
                 aria-hidden="true"
                 className={cn(
-                  "mt-2 hidden h-[0.125rem] transition-all duration-300 lg:block",
+                  "mt-2 h-[0.125rem] transition-all duration-300",
                   i === index ? "w-16 bg-gold" : "w-8 bg-white/30 group-hover:w-12",
                 )}
               />
@@ -210,38 +207,24 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
         </nav>
 
         {/* Copy */}
-        <div className="pointer-events-auto relative -mx-(--gutter) bg-[linear-gradient(0deg,#000_30%,rgba(0,0,0,0.85)_70%,transparent)] px-(--gutter) pt-16 pb-[calc(var(--gutter)+env(safe-area-inset-bottom))] lg:absolute lg:inset-y-[12.5rem] lg:left-(--gutter) xl:left-1 lg:mx-0 lg:mt-0 lg:flex lg:w-[40%] lg:items-start lg:bg-none lg:px-0 lg:pt-0 lg:pb-[2.5rem]">
+        <div className="pointer-events-auto relative -mx-(--gutter) mt-auto bg-[linear-gradient(0deg,#000_30%,rgba(0,0,0,0.85)_70%,transparent)] px-(--gutter) pt-16 pb-[calc(var(--gutter)+env(safe-area-inset-bottom))] lg:absolute lg:inset-y-[12.5rem] lg:left-(--gutter) xl:left-1 lg:mx-0 lg:mt-0 lg:flex lg:w-[40%] lg:items-start lg:bg-none lg:px-0 lg:pt-0 lg:pb-[2.5rem]">
           {/* The frame (tape, rules, button) stays put; only the product's text rolls to the next one. */}
-          <div aria-live="polite" className="w-full">
-            <Tape className="-rotate-[2deg] py-1 [--tape-end:1.1rem] lg:[--tape-end:1.5rem]">
-              <p className="flex items-baseline gap-2 font-display leading-none font-extrabold uppercase">
-                <span className="text-[3.5rem] lg:text-[min(7rem,13svh)]">
-                  <TextSwap value={String(index + 1).padStart(2, "0")} direction={direction} />
-                </span>
-                <span className="text-[1.25rem] text-[#14110a]/60 lg:text-[1.875rem]">/{String(n).padStart(2, "0")}</span>
+          <div ref={copyRef} aria-live="polite" className="w-full">
+            {/* The price, on a strip of tape, spins to the next one like a cash register */}
+            <Tape className="-rotate-[2deg] py-1.5 [--tape-end:1.1rem] lg:[--tape-end:1.5rem]">
+              <p className="font-display leading-none font-extrabold">
+                <PriceRoll
+                  amount={items[index].priceAmount}
+                  currency={items[index].currencyCode}
+                  turn={items[index].handle}
+                  direction={direction}
+                  className="text-[3.5rem] lg:text-[min(7rem,13svh)]"
+                />
               </p>
             </Tape>
-            <h3 className="mt-3 font-display text-[clamp(2.375rem,9vw,4rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-5">
+            <h3 className="mt-3 font-display text-[clamp(2.75rem,10.5vw,4.75rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-5">
               <TextSwap value={items[index].title} direction={direction} display="block" />
             </h3>
-            <p className="mt-2 text-[1.0625rem] text-white/85">
-              <TextSwap value={items[index].price} direction={direction} />
-            </p>
-
-            <ul aria-label={copy.showroom.specs} className="mt-4 hidden border-t border-white/20 lg:block [@media(max-height:48rem)]:lg:hidden [@media(min-aspect-ratio:8/5)_and_(min-width:1326px)]:lg:hidden">
-              {[0, 1, 2].map((row) => {
-                const spec = items[index].specs[row] ?? "";
-                return (
-                  <li
-                    key={row}
-                    className={cn("flex gap-3 border-b border-white/15 py-3 text-[0.875rem] leading-snug text-white/75", !spec && "hidden")}
-                  >
-                    <span aria-hidden="true" className="mt-[0.4375rem] size-1.5 flex-none bg-gold" />
-                    <TextSwap value={spec} direction={direction} display="block" />
-                  </li>
-                );
-              })}
-            </ul>
 
             <Button href={items[index].href} arrow className="mt-5 w-full sm:w-auto">
               {copy.showroom.shop}

@@ -131,9 +131,22 @@ body {
   .hero-photo-mask {
     mask-image:
       linear-gradient(90deg, transparent 0, #000 var(--hero-photo-fade-l), #000 calc(100% - var(--hero-photo-fade-r)), transparent 100%),
-      linear-gradient(180deg, transparent 0, transparent calc(var(--hero-photo-drop) - 0.125rem), #000 calc(var(--hero-photo-drop) + var(--hero-photo-fade-t)));
+      linear-gradient(180deg, transparent 0, transparent calc(var(--hero-photo-drop) - 0.125rem), #000 calc(var(--hero-photo-drop) + var(--hero-photo-fade-t)), #000 calc(100% - 1.5rem), transparent 100%);
     mask-composite: intersect;
   }
+}
+
+/*
+ * Desktop: the dark wall behind the show words. It fades in below the header and out at the bottom
+ * (no hard box edges), and a second layer carries it on past the content column to the screen edge.
+ */
+.hero-wall {
+  background: linear-gradient(90deg, transparent 0, #07070a calc(var(--hero-wall-w) * 0.3), #0a0a0c var(--hero-wall-w));
+  mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--hero-photo-drop) + var(--hero-photo-fade-t)), #000 calc(100% - 1.5rem), transparent 100%);
+}
+.hero-wall--bleed {
+  left: calc(50% + var(--container) / 2);
+  background: #0a0a0c;
 }
 
 /* ------------------------------------------------------------------ */
@@ -174,6 +187,40 @@ body {
   --tape-tone: grayscale(1) brightness(2.3) contrast(0.85);
   --tape-shadow: drop-shadow(0 0.2rem 0.3rem rgb(0 0 0 / 0.3));
 }
+/*
+ * What is printed on the tape is pressed INTO it: solid ink with a light lip under each letter and a
+ * shade on its upper edge (a debossed groove), a faint unevenness of ink (ink-grain.png), and the
+ * tape's own creases catching the light over the ink (::after, screen-blended). On black tape the
+ * white ink gets a dark groove instead.
+ */
+.tape-print {
+  --ink-grain: url("/images/art/ink-grain.png");
+  text-shadow:
+    0 min(0.045em, 3px) min(0.012em, 1px) rgb(255 228 150 / 0.6),
+    0 max(-0.025em, -2px) min(0.02em, 1.5px) rgb(60 38 0 / 0.55);
+  -webkit-mask: var(--ink-grain) 0 0 / 12rem 12rem repeat;
+  mask: var(--ink-grain) 0 0 / 12rem 12rem repeat;
+}
+.tape-ink .tape-print {
+  text-shadow:
+    0 min(0.04em, 2.5px) min(0.012em, 1px) rgb(0 0 0 / 0.75),
+    0 max(-0.02em, -1.5px) 0 rgb(255 255 255 / 0.12);
+}
+.tape-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 var(--tape-end);
+  border-image: var(--tape) 0 50 0 70 fill / 0 var(--tape-end) / 0 stretch;
+  filter: grayscale(1) brightness(0.52) contrast(4.2);
+  mix-blend-mode: screen;
+  opacity: 0.26;
+}
+
 a.tape-surface:hover::before,
 button.tape-surface:hover:not(:disabled)::before {
   filter: var(--tape-tone) brightness(1.08) drop-shadow(0 0.55rem 0.8rem rgb(0 0 0 / 0.5));
@@ -182,6 +229,87 @@ a.tape-surface:active::before,
 button.tape-surface:active:not(:disabled)::before {
   filter: var(--tape-tone) brightness(0.95) drop-shadow(0 0.15rem 0.25rem rgb(0 0 0 / 0.45));
 }
+}
+
+/* ------------------------------------------------------------------ */
+/* The cart flame (CartFlame.tsx): a stamped flame that flickers.        */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+.cart-flame {
+  position: relative;
+  display: block;
+  width: 1.125rem;
+  height: 1.6875rem;
+  animation: flame-glow 1.7s ease-in-out infinite;
+}
+.cart-flame__body,
+.cart-flame__core {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 92%;
+  -webkit-mask: var(--flame) center / contain no-repeat;
+  mask: var(--flame) center / contain no-repeat;
+}
+.cart-flame__core {
+  -webkit-mask-image: var(--flame-core);
+  mask-image: var(--flame-core);
+  background: radial-gradient(60% 55% at 50% 72%, #fff6c2, #ffd24a 70%);
+  animation: flame-core 0.8s ease-in-out infinite alternate;
+}
+.cart-flame__body {
+  background: linear-gradient(180deg, #ff4a14 0%, #ff7a1c 40%, #f6a12a 100%);
+  animation: flame-flicker 1.3s ease-in-out infinite;
+}
+.cart-flame__count {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.25rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #2b1300;
+  font-variant-numeric: tabular-nums;
+}
+}
+
+@keyframes flame-flicker {
+  0%,
+  100% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  22% {
+    transform: scale(0.95, 1.07) skewX(-3deg);
+  }
+  48% {
+    transform: scale(1.03, 0.96) skewX(2deg);
+  }
+  74% {
+    transform: scale(0.97, 1.05) skewX(-1.5deg);
+  }
+}
+
+@keyframes flame-core {
+  from {
+    transform: scale(0.9, 0.86);
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(1.04, 1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes flame-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0.2rem rgb(255 110 20 / 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 0.45rem rgb(255 140 30 / 0.8));
+  }
 }
 
 /* The hero's show words on phones: a slow horizontal ticker. */
@@ -256,12 +384,22 @@ button.tape-surface:active:not(:disabled)::before {
   }
 }
 
-@keyframes sig-wipe {
+/* The signature, written by a pen (see Signature.tsx): each stroke draws on, then the crossbar. */
+@keyframes sig-pen {
   from {
-    clip-path: inset(-12% 100% -12% -12%);
+    stroke-dashoffset: calc(var(--len) * 1px);
   }
   to {
-    clip-path: inset(-12% -12% -12% -12%);
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sig-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -323,9 +461,16 @@ button.tape-surface:active:not(:disabled)::before {
   animation: bar-in 0.9s var(--ease-out-expo) both;
   animation-delay: calc(var(--d, 0) * 1ms);
 }
-.anim-sig {
-  animation: sig-wipe 1.4s var(--ease-in-out-circ) both;
-  animation-delay: calc(var(--d, 0) * 1ms);
+.sig-pen {
+  animation: sig-pen var(--for) cubic-bezier(0.37, 0, 0.42, 1) var(--at) both;
+}
+.sig-settle {
+  animation: fade-in 0.35s ease-out var(--at) both;
+}
+.sig-bar {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: sig-bar 0.5s var(--ease-out-expo) var(--at) both;
 }
 .anim-photo {
   animation: photo-in 1.9s var(--ease-out-expo) both;

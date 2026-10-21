@@ -485,5 +485,47 @@
     },
     "webVariants": "tools/3d/optimize.mjs: web = 60k triangles, 2048 base colour, 1024 normal and roughness; hd = 160k triangles, 4096 base colour, 2048 normal. Meshopt compressed, WebP.",
     "renders": "tools/3d/render.mjs renders six angles per product from the 8K originals (public/images/products/angles/<handle>/). Same sand background as the cards."
+  },
+  "round4": {
+    "generatedOn": "2026-10-20",
+    "purpose": "Header icons in a rubber-stamp style and a small flame for the cart count (the user confirmed 36 credits).",
+    "model": "text-to-image, gpt-image-2 and nano-banana-pro (9 credits each), both tried per prompt",
+    "credits": {
+      "images": "4 x 9 = 36",
+      "balanceBefore": 2831,
+      "balanceAfter": 2795
+    },
+    "items": [
+      {
+        "name": "Header icon set (search, cart, menu), stamp style",
+        "taskIds": {
+          "gpt-image-2": "01a15c2b-cf35-7694-a5ee-b03134da6838",
+          "nano-banana-pro": "01a15c2b-d691-71b6-98eb-93649db0e6de"
+        },
+        "picked": "nano-banana-pro",
+        "originals": [
+          "assets-src/round4/icons__gpt.png",
+          "assets-src/round4/icons__nano.png"
+        ],
+        "status": "Not shipped: after seeing them on the site the user asked for thinner, more minimal icons tied to the brand, so the header uses hand-drawn SVG icons (src/components/ui/HeaderIcons.tsx)."
+      },
+      {
+        "name": "Cart flame, stamp style",
+        "taskIds": {
+          "gpt-image-2": "01a15c2b-dd98-77ed-807a-ad9bacbaeaf9",
+          "nano-banana-pro": "01a15c2b-e35b-7051-a4f1-83963e0d9734"
+        },
+        "picked": "gpt-image-2",
+        "originals": [
+          "assets-src/round4/flame__gpt.png",
+          "assets-src/round4/flame__nano.png"
+        ],
+        "shipped": [
+          "public/images/icons/flame.webp",
+          "public/images/icons/flame-core.webp"
+        ],
+        "note": "Ink turned into an alpha mask; the bright core (the cut-out tongue) is a second mask. Animated in CSS (.cart-flame)."
+      }
+    ]
   }
 }

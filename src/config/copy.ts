@@ -140,7 +140,6 @@ export const copy = {
     goTo: (label: string) => `Go to ${label}`,
     stage: (title: string) => `Interactive 3D view of ${title}. Drag to rotate.`,
     loading3d: "Loading 3D view",
-    specs: "Spec sheet",
     pickLabel: "Choose a product to view in 3D",
   },
 

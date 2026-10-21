@@ -8,7 +8,9 @@ import { Suspense, useEffect, useId, useRef, useState, type FormEvent } from "re
 import { useCart } from "@/components/cart/CartProvider";
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { Button } from "@/components/ui/Button";
-import { CartIcon, CloseIcon, MenuIcon, SearchIcon, UserIcon } from "@/components/ui/Icons";
+import { AccountIcon, BagCartIcon, MenuBarsIcon, ScopeIcon } from "@/components/ui/HeaderIcons";
+import { CloseIcon } from "@/components/ui/Icons";
+import { CartFlame } from "@/components/ui/CartFlame";
 import { copy } from "@/config/copy";
 import { nav, site } from "@/config/site";
 import { cn } from "@/lib/cn";
@@ -56,7 +58,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
         <label htmlFor={id} className="sr-only">
           {copy.header.searchStore}
         </label>
-        <SearchIcon size={20} className="flex-none text-white/60" />
+        <ScopeIcon size={20} className="flex-none text-white/60" />
         <input
           ref={inputRef}
           id={id}
@@ -159,15 +161,15 @@ function Actions({ pathname }: { pathname: string }) {
   const setPanel = (next: "search" | "menu" | null) => setOpen(next ? { panel: next, path: pathname } : null);
   const closePanel = () => setPanel(null);
 
-  // Pop the badge whenever the cart count changes (not on first paint).
-  const badge = useAnimationControls();
+  // The flame flares up whenever the count changes while it is lit (it lights up on its own).
+  const flare = useAnimationControls();
   const previousCount = useRef(count);
   useEffect(() => {
-    if (previousCount.current !== count) {
-      void badge.start({ scale: [1, 1.7, 1], transition: { duration: 0.45, ease: "easeOut" } });
-      previousCount.current = count;
+    if (previousCount.current !== count && previousCount.current > 0 && count > 0) {
+      void flare.start({ scale: [1, 1.45, 1], transition: { duration: 0.5, ease: "easeOut" } });
     }
-  }, [count, badge]);
+    previousCount.current = count;
+  }, [count, flare]);
 
   return (
     <>
@@ -185,11 +187,11 @@ function Actions({ pathname }: { pathname: string }) {
           onClick={() => setPanel(panel === "search" ? null : "search")}
           className={iconButton}
         >
-          <SearchIcon size={22} />
+          <ScopeIcon size={22} />
         </button>
 
         <Link href="/account" aria-label={copy.header.account} className={cn(iconButton, "hidden sm:grid")}>
-          <UserIcon size={22} />
+          <AccountIcon size={22} />
         </Link>
 
         <button
@@ -198,14 +200,25 @@ function Actions({ pathname }: { pathname: string }) {
           onClick={openCart}
           className={cn(iconButton, "relative")}
         >
-          <CartIcon size={22} />
-          <motion.span
-            aria-hidden="true"
-            animate={badge}
-            className="absolute top-1/2 left-1/2 -mt-[0.96875rem] ml-[0.28125rem] grid h-[0.875rem] min-w-[0.875rem] place-items-center rounded-full bg-gold px-[0.1875rem] text-[0.53125rem] leading-none font-bold text-black"
-          >
-            {count}
-          </motion.span>
+          <BagCartIcon size={22} />
+          {/* An empty cart has no badge; with something in it, a small flame burns on it. */}
+          <AnimatePresence>
+            {count > 0 && (
+              <motion.span
+                key="flame"
+                aria-hidden="true"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0, transition: { duration: 0.2 } }}
+                transition={{ type: "spring", stiffness: 420, damping: 16 }}
+                className="absolute top-[0.0625rem] right-[0.0625rem] origin-bottom"
+              >
+                <motion.span animate={flare} className="block origin-bottom">
+                  <CartFlame count={count} />
+                </motion.span>
+              </motion.span>
+            )}
+          </AnimatePresence>
         </button>
 
         <button
@@ -216,7 +229,7 @@ function Actions({ pathname }: { pathname: string }) {
           onClick={() => setPanel(panel === "menu" ? null : "menu")}
           className={cn(iconButton, "lg:hidden")}
         >
-          {panel === "menu" ? <CloseIcon size={22} /> : <MenuIcon size={22} />}
+          {panel === "menu" ? <CloseIcon size={22} /> : <MenuBarsIcon size={22} />}
         </button>
       </div>
 

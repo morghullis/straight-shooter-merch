@@ -1,0 +1,12 @@
+{
+  "name": "straight-shooter-signature-tool",
+  "private": true,
+  "description": "Offline: builds the pen strokes of the hero signature (src/components/brand/signature-paths.ts). Not part of the storefront build.",
+  "scripts": {
+    "build": "node build.cjs"
+  },
+  "dependencies": {
+    "opentype.js": "^1.3.4",
+    "playwright-core": "^1.50.0"
+  }
+}

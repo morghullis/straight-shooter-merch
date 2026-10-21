@@ -4,12 +4,13 @@ import type { ModelSpec } from "@/config/models";
 export interface ShowroomItem {
   handle: string;
   title: string;
+  /** Formatted price ("$35.00"), plus the amount and currency for the price wheels. */
   price: string;
+  priceAmount: number;
+  currencyCode: string;
   href: string;
   image: string;
   imageAlt: string;
-  /** Short selling points, taken from the product description. */
-  specs: string[];
   model: ModelSpec;
   /** Stamp or sticker stuck onto this product's stage. */
   art?: { art: ArtKey; className: string };
