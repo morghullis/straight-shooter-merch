@@ -389,7 +389,17 @@
           "glb": "public/models/tumbler.glb"
         }
       ],
-      "superseded": "Superseded by round3.models3d."
+      "superseded": "Superseded by round3.models3d on the product pages and cards. The home showroom went back to these four models on 2026-10-20 (lighter, and what the showroom was first built with).",
+      "showroom": {
+        "files": [
+          "public/models/showroom/hat.glb",
+          "public/models/showroom/tee.glb",
+          "public/models/showroom/hoodie.glb",
+          "public/models/showroom/tumbler.glb"
+        ],
+        "optimised": "gltf-transform optimize --compress meshopt --texture-compress webp --texture-size 1536 (0.4-0.65 MB each)",
+        "config": "src/config/models.ts -> showroomModels, showroomOrder"
+      }
     },
     "notFromMeshy": [
       "public/images/products/on-model/the-silhouette-hoodie.webp and stephen-a-smith-hoodie.webp are the round-1 Meshy product photos (gpt-image-2, assets-src/products/), reused as the on-model hover images because those two products were already worn by a model.",

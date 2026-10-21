@@ -23,3 +23,8 @@ export function lockPageScroll(): () => void {
     if (locks === 0) root.style.overflow = previous;
   };
 }
+
+/** True while something holds the page still (an overlay is open). */
+export function isPageScrollLocked(): boolean {
+  return locks > 0;
+}

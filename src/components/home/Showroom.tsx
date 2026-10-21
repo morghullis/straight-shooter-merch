@@ -1,4 +1,4 @@
-import { models, showroomArt, showroomOrder } from "@/config/models";
+import { showroomArt, showroomModels, showroomOrder } from "@/config/models";
 import { getProduct } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
 
@@ -19,7 +19,7 @@ export async function Showroom() {
   const products = await Promise.all(showroomOrder.map((handle) => getProduct(handle)));
 
   const items: ShowroomItem[] = products.flatMap((p) => {
-    if (!p || !models[p.handle]) return [];
+    if (!p || !showroomModels[p.handle]) return [];
     return [
       {
         handle: p.handle,
@@ -29,7 +29,7 @@ export async function Showroom() {
         image: p.featuredImage.url,
         imageAlt: p.featuredImage.altText || p.title,
         specs: specLines(p.description),
-        model: models[p.handle],
+        model: showroomModels[p.handle],
         art: showroomArt[p.handle],
       },
     ];

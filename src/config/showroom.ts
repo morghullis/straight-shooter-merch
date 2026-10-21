@@ -1,30 +1,28 @@
 /**
  * How the pinned 3D showroom moves. Everything that decides its feel lives here.
  *
- * The showroom moves WITH the scroll (it is never a canned animation that ignores the hand): each
- * product rests in front for part of the scroll, then the products move like a conveyor: the current
- * one spins on its axis and travels off one side while the next one spins in from the other. If the scroll stops halfway through a change,
- * the page glides on to the nearer product, so the stage never stays between two.
+ * One gesture = one product. A scroll, a trackpad swipe, a finger swipe or an arrow key changes to the
+ * next product, always at the same easy pace, however hard the visitor scrolls: the current product
+ * spins on its axis and travels off one side while the next one spins in from the other. The rest of
+ * the gesture (a trackpad's inertia, a phone's momentum) is absorbed, so products are never skipped.
+ * At the first and the last product the page scrolls on as usual.
  */
 export const showroomMotion = {
-  /** Scroll distance per product, in screens (svh). */
-  pageSvh: 110,
-  /**
-   * Share of each product's scroll during which it stays at rest, facing the camera. The change to
-   * the next product happens in the rest. The first and last products also get this much scroll
-   * before and after them, so the cap is always seen at rest first.
-   */
-  rest: 0.25,
-
-  /** When the scroll has been still this long halfway through a change... */
-  snapIdleMs: 140,
-  /** ...the page glides to the nearer product (towards the way it was going) in this many seconds. */
-  snapSeconds: 0.9,
+  /** Page scroll per product, in screens (svh). Only felt when the scroll bar is dragged. */
+  pageSvh: 100,
+  /** Seconds one change from a product to the next takes. */
+  stepSeconds: 1.2,
+  /** Seconds the page takes to settle on a product when it arrives at the showroom or stops between two. */
+  settleSeconds: 0.7,
+  /** Wheel or trackpad travel needed before a gesture changes the product, in px (ignores brushes). */
+  wheelMinPx: 4,
+  /** Finger travel needed before a swipe changes the product, in px. */
+  swipeMinPx: 24,
 
   /** Turns a product makes on its axis between resting in front and being off the stage. */
   spinTurns: 0.9,
   /** Scale halfway through a change (a product is slightly smaller while it travels). */
   travelScale: 0.94,
-  /** Extra smoothing of the stage on top of the page's smooth scroll (seconds). Small: the stage must not lag the hand. */
-  followSeconds: 0.06,
+  /** Smoothing of the stage on top of the page's own movement (seconds). Small: it must not lag. */
+  followSeconds: 0.05,
 } as const;

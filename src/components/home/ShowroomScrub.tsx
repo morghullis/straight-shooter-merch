@@ -1,13 +1,13 @@
 "use client";
 
-import { useLenis } from "lenis/react";
-import { AnimatePresence, motion, useInView, useMotionValueEvent, useScroll, useTransform } from "motion/react";
+import { AnimatePresence, motion, useInView, useMotionValueEvent } from "motion/react";
 import dynamic from "next/dynamic";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { TextSwap } from "@/components/motion/TextSwap";
-import { useRestSnap } from "@/components/motion/useRestSnap";
+import { useProductPager } from "@/components/motion/useProductPager";
+import type { StageSlot } from "@/components/three/ScrubStage";
 import { Art, textureStyle } from "@/components/ui/Art";
 import { Button } from "@/components/ui/Button";
 import { Tape } from "@/components/ui/Tape";
@@ -18,52 +18,46 @@ import { cn } from "@/lib/cn";
 
 import type { ShowroomItem } from "./showroom-types";
 
-// Three.js only downloads after the page itself has loaded.
+// Three.js downloads once the page has loaded, or earlier if the visitor is already close to the showroom.
 const ScrubStage = dynamic(() => import("@/components/three/ScrubStage"), { ssr: false });
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
-const smoothstep = (edge0: number, edge1: number, x: number) => {
-  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
-  return t * t * (3 - 2 * t);
-};
 
-/** Scroll before the first and after the last product, in products: the cap is always seen at rest first. */
-const LEAD = motionCfg.rest;
-
-/** The page scroll (0..1 across the section) as a position along the products, before resting. */
-const linearAt = (progress: number, n: number) => progress * (n - 1 + 2 * LEAD) - LEAD;
-
-/** The position the stage shows: it holds still on each product, then moves to the next one. */
-function restingAt(x: number, n: number) {
-  if (x <= 0) return 0;
-  if (x >= n - 1) return n - 1;
-  const base = Math.floor(x);
-  return base + smoothstep(motionCfg.rest, 1 - motionCfg.rest, x - base);
-}
+/** Space kept between the product and the title above it / the rail below it on phones, in px. */
+const SLOT_GAP = 12;
 
 /**
- * Pinned 3D showroom that moves WITH the scroll. Each product rests in front for part of the scroll;
- * scrolling on spins it on its axis and carries it off the stage while the next one spins in from the
- * other side. Stop halfway and the page glides on to the nearer product. Only the number, name, price
- * and spec text change; the tape, rules and button stay put. Drag a product to turn it.
+ * Pinned 3D showroom, one product per gesture. Each scroll, swipe or arrow key spins the current
+ * product on its axis and carries it off the stage while the next one spins in from the other side,
+ * always at the same easy pace (`useProductPager`). Only the number, name, price and spec text change;
+ * the tape, rules and button stay put. Drag a product to turn it.
  */
 export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   const n = items.length;
   const sectionRef = useRef<HTMLElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLElement>(null);
   const motionOn = useMotionEnabled();
   const desktop = useMediaQuery("(min-width: 1024px)", true);
-  // Desktop keeps every model loaded once prepared; phones keep only the neighbours.
-  const roomy = useMediaQuery("(min-width: 1024px) and (pointer: fine)");
-  const lenis = useLenis();
 
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   const loaded = useAfterLoad();
+  const near = useInView(sectionRef, { once: true, margin: "100% 0px" });
   const visible = useInView(sectionRef, { margin: "120px 0px" });
 
   const [anyReady, setAnyReady] = useState(false);
   const onItemReady = useCallback(() => setAnyReady(true), []);
 
-  const position = useTransform(scrollYProgress, (p) => restingAt(linearAt(p, n), n));
+  const { position, goTo } = useProductPager({
+    section: sectionRef,
+    frame: frameRef,
+    count: n,
+    stepSeconds: motionCfg.stepSeconds,
+    settleSeconds: motionCfg.settleSeconds,
+    wheelMinPx: motionCfg.wheelMinPx,
+    swipeMinPx: motionCfg.swipeMinPx,
+    enabled: motionOn,
+  });
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   useMotionValueEvent(position, "change", (v) => {
@@ -73,37 +67,37 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
     setIndex(next);
   });
 
-  useRestSnap({
-    section: sectionRef,
-    count: n,
-    pageSvh: motionCfg.pageSvh,
-    lead: LEAD,
-    rest: motionCfg.rest,
-    idleMs: motionCfg.snapIdleMs,
-    seconds: motionCfg.snapSeconds,
-    enabled: motionOn,
-  });
+  // Phones: the product rests in the free space between the title and the rail.
+  const [slot, setSlot] = useState<StageSlot | null>(null);
+  useEffect(() => {
+    const frame = frameRef.current;
+    const title = titleRef.current;
+    const rail = railRef.current;
+    if (!frame || !title || !rail) return;
+    const measure = () => {
+      const box = frame.getBoundingClientRect();
+      const top = title.getBoundingClientRect().bottom - box.top + SLOT_GAP;
+      const bottom = rail.getBoundingClientRect().top - box.top - SLOT_GAP;
+      if (box.height <= 0 || bottom - top < 80) return;
+      setSlot({ x: 0.5, y: (top + bottom) / 2 / box.height, w: 0.88, h: (bottom - top) / box.height });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(frame);
+    observer.observe(title);
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, []);
 
   const stickerKey = items[index].handle;
-
-  // The rail glides the page to a product; the products in between pass by, as if scrolled.
-  const jumpTo = (i: number) => {
-    const section = sectionRef.current;
-    if (!section || i === index) return;
-    const page = (motionCfg.pageSvh * window.innerHeight) / 100;
-    const y = section.getBoundingClientRect().top + window.scrollY + (i + LEAD) * page;
-    if (lenis && !lenis.isStopped) lenis.scrollTo(y, { duration: 0.9 + 0.2 * Math.abs(i - index) });
-    else window.scrollTo({ top: y, behavior: motionOn ? "smooth" : "auto" });
-  };
 
   return (
     <section
       ref={sectionRef}
       aria-labelledby="showroom-title"
-      style={{ height: `calc(${(n - 1 + 2 * LEAD) * motionCfg.pageSvh}svh + 100svh)` }}
+      style={{ height: `calc(${(n - 1) * motionCfg.pageSvh}svh + 100svh)` }}
       className="relative mt-[0.625rem] w-full"
     >
-      <div className="sticky top-0 flex h-svh flex-col overflow-hidden bg-[#0d0d0d]">
+      <div ref={frameRef} className="sticky top-0 flex h-svh flex-col overflow-hidden bg-[#0d0d0d]">
         {/* Concrete studio wall */}
         <div aria-hidden="true" className="absolute inset-0 opacity-90" style={textureStyle("concrete")} />
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0.1)_40%,rgba(0,0,0,0.65))]" />
@@ -115,13 +109,13 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
           className="absolute inset-0 z-[1] cursor-grab active:cursor-grabbing"
         >
           <div data-showroom-stage className="absolute inset-0">
-            {loaded && (
+            {(loaded || near) && (
               <ScrubStage
                 models={items.map((i) => i.model)}
                 position={position}
                 index={index}
-                keepAll={roomy}
                 active={visible}
+                slot={desktop ? null : slot}
                 offsetX={desktop ? 0.95 : 0}
                 offsetY={desktop ? 0 : 0.55}
                 onItemReady={onItemReady}
@@ -168,7 +162,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
         </AnimatePresence>
 
         {/* Title on a strip of tape */}
-        <div className="pointer-events-auto pt-[calc(var(--header-h)+1rem)] lg:pt-10">
+        <div ref={titleRef} className="pointer-events-auto pt-[calc(var(--header-h)+1rem)] lg:pt-10">
           <Tape className="-rotate-[1.6deg]">
             <h2
               id="showroom-title"
@@ -182,6 +176,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
 
         {/* Rail: one stop per product */}
         <nav
+          ref={railRef}
           aria-label={copy.showroom.pickLabel}
           className="pointer-events-auto relative z-10 mt-auto -mb-14 flex gap-1.5 lg:absolute lg:top-auto lg:right-(--gutter) xl:right-1 lg:bottom-8 lg:mt-0 lg:mb-0 lg:gap-6"
         >
@@ -189,7 +184,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
             <button
               key={it.handle}
               type="button"
-              onClick={() => jumpTo(i)}
+              onClick={() => goTo(i)}
               aria-label={copy.showroom.goTo(it.model.label)}
               aria-current={i === index ? "step" : undefined}
               className={cn(

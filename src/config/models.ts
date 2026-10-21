@@ -6,7 +6,7 @@ import type { ArtKey } from "./art";
  * in scene units, so every model reads at a similar scale on the stage.
  */
 export interface ModelSpec {
-  /** Web GLB: 2K base colour, light enough for phones and the showroom. */
+  /** Web GLB: 2K base colour, light enough for phones. */
   src: string;
   /** Detail GLB (4K base colour, 2K normal map) for the product page on a big screen with a mouse. */
   hd?: string;
@@ -25,27 +25,32 @@ export const models: Record<string, ModelSpec> = {
   "culture-table-tumbler": { src: "/models/tumbler.glb", hd: "/models/tumbler-hd.glb", label: "Tumbler", fit: 2.4, rotation: [0, 0, 0] },
 };
 
+/**
+ * The 3D showroom on the home page keeps the models it was first built with (Meshy, 2K texture,
+ * colour only, about 0.4-0.65 MB each), not the 8K ones the product pages use: four light models that
+ * all stay loaded, on phones too. To add a product, give it a light GLB here and list it in
+ * `showroomOrder`.
+ */
+export const showroomModels: Record<string, ModelSpec> = {
+  "blasphemous-hat": { src: "/models/showroom/hat.glb", label: "Cap", fit: 2.45, rotation: [0, 0.5, 0] },
+  "straight-shooter-tee": { src: "/models/showroom/tee.glb", label: "Tee", fit: 2.35, rotation: [0, 0, 0] },
+  "culture-table-hoodie": { src: "/models/showroom/hoodie.glb", label: "Hoodie", fit: 2.4, rotation: [0, 0, 0] },
+  "culture-table-tumbler": { src: "/models/showroom/tumbler.glb", label: "Tumbler", fit: 2.4, rotation: [0, 0, 0] },
+};
+
 /** Brand artwork stuck onto each product's stage in the showroom (positions are Tailwind classes). */
 export const showroomArt: Record<string, { art: ArtKey; className: string }> = {
-  "blasphemous-hat": { art: "stampBlasphemous", className: "left-[6%] top-[40%] w-[8.75rem] -rotate-6 opacity-90 invert lg:right-[16%] lg:left-auto lg:top-[22%] lg:w-[15rem]" },
-  "straight-shooter-tee": { art: "stickerOfficial", className: "right-[8%] top-[44%] w-[5.75rem] rotate-12 lg:right-[27%] lg:top-[13%] lg:w-[8.125rem]" },
+  "blasphemous-hat": { art: "stampBlasphemous", className: "right-[4%] top-[calc(var(--header-h)+1.5rem)] w-[6.5rem] -rotate-6 opacity-90 invert lg:right-[16%] lg:top-[22%] lg:w-[15rem]" },
+  "straight-shooter-tee": { art: "stickerOfficial", className: "right-[8%] top-[44%] w-[5.75rem] rotate-12 lg:right-[7%] lg:top-[18%] lg:w-[8.125rem]" },
   "the-silhouette-hoodie": { art: "stickerOfficial", className: "right-[6%] top-[44%] w-[5.75rem] rotate-12 lg:right-[12%] lg:top-[16%] lg:w-[8.125rem]" },
   "stephen-a-smith-hoodie": { art: "stickerOfficial", className: "right-[6%] top-[46%] w-[5.75rem] -rotate-6 lg:right-[10%] lg:top-auto lg:bottom-[30%] lg:w-[8.125rem]" },
   "potus-hoodie": { art: "stickerOfficial", className: "right-[6%] top-[46%] w-[5.75rem] rotate-6 lg:right-[24%] lg:top-[14%] lg:w-[8.125rem]" },
-  "culture-table-hoodie": { art: "stickerOfficial", className: "right-[6%] top-[46%] w-[6rem] -rotate-12 lg:right-[18%] lg:top-auto lg:bottom-[28%] lg:w-[8.125rem]" },
+  "culture-table-hoodie": { art: "stickerOfficial", className: "right-[6%] top-[46%] w-[6rem] -rotate-12 lg:right-[4%] lg:top-[18%] lg:w-[8.125rem]" },
   "culture-table-tumbler": { art: "stickerOfficial", className: "right-[6%] top-[42%] w-[5.75rem] rotate-6 lg:right-[7%] lg:top-[46%] lg:w-[8.125rem]" },
 };
 
-/** Order of the products in the showroom. */
-export const showroomOrder = [
-  "blasphemous-hat",
-  "straight-shooter-tee",
-  "the-silhouette-hoodie",
-  "stephen-a-smith-hoodie",
-  "potus-hoodie",
-  "culture-table-hoodie",
-  "culture-table-tumbler",
-] as const;
+/** Order of the products in the showroom (each needs an entry in `showroomModels`). */
+export const showroomOrder = ["blasphemous-hat", "straight-shooter-tee", "culture-table-hoodie", "culture-table-tumbler"] as const;
 
 const DEFAULT_SPEC: Omit<ModelSpec, "src"> = { label: "3D", fit: 2.6, rotation: [0, 0, 0] };
 
