@@ -3,7 +3,7 @@
 import { ContactShadows, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import type { MotionValue } from "motion/react";
-import { Suspense, useEffect, useMemo, useRef, type MutableRefObject } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 
 import { showroomMotion as cfg } from "@/config/showroom";
@@ -19,32 +19,28 @@ export interface ScrubModel {
 
 interface ScrubStageProps {
   models: ScrubModel[];
-  /** The product arriving or at rest. */
-  activeIndex: number;
-  /** The product spinning out during a change. */
-  leavingIndex: number | null;
-  /** A product being prepared for the next change (loaded ahead). */
-  preparingIndex: number | null;
-  /** The product the stage last rested on: its neighbours are kept loaded. */
-  anchorIndex: number;
-  /** +1 towards later products, -1 towards earlier ones. */
-  direction: number;
-  /** 0..1 progress of the leaving product's exit. */
-  exit: MotionValue<number>;
-  /** 0..1 progress of the active product's arrival (1 = at rest). */
-  enter: MotionValue<number>;
+  /** Position along the products (0 = first, n-1 = last), already holding still on each product. */
+  position: MotionValue<number>;
+  /** The product closest to the current position. */
+  index: number;
+  /**
+   * Keep every model loaded once it has loaded (desktop). Otherwise only the products around the
+   * current one are kept (phones), which saves GPU memory.
+   */
+  keepAll: boolean;
   /** Render frames only while the section is on screen. */
   active: boolean;
-  /** Offset of the product in scene units (desktop leaves room on the left for the copy). */
+  /** Offset of the products in scene units (desktop leaves room on the left for the copy). */
   offsetX: number;
   offsetY?: number;
   onItemReady?: (index: number) => void;
-  onItemGone?: (index: number) => void;
 }
 
 const clamp = THREE.MathUtils.clamp;
 const lerp = THREE.MathUtils.lerp;
 const SPIN = Math.PI * 2 * cfg.spinTurns;
+/** Half the width of a product on stage, in scene units (models are fitted to about 2.4). */
+const PRODUCT_HALF = 1.25;
 
 /** Runs `fn` when the browser is idle (soon at the latest), so heavy uploads never land mid-frame. */
 function whenIdle(fn: () => void) {
@@ -72,6 +68,19 @@ function CameraRig() {
     camera.position.z = z;
     camera.updateProjectionMatrix();
   });
+  return null;
+}
+
+/** One smoothing step towards `target` (renderer state, updated once per frame outside React's render). */
+function follow(smoothed: MutableRefObject<number>, target: number, dt: number) {
+  const k = 1 - Math.exp(-Math.min(dt, 0.1) / cfg.followSeconds);
+  smoothed.current += (target - smoothed.current) * k;
+  if (Math.abs(target - smoothed.current) < 1e-4) smoothed.current = target;
+}
+
+/** Follows the scroll position with a very short smoothing, once per frame, for every product to read. */
+function Follower({ position, smoothed }: { position: MotionValue<number>; smoothed: MutableRefObject<number> }) {
+  useFrame((_, dt) => follow(smoothed, position.get(), dt));
   return null;
 }
 
@@ -113,30 +122,25 @@ function DragYaw({ yawRef }: { yawRef: MutableRefObject<number> }) {
   return null;
 }
 
-type Role = "active" | "leaving" | "idle";
-
 interface ItemProps {
   model: ScrubModel;
   index: number;
-  role: Role;
-  direction: number;
-  exit: MotionValue<number>;
-  enter: MotionValue<number>;
-  /** No change is running: a hidden product may do its warm-up draw now. */
-  quiet: boolean;
+  smoothed: MutableRefObject<number>;
   offsetX: number;
   offsetY: number;
   dragYaw: MutableRefObject<number>;
+  /** Free the model's GPU memory and loader cache when it leaves the working set (phones). */
+  disposeOnLeave: boolean;
   onReady?: (index: number) => void;
-  onGone?: (index: number) => void;
 }
 
 /**
- * One product. At rest it sits in front, facing the camera. When it leaves it spins on its axis and
- * travels off the stage; the next product travels in from the other side, spinning, and settles
- * facing the camera. Materials stay opaque the whole time.
+ * One product. Its pose is a pure function of the scroll position `d` relative to it: at d = 0 it
+ * rests in front; as d grows it spins on its axis and travels off to one side, while the next product
+ * (d < 0) spins in from the other side. Materials stay opaque, and at most the leaving and the arriving
+ * products are drawn, each on its own side of the stage.
  */
-function Item({ model, index, role, direction, exit, enter, quiet, offsetX, offsetY, dragYaw, onReady, onGone }: ItemProps) {
+function Item({ model, index, smoothed, offsetX, offsetY, dragYaw, disposeOnLeave, onReady }: ItemProps) {
   const { scene } = useGLTF(model.src);
   const gl = useThree((s) => s.gl);
   const group = useRef<THREE.Group>(null);
@@ -144,8 +148,7 @@ function Item({ model, index, role, direction, exit, enter, quiet, offsetX, offs
   const phase = useRef<"loading" | "uploaded" | "warming" | "ready">("loading");
   const { object, scale, offset } = useMemo(() => normalizeModel(scene, model.fit), [scene, model.fit]);
 
-  // Upload the textures to the GPU now, one at a time while the browser is idle, instead of in the
-  // first frame the product is drawn (that upload is what makes a change stutter).
+  // Upload the textures to the GPU while the browser is idle, not in the first frame the product is drawn.
   useEffect(() => {
     const textures = texturesOf(object);
     let cancelled = false;
@@ -163,12 +166,11 @@ function Item({ model, index, role, direction, exit, enter, quiet, offsetX, offs
     whenIdle(step);
     return () => {
       cancelled = true;
-      onGone?.(index);
     };
-  }, [object, gl, index, onGone]);
+  }, [object, gl]);
 
-  // When the product leaves the stage's working set, free its GPU memory and drop it from the loader cache.
   useEffect(() => {
+    if (!disposeOnLeave) return;
     const src = model.src;
     return () => {
       object.traverse((node) => {
@@ -182,57 +184,50 @@ function Item({ model, index, role, direction, exit, enter, quiet, offsetX, offs
       });
       useGLTF.clear(src);
     };
-  }, [object, model.src]);
+  }, [object, model.src, disposeOnLeave]);
 
   useFrame((state) => {
     const g = group.current;
     if (!g) return;
+    const x = smoothed.current;
+    const d = x - index;
 
-    // Warm-up: the first time a model is drawn the GPU compiles its shader and uploads its geometry,
-    // which blocks the page for a moment. Do that one draw early, while no change is running.
-    if (role === "idle" && phase.current !== "ready") {
-      // Quiet: no change running, or the leaving product is already off the stage.
-      if (phase.current === "uploaded" && (quiet || exit.get() >= 0.97)) {
+    // On stage while it is the current product or the one just next to it (|d| < 1).
+    const onStage = Math.abs(d) < 1;
+
+    // Warm-up: the first draw of a model compiles its shader and uploads its geometry. Do it while the
+    // stage is at rest and the product is off stage, at a scale nobody can see.
+    if (phase.current === "warming") {
+      phase.current = "ready";
+      onReady?.(index);
+    } else if (phase.current === "uploaded") {
+      if (onStage) {
+        phase.current = "ready";
+        onReady?.(index);
+      } else if (Math.abs(x - Math.round(x)) < 0.01) {
         g.visible = true;
         g.position.set(offsetX, offsetY, 0);
         g.scale.setScalar(0.001);
         phase.current = "warming";
         return;
       }
-      if (phase.current === "warming") {
-        g.visible = false;
-        phase.current = "ready";
-        onReady?.(index);
-        return;
-      }
-    }
-    if (role !== "idle" && phase.current === "uploaded") {
-      phase.current = "ready";
-      onReady?.(index);
     }
 
-    g.visible = role !== "idle";
-    if (role === "idle") return;
+    g.visible = onStage;
+    if (!onStage) return;
 
-    // How far off the stage a product has to travel to be fully out of view.
+    // A conveyor: products move at a steady pace with the scroll, spinning on their axis, the leaving
+    // one still on its way out on one side while the next one comes in on the other. The distances are
+    // chosen so a product is exactly off the stage when its neighbour is at rest (|d| = 1).
     const camera = state.camera as THREE.PerspectiveCamera;
-    const visibleWidth = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z * (state.size.width / state.size.height);
-    const away = visibleWidth / 2 + 1.6 + Math.abs(offsetX);
+    const visibleHalf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z * (state.size.width / state.size.height);
+    const toLeft = visibleHalf + PRODUCT_HALF + offsetX;
+    const toRight = visibleHalf + PRODUCT_HALF - offsetX;
     const bob = Math.sin(state.clock.elapsedTime * 1.3 + index) * 0.05;
 
-    if (role === "leaving") {
-      const t = clamp(exit.get(), 0, 1);
-      g.position.set(offsetX - direction * t * away, offsetY + bob, 0);
-      g.rotation.y = direction * t * SPIN;
-      g.scale.setScalar(lerp(1, cfg.travelScale, t));
-      return;
-    }
-
-    // Arriving (enter < 1) or at rest (enter = 1).
-    const t = clamp(enter.get(), 0, 1);
-    g.position.set(offsetX + direction * (1 - t) * away, offsetY + bob, 0);
-    g.rotation.y = -direction * (1 - t) * SPIN + dragYaw.current;
-    g.scale.setScalar(lerp(cfg.travelScale, 1, t));
+    g.position.set(offsetX - d * (d >= 0 ? toLeft : toRight), offsetY + bob, 0);
+    g.rotation.y = d * SPIN + (Math.abs(d) < 0.001 ? dragYaw.current : dragYaw.current * (1 - Math.min(1, Math.abs(d) * 4)));
+    g.scale.setScalar(lerp(1, cfg.travelScale, Math.sin(Math.PI * Math.min(1, Math.abs(d)))));
   });
 
   return (
@@ -244,34 +239,36 @@ function Item({ model, index, role, direction, exit, enter, quiet, offsetX, offs
   );
 }
 
-export default function ScrubStage({
-  models,
-  activeIndex,
-  leavingIndex,
-  preparingIndex,
-  anchorIndex,
-  direction,
-  exit,
-  enter,
-  active,
-  offsetX,
-  offsetY = 0,
-  onItemReady,
-  onItemGone,
-}: ScrubStageProps) {
+export default function ScrubStage({ models, position, index, keepAll, active, offsetX, offsetY = 0, onItemReady }: ScrubStageProps) {
   const dragYaw = useRef(0);
-  const quiet = leavingIndex === null;
+  const smoothed = useRef(position.get());
 
-  // Working set: what is on stage, what is being prepared, and the neighbours of the product the
-  // stage last RESTED on (so loading never lands in the middle of a change).
-  const mounted = useMemo(
-    () =>
-      new Set(
-        [anchorIndex - 1, anchorIndex, anchorIndex + 1, activeIndex, leavingIndex ?? -1, preparingIndex ?? -1].filter(
-          (i) => i >= 0 && i < models.length,
-        ),
-      ),
-    [anchorIndex, activeIndex, leavingIndex, preparingIndex, models.length],
+  // Working set: the products around the current one (two ahead, so they are ready long before they
+  // are needed). On desktop every model that has been loaded once stays loaded, so scrolling never has
+  // to load or prepare anything mid-change.
+  const near = useMemo(() => [index - 1, index, index + 1, index + 2].filter((i) => i >= 0 && i < models.length), [index, models.length]);
+  const [kept, setKept] = useState<number[]>(near);
+  const [seenNear, setSeenNear] = useState(near);
+  if (seenNear !== near) {
+    // The current product changed: update the working set during render (no extra effect pass).
+    setSeenNear(near);
+    setKept(keepAll ? [...new Set([...kept, ...near])] : near);
+  }
+  const mounted = useMemo(() => new Set([...kept, ...near]), [kept, near]);
+
+  // Desktop: once a model is ready, start loading the next one still missing, one at a time, in the
+  // background, so every product is prepared before the visitor scrolls to it.
+  const count = models.length;
+  const handleReady = useCallback(
+    (i: number) => {
+      onItemReady?.(i);
+      if (!keepAll) return;
+      setKept((prev) => {
+        for (let k = 0; k < count; k++) if (!prev.includes(k)) return [...prev, k];
+        return prev;
+      });
+    },
+    [onItemReady, keepAll, count],
   );
 
   return (
@@ -288,6 +285,7 @@ export default function ScrubStage({
     >
       <Studio />
       <CameraRig />
+      <Follower position={position} smoothed={smoothed} />
       <DragYaw yawRef={dragYaw} />
 
       {models.map((model, i) =>
@@ -296,17 +294,12 @@ export default function ScrubStage({
             <Item
               model={model}
               index={i}
-              // The leaving product is still the active one until the next starts arriving: leaving wins.
-              role={i === leavingIndex ? "leaving" : i === activeIndex ? "active" : "idle"}
-              direction={direction}
-              exit={exit}
-              enter={enter}
-              quiet={quiet}
+              smoothed={smoothed}
               offsetX={offsetX}
               offsetY={offsetY}
               dragYaw={dragYaw}
-              onReady={onItemReady}
-              onGone={onItemGone}
+              disposeOnLeave={!keepAll}
+              onReady={handleReady}
             />
           </Suspense>
         ) : null,

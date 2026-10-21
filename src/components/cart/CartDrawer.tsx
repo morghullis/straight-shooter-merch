@@ -10,6 +10,7 @@ import { CloseIcon, MinusIcon, PlusIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 import { useCart } from "./CartProvider";
 
@@ -33,12 +34,11 @@ export function CartDrawer() {
       if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockPageScroll();
 
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      unlock();
       returnFocus.current?.focus?.();
     };
   }, [isOpen, close]);
@@ -98,7 +98,7 @@ export function CartDrawer() {
               {copy.cart.emptyTitle}
             </p>
             <p className="text-sm text-white/60">{copy.cart.emptyBody}</p>
-            <Button href="/collections/all" onClick={close} variant="solid">
+            <Button href="/collections/all" onClick={close}>
               {copy.cart.emptyCta}
             </Button>
           </div>

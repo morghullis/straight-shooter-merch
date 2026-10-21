@@ -14,6 +14,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MotionAttribute } from "@/components/motion/motion-preference";
 import { ScrollProgress } from "@/components/motion/ScrollProgress";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { site } from "@/config/site";
 
 import "./globals.css";
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col bg-black text-white antialiased">
         <CartProvider>
           <MotionAttribute />
+          <SmoothScroll />
           <ScrollProgress />
           <a
             href="#main"

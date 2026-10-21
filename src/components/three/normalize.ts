@@ -1,15 +1,14 @@
 import * as THREE from "three";
-import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 
-/**
- * Prepares a loaded glTF scene for the stage: clones it, turns metalness off, welds vertices and rebuilds the
- * normals (the remeshed geometry is faceted, this makes cloth read smooth), then returns
- * the scale and offset that fit its longest side to `fit` and centre it on the origin.
- */
 const NORMAL_STRENGTH = 0.45;
 /** Clamped by the GPU to what it supports. */
 const ANISOTROPY = 16;
 
+/**
+ * Prepares a loaded glTF scene for the stage: clones it, tunes its materials (no metalness, softer
+ * normal map, anisotropic filtering), then returns the scale and offset that fit its longest side to
+ * `fit` and centre it on the origin. The models ship with their own smooth normals.
+ */
 export function normalizeModel(scene: THREE.Object3D, fit: number) {
   const clone = scene.clone(true);
 
@@ -34,16 +33,6 @@ export function normalizeModel(scene: THREE.Object3D, fit: number) {
         if (texture) texture.anisotropy = ANISOTROPY;
       }
       standard.needsUpdate = true;
-    }
-
-    try {
-      const geometry = mesh.geometry.clone();
-      geometry.deleteAttribute("normal");
-      const smooth = mergeVertices(geometry, 1e-3);
-      smooth.computeVertexNormals();
-      mesh.geometry = smooth;
-    } catch {
-      /* keep the original geometry */
     }
   });
 

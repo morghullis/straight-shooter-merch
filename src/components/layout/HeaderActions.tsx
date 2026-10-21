@@ -12,6 +12,7 @@ import { CartIcon, CloseIcon, MenuIcon, SearchIcon, UserIcon } from "@/component
 import { copy } from "@/config/copy";
 import { nav, site } from "@/config/site";
 import { cn } from "@/lib/cn";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 const iconButton =
   "grid size-11 place-items-center text-white transition-colors hover:text-gold focus-visible:text-gold";
@@ -85,12 +86,9 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 
   // Lock page scroll behind the menu and start with focus inside it.
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockPageScroll();
     first.current?.focus();
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return unlock;
   }, []);
 
   const item = (i: number) =>
@@ -135,7 +133,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       </nav>
 
       <motion.div {...item(nav.length)} className="mt-auto pt-8">
-        <Button href="/collections/all" onClick={onClose} variant="solid" size="lg" arrow className="w-full">
+        <Button href="/collections/all" onClick={onClose} size="lg" arrow className="w-full">
           {copy.header.menuCta}
         </Button>
         <div className="mt-5 flex items-center justify-between text-[0.8125rem] text-white/55">

@@ -6,21 +6,22 @@ import { cn } from "@/lib/cn";
 
 import { ArrowRightIcon } from "./Icons";
 
-export type ButtonVariant = "solid" | "gold" | "outline" | "ink" | "ghost";
+export type ButtonVariant = "gold" | "outline" | "ink" | "ghost";
 export type ButtonSize = "none" | "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-[filter,background-color,border-color,color,transform,rotate,translate] duration-200 select-none active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 font-semibold tracking-[0.06em] whitespace-nowrap uppercase cursor-pointer transition-[filter,background-color,border-color,color,transform,rotate,translate,scale] duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white select-none active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50";
 
 /**
- * `solid` is a real button: the flat gold rectangle of the reference design (used for "Shop all merch").
- * Gold and ink buttons are strips of gaffer tape, like the showroom title (see `.tape-surface`).
+ * Gold and ink buttons are strips of gaffer tape, like the showroom title (see `.tape-surface`), and
+ * behave like real buttons: they lift and straighten under the pointer, press down when clicked and
+ * show a focus ring for the keyboard.
  */
+const pressable = "hover:-translate-y-0.5 hover:rotate-0 active:translate-y-0 active:scale-[0.97] active:rotate-0";
 const variants: Record<ButtonVariant, string> = {
-  solid: "rounded-[0.1875rem] bg-gold text-[#1a1a1a] hover:brightness-110",
-  gold: "tape-surface -rotate-[0.7deg] text-[#14110a] hover:-translate-y-px hover:rotate-0",
+  gold: `tape-surface -rotate-[0.7deg] text-[#14110a] ${pressable}`,
   outline: "border border-white/30 text-white hover:border-gold hover:text-gold",
-  ink: "tape-surface tape-ink rotate-[0.6deg] text-white hover:-translate-y-px hover:rotate-0",
+  ink: `tape-surface tape-ink rotate-[0.6deg] text-white ${pressable}`,
   ghost: "px-0 normal-case tracking-normal underline underline-offset-4 hover:text-gold",
 };
 

@@ -83,11 +83,10 @@ export function Hero() {
           y={[0, -36]}
           opacity={[1, 0]}
           during={[0, 0.6]}
-          className="mt-7 lg:absolute lg:top-(--hero-cta-top) lg:left-(--hero-headline-left) lg:z-[3] lg:mt-0"
+          className="mt-7 lg:absolute lg:top-(--hero-cta-top) lg:left-(--hero-headline-left) lg:z-[4] lg:mt-0"
         >
           <Button
             href={hero.cta.href}
-            variant="solid"
             size="none"
             arrow
             style={delay(800)}
@@ -120,12 +119,13 @@ export function Hero() {
       <ParallaxLayer
         depth={14}
         drift={-22}
-        className="absolute top-(--hero-sig-top) left-(--hero-sig-left) z-[3] hidden lg:block"
+        className="pointer-events-none absolute top-(--hero-sig-top) left-(--hero-sig-left) z-[3] hidden lg:block"
       >
         <Signature text={hero.signature} />
       </ParallaxLayer>
 
-      <ParallaxLayer depth={9} drift={-10} className="absolute inset-0 z-[3] hidden lg:block">
+      {/* Decoration only: it must never sit between the visitor and the button. */}
+      <ParallaxLayer depth={9} drift={-10} className="pointer-events-none absolute inset-0 z-[3] hidden lg:block">
         <div aria-hidden="true">
           <GhostRoll words={hero.ghostWords} className="absolute top-(--hero-ghost-top) left-(--hero-ghost-left)" />
           <span

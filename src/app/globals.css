@@ -85,6 +85,11 @@
   }
 }
 
+/* Native smooth scrolling for anchors only when the inertial scroll layer is not running. */
+html:not(.lenis) {
+  scroll-behavior: smooth;
+}
+
 html {
   background: #000;
   /*
@@ -93,7 +98,6 @@ html {
    * in a black field. 16px up to 1326px wide, capped at 2.6x. Breakpoints stay in viewport pixels.
    */
   font-size: clamp(100%, calc(100vw * 16 / 1326), 41.6px);
-  scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
   /* Anchored sections clear the sticky mobile header. */
   scroll-padding-top: var(--header-h);
@@ -172,7 +176,11 @@ body {
 }
 a.tape-surface:hover::before,
 button.tape-surface:hover:not(:disabled)::before {
-  filter: var(--tape-tone) brightness(1.08) var(--tape-shadow);
+  filter: var(--tape-tone) brightness(1.08) drop-shadow(0 0.55rem 0.8rem rgb(0 0 0 / 0.5));
+}
+a.tape-surface:active::before,
+button.tape-surface:active:not(:disabled)::before {
+  filter: var(--tape-tone) brightness(0.95) drop-shadow(0 0.15rem 0.25rem rgb(0 0 0 / 0.45));
 }
 }
 

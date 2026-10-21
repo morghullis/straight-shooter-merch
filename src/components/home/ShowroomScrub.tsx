@@ -1,13 +1,13 @@
 "use client";
 
+import { useLenis } from "lenis/react";
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useScroll, useTransform } from "motion/react";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { TextSwap } from "@/components/motion/TextSwap";
-import { useProductTransition } from "@/components/motion/useProductTransition";
-import { useStepScroll } from "@/components/motion/useStepScroll";
+import { useRestSnap } from "@/components/motion/useRestSnap";
 import { Art, textureStyle } from "@/components/ui/Art";
 import { Button } from "@/components/ui/Button";
 import { Tape } from "@/components/ui/Tape";
@@ -18,112 +18,89 @@ import { cn } from "@/lib/cn";
 
 import type { ShowroomItem } from "./showroom-types";
 
-// Three.js only downloads when the section is about to be reached.
+// Three.js only downloads after the page itself has loaded.
 const ScrubStage = dynamic(() => import("@/components/three/ScrubStage"), { ssr: false });
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+const smoothstep = (edge0: number, edge1: number, x: number) => {
+  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+};
 
-/** Maps the page scroll (0..1 across the section) to a position along the products: 0 = first, n-1 = last. */
-function productAt(scrollProgress: number, n: number): number {
-  const steps = n - 1;
-  const stepsLength = steps * motionCfg.pageSvh;
-  return clamp((scrollProgress * (stepsLength + motionCfg.tailSvh)) / stepsLength, 0, 1) * steps;
+/** Scroll before the first and after the last product, in products: the cap is always seen at rest first. */
+const LEAD = motionCfg.rest;
+
+/** The page scroll (0..1 across the section) as a position along the products, before resting. */
+const linearAt = (progress: number, n: number) => progress * (n - 1 + 2 * LEAD) - LEAD;
+
+/** The position the stage shows: it holds still on each product, then moves to the next one. */
+function restingAt(x: number, n: number) {
+  if (x <= 0) return 0;
+  if (x >= n - 1) return n - 1;
+  const base = Math.floor(x);
+  return base + smoothstep(motionCfg.rest, 1 - motionCfg.rest, x - base);
 }
 
 /**
- * Pinned 3D showroom. While it is pinned, one scroll gesture (wheel, trackpad, swipe or key) moves
- * exactly one product, whatever its strength: the product spins on its axis as it leaves and the next
- * one spins in and settles (`useProductTransition`). Only the number, name, price and spec text change;
- * the tape, rules and button stay where they are. Coming from above it always starts on the first
- * product; above the first and below the last the page scrolls on normally.
+ * Pinned 3D showroom that moves WITH the scroll. Each product rests in front for part of the scroll;
+ * scrolling on spins it on its axis and carries it off the stage while the next one spins in from the
+ * other side. Stop halfway and the page glides on to the nearer product. Only the number, name, price
+ * and spec text change; the tape, rules and button stay put. Drag a product to turn it.
  */
 export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   const n = items.length;
-  const section = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const motionOn = useMotionEnabled();
   const desktop = useMediaQuery("(min-width: 1024px)", true);
+  // Desktop keeps every model loaded once prepared; phones keep only the neighbours.
+  const roomy = useMediaQuery("(min-width: 1024px) and (pointer: fine)");
+  const lenis = useLenis();
 
-  const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
-  // The models load right after the page itself, so the cap is ready before the visitor arrives.
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   const loaded = useAfterLoad();
-  const visible = useInView(section, { margin: "120px 0px" });
+  const visible = useInView(sectionRef, { margin: "120px 0px" });
 
-  // Which models are loaded and warmed, as reported by the 3D stage.
-  const readyItems = useRef(new Set<number>());
   const [anyReady, setAnyReady] = useState(false);
-  const onItemReady = useCallback((i: number) => {
-    readyItems.current.add(i);
-    setAnyReady(true);
-  }, []);
-  const onItemGone = useCallback((i: number) => {
-    readyItems.current.delete(i);
-  }, []);
-  const isReady = useCallback((i: number) => readyItems.current.has(i), []);
+  const onItemReady = useCallback(() => setAnyReady(true), []);
 
-  const show = useProductTransition({ timing: motionCfg, isReady });
-  const { active, leaving, preparing, settled, direction, exit, enter, busy, goTo, jump } = show;
-  // The product the showroom is on or heading to (updated before the animation catches up).
-  const activeNow = useRef(0);
-  useEffect(() => {
-    activeNow.current = active;
-  }, [active]);
+  const position = useTransform(scrollYProgress, (p) => restingAt(linearAt(p, n), n));
+  const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  useMotionValueEvent(position, "change", (v) => {
+    const next = clamp(Math.round(v), 0, n - 1);
+    if (next === index) return;
+    setDirection(next > index ? 1 : -1);
+    setIndex(next);
+  });
 
-  // One gesture = one product while the section is pinned.
-  useStepScroll({
-    section,
+  useRestSnap({
+    section: sectionRef,
     count: n,
     pageSvh: motionCfg.pageSvh,
-    tailSvh: motionCfg.tailSvh,
-    getIndex: () => activeNow.current,
-    onStep: (dir) => {
-      // Never leave a product that has not been shown yet (the cap, on a slow connection).
-      if (busy() || !isReady(activeNow.current)) return false;
-      const next = clamp(activeNow.current + dir, 0, n - 1);
-      activeNow.current = next;
-      goTo(next);
-      return true;
-    },
-    onEnter: (from) => {
-      const target = from > 0 ? 0 : n - 1;
-      if (activeNow.current !== target && !busy()) {
-        activeNow.current = target;
-        jump(target);
-      }
-    },
-    isBusy: busy,
-    wheelThreshold: motionCfg.wheelThreshold,
-    swipeThreshold: motionCfg.swipeThreshold,
-    quietMs: motionCfg.quietMs,
+    lead: LEAD,
+    rest: motionCfg.rest,
+    idleMs: motionCfg.snapIdleMs,
+    seconds: motionCfg.snapSeconds,
     enabled: motionOn,
   });
 
-  // While the section is off screen, keep the right product ready for the side the page will come
-  // back from: the first one above the section, the last one below it.
-  const position = useTransform(scrollYProgress, (p) => productAt(p, n));
-  useMotionValueEvent(position, "change", (v) => {
-    if (visible || busy()) return;
-    const target = v < (n - 1) / 2 ? 0 : n - 1;
-    if (target === activeNow.current) return;
-    activeNow.current = target;
-    jump(target);
-  });
+  const stickerKey = items[index].handle;
 
-  const stickerKey = items[active].handle;
-
+  // The rail glides the page to a product; the products in between pass by, as if scrolled.
   const jumpTo = (i: number) => {
-    const el = section.current;
-    if (!el || i === activeNow.current || busy()) return;
-    activeNow.current = i;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: top + (i * motionCfg.pageSvh * window.innerHeight) / 100, behavior: "instant" });
-    goTo(i);
+    const section = sectionRef.current;
+    if (!section || i === index) return;
+    const page = (motionCfg.pageSvh * window.innerHeight) / 100;
+    const y = section.getBoundingClientRect().top + window.scrollY + (i + LEAD) * page;
+    if (lenis && !lenis.isStopped) lenis.scrollTo(y, { duration: 0.9 + 0.2 * Math.abs(i - index) });
+    else window.scrollTo({ top: y, behavior: motionOn ? "smooth" : "auto" });
   };
 
   return (
     <section
-      ref={section}
+      ref={sectionRef}
       aria-labelledby="showroom-title"
-      style={{ height: `calc(${(n - 1) * motionCfg.pageSvh + motionCfg.tailSvh}svh + 100svh)` }}
+      style={{ height: `calc(${(n - 1 + 2 * LEAD) * motionCfg.pageSvh}svh + 100svh)` }}
       className="relative mt-[0.625rem] w-full"
     >
       <div className="sticky top-0 flex h-svh flex-col overflow-hidden bg-[#0d0d0d]">
@@ -131,28 +108,23 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
         <div aria-hidden="true" className="absolute inset-0 opacity-90" style={textureStyle("concrete")} />
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0.1)_40%,rgba(0,0,0,0.65))]" />
 
-        {/* 3D stage: one product at a time, spinning out and in on every change */}
+        {/* 3D stage: the products move with the scroll */}
         <div
           role="img"
-          aria-label={copy.showroom.stage(items[active].title)}
+          aria-label={copy.showroom.stage(items[index].title)}
           className="absolute inset-0 z-[1] cursor-grab active:cursor-grabbing"
         >
           <div data-showroom-stage className="absolute inset-0">
             {loaded && (
               <ScrubStage
                 models={items.map((i) => i.model)}
-                activeIndex={active}
-                leavingIndex={leaving}
-                preparingIndex={preparing}
-                anchorIndex={settled}
-                direction={direction}
-                exit={exit}
-                enter={enter}
+                position={position}
+                index={index}
+                keepAll={roomy}
                 active={visible}
                 offsetX={desktop ? 0.95 : 0}
                 offsetY={desktop ? 0 : 0.55}
                 onItemReady={onItemReady}
-                onItemGone={onItemGone}
               />
             )}
           </div>
@@ -177,17 +149,17 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
         <div className="pointer-events-none relative z-10 mx-auto flex h-full w-full max-w-(--container) flex-col px-(--gutter) xl:px-1">
         {/* Stamp or sticker stuck on the stage: peeled off with the product, the next one pressed on */}
         <AnimatePresence initial={false}>
-          {items[active].art && (
+          {items[index].art && (
             <motion.div
               key={stickerKey}
               aria-hidden="true"
               initial={{ opacity: 0, scale: 0.6, rotate: -12 }}
               animate={{ opacity: 1, scale: 1, rotate: 0, transition: { delay: 0.35, type: "spring", stiffness: 260, damping: 18 } }}
               exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.25 } }}
-              className={cn("pointer-events-none absolute z-[2]", items[active].art.className)}
+              className={cn("pointer-events-none absolute z-[2]", items[index].art.className)}
             >
               <Art
-                name={items[active].art.art}
+                name={items[index].art.art}
                 sizes="(min-width: 1326px) 19.6vw, 260px"
                 className="h-auto w-full drop-shadow-[0_8px_14px_rgba(0,0,0,0.5)]"
               />
@@ -219,10 +191,10 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
               type="button"
               onClick={() => jumpTo(i)}
               aria-label={copy.showroom.goTo(it.model.label)}
-              aria-current={i === active ? "step" : undefined}
+              aria-current={i === index ? "step" : undefined}
               className={cn(
                 "group flex h-10 min-w-10 flex-col items-center justify-center border px-2 font-nav text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors lg:h-auto lg:min-w-0 lg:items-start lg:border-0 lg:px-0",
-                i === active
+                i === index
                   ? "border-gold bg-gold text-[#14110a] lg:bg-transparent lg:text-gold"
                   : "border-white/25 bg-black/50 text-white/70 hover:border-white hover:text-white lg:bg-transparent lg:text-white/45",
               )}
@@ -235,7 +207,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
                 aria-hidden="true"
                 className={cn(
                   "mt-2 hidden h-[0.125rem] transition-all duration-300 lg:block",
-                  i === active ? "w-16 bg-gold" : "w-8 bg-white/30 group-hover:w-12",
+                  i === index ? "w-16 bg-gold" : "w-8 bg-white/30 group-hover:w-12",
                 )}
               />
             </button>
@@ -249,21 +221,21 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
             <Tape className="-rotate-[2deg] py-1 [--tape-end:1.1rem] lg:[--tape-end:1.5rem]">
               <p className="flex items-baseline gap-2 font-display leading-none font-extrabold uppercase">
                 <span className="text-[3.5rem] lg:text-[min(7rem,13svh)]">
-                  <TextSwap value={String(active + 1).padStart(2, "0")} direction={direction} />
+                  <TextSwap value={String(index + 1).padStart(2, "0")} direction={direction} />
                 </span>
                 <span className="text-[1.25rem] text-[#14110a]/60 lg:text-[1.875rem]">/{String(n).padStart(2, "0")}</span>
               </p>
             </Tape>
             <h3 className="mt-3 font-display text-[clamp(2.375rem,9vw,4rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-5">
-              <TextSwap value={items[active].title} direction={direction} display="block" />
+              <TextSwap value={items[index].title} direction={direction} display="block" />
             </h3>
             <p className="mt-2 text-[1.0625rem] text-white/85">
-              <TextSwap value={items[active].price} direction={direction} />
+              <TextSwap value={items[index].price} direction={direction} />
             </p>
 
             <ul aria-label={copy.showroom.specs} className="mt-4 hidden border-t border-white/20 lg:block [@media(max-height:48rem)]:lg:hidden [@media(min-aspect-ratio:8/5)_and_(min-width:1326px)]:lg:hidden">
               {[0, 1, 2].map((row) => {
-                const spec = items[active].specs[row] ?? "";
+                const spec = items[index].specs[row] ?? "";
                 return (
                   <li
                     key={row}
@@ -276,7 +248,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
               })}
             </ul>
 
-            <Button href={items[active].href} arrow className="mt-5 w-full sm:w-auto">
+            <Button href={items[index].href} arrow className="mt-5 w-full sm:w-auto">
               {copy.showroom.shop}
             </Button>
           </div>
