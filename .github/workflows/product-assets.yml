@@ -1,6 +1,8 @@
-# Makes the storefront assets (3D model, turntable renders, on-model photo) of new Shopify products:
-# see tools/pipeline/README.md. Runs when the storefront's Shopify webhook reports a new product, every
-# 30 minutes as a safety net, and by hand from the Actions tab.
+# Makes the storefront assets (3D model, front and back renders, on-model hover photo) of Shopify
+# products: see tools/pipeline/README.md. A product runs when it is new, when the merchant adds a photo,
+# or when it is tagged "regenerate-assets". Checks every 10 minutes (a quick look at the store that
+# installs nothing), right away when the storefront's Shopify webhook asks for it, and by hand from
+# the Actions tab.
 #
 # Needs these repository secrets: SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, MESHY_API_KEY,
 # and the repository variable SHOPIFY_STORE_DOMAIN (e.g. my-store.myshopify.com).
@@ -8,13 +10,13 @@ name: Product assets
 
 on:
   repository_dispatch:
-    types: [shopify-product-created]
+    types: [shopify-product-changed, shopify-product-created]
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       products:
-        description: Product handles to (re)do, separated by spaces. Empty = every product without assets.
+        description: Product handles to (re)do, separated by spaces. Empty = every product that needs it.
         required: false
         default: ""
       max:
@@ -34,6 +36,15 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      SHOPIFY_STORE_DOMAIN: ${{ vars.SHOPIFY_STORE_DOMAIN }}
+      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+      # Only a run started by hand names products (they are redone even if up to date); a webhook's
+      # run checks the whole store, so an edit never forces a regeneration. Passed through the
+      # environment, never pasted into the script (generate.mjs validates them).
+      PRODUCTS: ${{ inputs.products || '' }}
+      MAX: ${{ inputs.max || '3' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,21 +56,25 @@ jobs:
             package-lock.json
             tools/3d/package-lock.json
 
+      # Plain Node, nothing installed: is there anything to make? Sets `pending`.
+      # Word splitting on, globbing off: PRODUCTS is a list of handles, never file patterns.
+      - name: Check
+        id: check
+        run: |
+          set -f
+          node tools/pipeline/generate.mjs $PRODUCTS --check
+
       # three.js comes from the storefront's dependencies; the 3D tools have their own.
-      - run: npm ci --ignore-scripts
-      - run: npm ci --prefix tools/3d
+      - if: steps.check.outputs.pending != '0'
+        run: npm ci --ignore-scripts
+      - if: steps.check.outputs.pending != '0'
+        run: npm ci --prefix tools/3d
 
       - name: Generate
+        if: steps.check.outputs.pending != '0'
         env:
-          SHOPIFY_STORE_DOMAIN: ${{ vars.SHOPIFY_STORE_DOMAIN }}
-          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
-          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           MESHY_API_KEY: ${{ secrets.MESHY_API_KEY }}
           CHROME_PATH: /usr/bin/google-chrome
-          # Passed through the environment, never pasted into the script (generate.mjs validates them).
-          PRODUCTS: ${{ inputs.products || github.event.client_payload.product || '' }}
-          MAX: ${{ inputs.max || '3' }}
-        # Word splitting on, globbing off: PRODUCTS is a list of handles, never file patterns.
         run: |
           set -f
           node tools/pipeline/generate.mjs $PRODUCTS --max "$MAX"

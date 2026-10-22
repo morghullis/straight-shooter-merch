@@ -14,9 +14,10 @@ import { isSafeHandle } from "@/lib/format";
  * Every request is verified against `x-shopify-hmac-sha256` using SHOPIFY_WEBHOOK_SECRET (for
  * webhooks registered by the app, the app's client secret).
  *
- * A new product also starts its asset pipeline right away (the GitHub Action in
- * .github/workflows/product-assets.yml) when GITHUB_DISPATCH_TOKEN and GITHUB_DISPATCH_REPO are set;
- * otherwise the Action's half-hourly run picks it up.
+ * A new or changed product also asks the asset pipeline (the GitHub Action in
+ * .github/workflows/product-assets.yml) to look at it right away when GITHUB_DISPATCH_TOKEN and
+ * GITHUB_DISPATCH_REPO are set; otherwise the Action's 10-minute check picks it up. The pipeline only
+ * spends credits when the product needs it (new, a photo added, or tagged "regenerate-assets").
  */
 export async function POST(request: Request) {
   const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
@@ -57,14 +58,17 @@ export async function POST(request: Request) {
   // gets the store as it is (not one last stale copy while it refreshes).
   for (const tag of tags) revalidateTag(tag, { expire: 0 });
   console.info(`[shopify webhook] ${topic}${handle ? ` ${handle}` : ""}: refreshed ${[...tags].join(", ")}`);
-  if (topic === "products/create" && handle) {
+  if ((topic === "products/create" || topic === "products/update") && handle) {
     const product = handle;
     after(() => startAssetPipeline(product));
   }
   return Response.json({ revalidated: true, tags: [...tags] });
 }
 
-/** Asks GitHub to run the product-assets workflow for one product now. */
+/**
+ * Asks GitHub to run the product-assets workflow now. It checks the whole store (not only this
+ * product), so a title or price edit costs nothing: only products that need assets are made.
+ */
 async function startAssetPipeline(handle: string) {
   const token = process.env.GITHUB_DISPATCH_TOKEN;
   const repo = process.env.GITHUB_DISPATCH_REPO;
@@ -77,9 +81,9 @@ async function startAssetPipeline(handle: string) {
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
       },
-      body: JSON.stringify({ event_type: "shopify-product-created", client_payload: { product: handle } }),
+      body: JSON.stringify({ event_type: "shopify-product-changed", client_payload: { handle } }),
     });
   } catch {
-    // The half-hourly run will pick the product up.
+    // The 10-minute check will pick the product up.
   }
 }

@@ -5,16 +5,13 @@ import { formatMoney } from "@/lib/format";
 import { ShowroomExperience } from "./ShowroomExperience";
 import type { ShowroomItem } from "./showroom-types";
 
-/** How many products the showroom stages. */
-const SHOWROOM_SIZE = 4;
-
 /**
- * Server wrapper: the products shoppers engage with most that have a 3D model (see
+ * Server wrapper: the most engaged-with product of each category that has a 3D model (see
  * `getShowroomProducts`), as plain props for the 3D client.
  */
 export async function Showroom() {
-  const products = await getShowroomProducts(SHOWROOM_SIZE);
-  // Each stop is named by its category ("Tee"), or by the product's name when two share one.
+  const products = await getShowroomProducts();
+  // Each stop is named by its category ("Tee"); a product without one goes by its name.
   const categories = products.map((p) => p.productType || p.title);
   const labelOf = (i: number) =>
     categories.filter((c) => c === categories[i]).length > 1 ? products[i].title : categories[i];

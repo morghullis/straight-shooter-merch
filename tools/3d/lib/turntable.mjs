@@ -10,10 +10,10 @@ import { fileURLToPath } from "node:url";
 const toolDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const three = path.resolve(toolDir, "../../node_modules/three");
 
-/** One full turn, front first (yaw in degrees, 0 = the model's front, which Meshy faces to +Z). */
-export const FRONT_FIRST = { front: 0, "quarter-right": 45, "side-right": 90, back: 180, "side-left": -90, "quarter-left": -45 };
-/** For products whose graphic is on the back. */
-export const BACK_FIRST = { back: 180, "quarter-back-right": 135, "side-right": 90, front: 0, "side-left": -90, "quarter-back-left": -135 };
+/** The product's views: front and back (yaw in degrees, 0 = the model's front, which Meshy faces to +Z). */
+export const FRONT_BACK = { front: 0, back: 180 };
+/** The same, back first, for products whose graphic is on the back. */
+export const BACK_FRONT = { back: 180, front: 0 };
 export const IMAGE_SIZE = { width: 1500, height: 1223 };
 
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".glb": "model/gltf-binary" };
@@ -56,7 +56,7 @@ export async function openTurntable() {
   let next = 0;
   return {
     /** Renders every angle of `glbPath` into `outDir/<angle>.webp`; returns [{ name, file }] in order. */
-    async render(glbPath, outDir, { angles = FRONT_FIRST, ...camera } = {}) {
+    async render(glbPath, outDir, { angles = FRONT_BACK, ...camera } = {}) {
       const id = `model-${next++}.glb`;
       models.set(id, path.resolve(glbPath));
       try {

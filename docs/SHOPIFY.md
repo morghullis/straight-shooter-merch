@@ -9,7 +9,7 @@
 | Cart + hosted checkout (payments, taxes, shipping, discount codes) | Cart drawer, then a redirect to Shopify's checkout |
 | Orders, customers, emails, admin | Fast cached pages, kept fresh by webhooks |
 
-Nothing about a product or a collection is written in the code: create it in Shopify and the site shows it, with its look. New products get their 3D model, turntable and on-model photo made automatically (see [tools/pipeline/README.md](../tools/pipeline/README.md)).
+Nothing about a product or a collection is written in the code: create it in Shopify and the site shows it, with its look. New products get their 3D model, front and back views and on-model hover photo made automatically, and a product is redone when a photo is added to it (see [tools/pipeline/README.md](../tools/pipeline/README.md)).
 
 **Trade-offs, honestly.** The Shopify theme editor and theme app embeds (reviews widgets, some pop-ups) do not render here, because there is no theme. Layout and copy are edited in code (`src/config/*`). Checkout is Shopify's own hosted page.
 
@@ -42,7 +42,7 @@ With the storefront variables empty the app runs on the demo catalog.
 
 **Stock:** products track inventory (the store's own have 100-200 per variant, the site's products 100). A product with no stock left shows as sold out and cannot be bought.
 
-The **navigation, footer and home tiles** list every collection published on the Headless channel, by `position`; the strip under the hero then turns through every product too. To hide one from the site, unpublish it from that channel. The **showroom** shows the four products shoppers engage with most (page views and adds to the cart over the last month, counted by the site in Netlify Blobs), among those with a 3D model; until there is data it uses Shopify's best-selling order. Tag a product `showroom` to pin it there, `no-showroom` to keep it out.
+The **navigation, footer and home tiles** list every collection published on the Headless channel, by `position`; the strip under the hero then turns through every product too. To hide one from the site, unpublish it from that channel. The **showroom** shows the most viewed product of each category (product type), among those with a 3D model: page views and adds to the cart over the last month, counted by the site in Netlify Blobs; until there is data it uses Shopify's best-selling order. Categories come in the order of their product's engagement, up to six. Tag a product `showroom` to make it its category's pick, `no-showroom` to keep it out.
 
 ## 3. Keep the site fresh: webhooks
 

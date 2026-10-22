@@ -38,9 +38,9 @@
   --gutter: 1rem;
   /* Phones get a compact sticky bar; from lg up it is the 83px bar of the reference. */
   --header-h: 4.5rem;
-  /* Logo: the mark is --logo-w wide; the MERCH tag hangs under it, as in the reference. */
-  --logo-w: 3.75rem;
-  --logo-top: 0.3125rem;
+  /* Logo: the official logo (2.5 : 1) is --logo-w wide and sits inside the black bar. */
+  --logo-w: 8.25rem;
+  --logo-top: 0.625rem;
   --nav-top: 2.75rem;
   --icons-top: 1.6875rem;
   --icons-right: 3.03125rem;
@@ -83,8 +83,8 @@
   :root {
     --hero-photo-fade-t: 1.25rem;
     --header-h: 5.1875rem;
-    --logo-w: 5.25rem;
-    --logo-top: 0.5rem;
+    --logo-w: 9.5rem;
+    --logo-top: 0.6875rem;
   }
 }
 
@@ -323,14 +323,6 @@ button.tape-surface:active:not(:disabled)::before {
 }
 .ghost-marquee {
   animation: ghost-marquee 36s linear infinite;
-}
-
-/* Brushed-silver lettering (the MERCH tag of the logo). */
-@utility text-silver {
-  background-image: linear-gradient(180deg, #ffffff 0%, #dfe2e6 50%, #9aa0a7 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
 }
 
 @utility scrollbar-none {
