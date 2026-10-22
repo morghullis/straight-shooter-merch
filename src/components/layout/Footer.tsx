@@ -27,7 +27,7 @@ export async function Footer() {
       <Container className="grid grid-cols-2 gap-x-6 gap-y-10 py-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div className="col-span-2 lg:col-span-1">
           <Link href="/" aria-label={copy.header.home(site.name)} className="inline-block">
-            <Logo className="[--logo-w:6.5rem]" />
+            <Logo className="[--logo-w:12rem]" />
           </Link>
           <p className="mt-4 max-w-[30ch] text-sm leading-relaxed text-white/60">{copy.footer.tagline}</p>
         </div>

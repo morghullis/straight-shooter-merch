@@ -10,7 +10,8 @@ export interface ArtAsset {
 }
 
 export const art = {
-  logoMark: { src: "/images/brand/logo-mark.webp", width: 680, height: 600 },
+  // The official logo, cut out of its black background (source: assets-src/brand).
+  logo: { src: "/images/brand/logo-official.webp", width: 1374, height: 552 },
   tape: { src: "/images/art/tape-gold.webp", width: 1505, height: 262 },
   stampOnAir: { src: "/images/art/stamp-on-air.webp", width: 700, height: 424 },
   stampBlasphemous: { src: "/images/art/stamp-blasphemous.webp", width: 700, height: 312 },

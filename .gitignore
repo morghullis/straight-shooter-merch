@@ -47,3 +47,6 @@ next-env.d.ts
 
 # netlify
 .netlify
+
+# rebuilt by tools/3d/perforate-cap.mjs from hat-v2-8k-final.glb
+assets-src/round6/models/*-perforated.glb

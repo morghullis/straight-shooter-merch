@@ -142,6 +142,23 @@ export async function attachToProduct(productId, fileIds) {
   }
 }
 
+/** Takes files off a product's media. The files stay in Shopify Files (nothing is deleted). */
+export async function detachFromProduct(productId, fileIds) {
+  if (!fileIds.length) return;
+  const data = await gql(
+    `mutation($files: [FileUpdateInput!]!) { fileUpdate(files: $files) { userErrors { field message } } }`,
+    { files: fileIds.map((id) => ({ id, referencesToRemove: [productId] })) },
+  );
+  check(data.fileUpdate, "fileUpdate");
+}
+
+/** Adds or removes product tags. */
+export async function setTag(productId, tag, on) {
+  const op = on ? "tagsAdd" : "tagsRemove";
+  const data = await gql(`mutation($id: ID!, $tags: [String!]!) { ${op}(id: $id, tags: $tags) { userErrors { field message } } }`, { id: productId, tags: [tag] });
+  check(data[op], op);
+}
+
 /** Sets metafields ([{ ownerId, namespace, key, type, value }]), 25 per call (Shopify's limit). */
 export async function setMetafields(metafields) {
   for (let i = 0; i < metafields.length; i += 25) {

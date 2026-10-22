@@ -48,7 +48,7 @@ window.loadModel = async (url, opts = {}) => {
   if (pivot) { scene.remove(pivot); pivot = null; }
   const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder); const gltf = await loader.loadAsync(url);
   const obj = gltf.scene;
-  obj.traverse((n) => { if (n.isMesh) { n.material.side = THREE.DoubleSide; if (opts.normalScale != null && n.material.normalScale) n.material.normalScale.setScalar(opts.normalScale); if (n.material.map) n.material.map.anisotropy = 16; } });
+  obj.traverse((n) => { if (n.isMesh) { n.material.side = opts.doubleSide === false ? THREE.FrontSide : THREE.DoubleSide; if (opts.normalScale != null && n.material.normalScale) n.material.normalScale.setScalar(opts.normalScale); if (n.material.map) n.material.map.anisotropy = 16; } });
   // center + scale to 2 units tall/long
   const box = new THREE.Box3().setFromObject(obj);
   const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());

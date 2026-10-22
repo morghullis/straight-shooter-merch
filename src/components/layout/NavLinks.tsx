@@ -39,10 +39,12 @@ function ActiveNav({ links }: { links: NavLink[] }) {
 /** Desktop primary navigation: white caps separated by thin vertical rules. */
 export function NavLinks({ links }: { links: NavLink[] }) {
   return (
-    // Centered with flex (no transform) so the 1px separators land on whole pixels.
+    // Centered by a 1fr | auto | 1fr grid (no transform, so the 1px separators land on whole
+    // pixels); the side columns never get narrower than the logo and the icons, so on narrow
+    // screens the links move aside instead of running into them.
     <nav
       aria-label={copy.a11y.primaryNav}
-      className="absolute inset-x-0 top-(--nav-top) hidden justify-center pr-[0.375rem] lg:flex"
+      className="absolute inset-x-0 top-(--nav-top) hidden grid-cols-[minmax(calc(var(--gutter)+var(--logo-w)+0.5rem),1fr)_auto_minmax(9.25rem,1fr)] pr-[0.375rem] lg:grid [&>ul]:col-start-2"
     >
       <Suspense fallback={<NavList links={links} />}>
         <ActiveNav links={links} />

@@ -23,7 +23,6 @@ export const copy = {
     closeSearch: "Close search",
     account: "Account",
     openCart: (count: number) => `Open cart, ${count} ${plural(count, "item", "items")}`,
-    logoTag: "Merch",
     openMenu: "Open menu",
     closeMenu: "Close menu",
     menuCta: "Shop all merch",
