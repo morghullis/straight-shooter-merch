@@ -8,9 +8,9 @@
 //      never a real person)                                                          (12 credits)
 //   4. the GLB optimised for the web and for big screens, and rendered on sand from the front and the
 //      back (../3d); a product tagged "back-print" shows its back first
-//   5. everything uploaded to Shopify: the renders and the on-model photo lead the product's images
-//      (the ones from an earlier run are taken off the product, never deleted) and the custom fields
-//      are filled in
+//   5. everything uploaded to Shopify: the first view, the on-model photo (2nd image = the card's
+//      hover) and the other view lead the product's images (the ones from an earlier run are taken
+//      off the product, never deleted) and the custom fields are filled in
 //
 // A product runs when it has photos and no assets yet, when the merchant adds a photo (the photos the
 // last run used are recorded in its `custom.asset_pipeline` field; the pipeline's own images do not
@@ -28,6 +28,9 @@
 //   --from-glb file  skip Meshy and use this GLB (re-render a product, or test without credits);
 //                    the product keeps its on-model photo
 //   --local dir      write the renders and GLBs to dir instead of Shopify (with --from-glb: a free test)
+//   --smoke          a free end-to-end test of the machinery (the Action's "smoke" option): the named
+//                    products' current 3D model goes through the optimiser and the renderer, nothing
+//                    is written to Shopify and Meshy is not called
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -47,7 +50,7 @@ const MIN_BALANCE = Number(process.env.MESHY_MIN_BALANCE ?? 100);
 const TAG = { skip: "no-3d", backPrint: "back-print", redo: "regenerate-assets" };
 
 const args = (() => {
-  const out = { targets: [], max: 3, check: false, dryRun: false, fromGlb: null, local: null };
+  const out = { targets: [], max: 3, check: false, dryRun: false, fromGlb: null, local: null, smoke: false };
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -56,8 +59,13 @@ const args = (() => {
     else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--from-glb") out.fromGlb = path.resolve(argv[++i]);
     else if (a === "--local") out.local = path.resolve(argv[++i]);
+    else if (a === "--smoke") out.smoke = true;
     else if (/^(gid:\/\/shopify\/Product\/\d+|[a-z0-9][a-z0-9-]{0,127})$/.test(a)) out.targets.push(a);
     else throw new Error(`Unexpected argument: ${a}`);
+  }
+  if (out.smoke) {
+    if (!out.targets.length) throw new Error("--smoke needs the products to test (handles)");
+    out.local ??= fs.mkdtempSync(path.join(os.tmpdir(), "smoke-"));
   }
   return out;
 })();
@@ -71,6 +79,7 @@ const FIELDS = `
   turntable: metafield(namespace: "${NAMESPACE}", key: "${F.turntable.key}") { value }
   onModel: metafield(namespace: "${NAMESPACE}", key: "${F.onModel.key}") { value }
   view: metafield(namespace: "${NAMESPACE}", key: "${F.view.key}") { value }
+  modelHd: metafield(namespace: "${NAMESPACE}", key: "${F.modelHd.key}") { reference { ... on GenericFile { url } } }
   pipeline: metafield(namespace: "${NAMESPACE}", key: "${F.pipeline.key}") { value }
 `;
 
@@ -193,6 +202,13 @@ async function processProduct(p, tools) {
     const tasks = {};
     let onModelFile = null;
 
+    if (args.smoke) {
+      const url = p.modelHd?.reference?.url;
+      if (!url) throw new Error("the product has no 3D model to test with");
+      progress("smoke test: the product's current 3D model, no Meshy, nothing written to Shopify");
+      glb = await meshy.download(url, path.join(work, `${p.handle}-current.glb`));
+    }
+
     if (!glb) {
       if (!photos.length) throw new Error("the product has no photo of its own to start from");
       const type = (p.productType || "product").toLowerCase();
@@ -254,9 +270,10 @@ async function processProduct(p, tools) {
       // keeps the framing set before.
       mf("view", args.fromGlb && p.view?.value ? p.view.value : JSON.stringify({ fit: 2.35, yaw: backPrint ? 180 : 0 })),
     ]);
-    // The same pictures in Shopify: the new views and the on-model photo lead the merchant's photos,
-    // and the images of earlier runs come off the product (they stay in Files).
-    const lead = [...renderIds, ...(onModelId ? [onModelId] : [])];
+    // The same pictures in Shopify: the first view, the on-model photo (the second image is what a
+    // card shows on hover) and the other view lead the merchant's photos, and the images of earlier
+    // runs come off the product (they stay in Files).
+    const lead = [renderIds[0], onModelId, ...renderIds.slice(1)].filter(Boolean);
     const old = [...generatedIds(p)].filter((id) => !lead.includes(id) && p.media.nodes.some((m) => m.id === id));
     await detachFromProduct(p.id, old);
     await attachToProduct(p.id, lead);
@@ -284,7 +301,7 @@ for (const p of products) {
 }
 
 // Recording the photos of products made before photos were tracked costs nothing: done right away.
-if (!args.dryRun) {
+if (!args.dryRun && !args.local) {
   for (const p of adopt) {
     const state = stateOf(p);
     await setPipeline(p.id, { ...state, photos: merchantPhotos(p).map((m) => m.id), generated: [...generatedIds(p)] });
@@ -298,7 +315,7 @@ if (args.check) {
   process.exit(0);
 }
 if (args.dryRun || batch.length === 0) process.exit(0);
-if (!args.fromGlb && !process.env.MESHY_API_KEY) {
+if (!args.fromGlb && !args.smoke && !process.env.MESHY_API_KEY) {
   // Without Meshy nothing can be made: leave the products untouched (no failed attempts counted).
   log("MESHY_API_KEY is not set: nothing generated. Add it (a GitHub secret for the Action) and the next run does these.");
   process.exit(1);
@@ -313,7 +330,7 @@ let failures = 0;
 const turntable = await openTurntable();
 try {
   for (const p of batch) {
-    if (!args.fromGlb) {
+    if (!args.fromGlb && !args.smoke) {
       const credits = await meshy.balance();
       if (credits !== null && credits < MIN_BALANCE + CREDITS_PER_PRODUCT) {
         log(`Stopping: Meshy has ${credits} credits, below the ${MIN_BALANCE} kept in reserve plus ${CREDITS_PER_PRODUCT} for a product.`);

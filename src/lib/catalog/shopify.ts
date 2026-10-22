@@ -93,9 +93,6 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     priceRange { minVariantPrice { amount currencyCode } }
     collections(first: 10) { nodes { handle } }
     media(first: 10) { nodes { ... on Model3d { sources { url mimeType } } } }
-    onModel: metafield(namespace: "custom", key: "on_model_image") {
-      reference { ... on MediaImage { image { url altText width height } } }
-    }
     model3d: metafield(namespace: "custom", key: "model_3d") { reference { ... on GenericFile { url } } }
     model3dHd: metafield(namespace: "custom", key: "model_3d_hd") { reference { ... on GenericFile { url } } }
     model3dShowroom: metafield(namespace: "custom", key: "model_3d_showroom") { reference { ... on GenericFile { url } } }
@@ -181,8 +178,8 @@ const VARIANTS_QUERY = /* GraphQL */ `
 `;
 
 const CART_CREATE_MUTATION = /* GraphQL */ `
-  mutation CartCreate($lines: [CartLineInput!]!) {
-    cartCreate(input: { lines: $lines }) {
+  mutation CartCreate($lines: [CartLineInput!]!, $buyerIdentity: CartBuyerIdentityInput) {
+    cartCreate(input: { lines: $lines, buyerIdentity: $buyerIdentity }) {
       cart { checkoutUrl }
       userErrors { message }
     }
@@ -235,7 +232,6 @@ interface RawProduct {
   priceRange: { minVariantPrice: Money };
   collections: { nodes: { handle: string }[] };
   media?: { nodes: { sources?: { url: string; mimeType: string }[] }[] };
-  onModel?: RawImageRef | null;
   model3d?: RawFileRef | null;
   model3dHd?: RawFileRef | null;
   model3dShowroom?: RawFileRef | null;
@@ -272,15 +268,6 @@ function mapImage(raw: RawImage | null, fallbackAlt: string): CatalogImage {
   };
 }
 
-/**
- * The on-model shot comes from the `custom.on_model_image` field (an image).
- * Without it the card simply has no hover shot: its carousel already shows the product images.
- */
-function resolveHoverImage(raw: RawProduct): CatalogImage | null {
-  const meta = raw.onModel?.reference?.image;
-  return meta ? mapImage(meta, `${raw.title} on a model`) : null;
-}
-
 /** `custom.model_3d_view` is JSON: { "fit": 2.35, "yaw": 0 }. Anything else is ignored. */
 function parseView(value: string | undefined): Pick<Model3D, "fit" | "yaw"> {
   try {
@@ -309,13 +296,10 @@ function resolveModel(raw: RawProduct): Model3D | null {
 }
 
 function mapProduct(raw: RawProduct): Product {
-  const hoverImage = resolveHoverImage(raw);
-  // Shopify decides what shows: the product's images in the order they have in the admin (the
-  // first one is the card's picture). The on-model shot is added at the end when it is not one of
-  // them already.
-  const photos = raw.images.nodes.map((i) => mapImage(i, raw.title));
-  const file = (url: string) => url.split("?")[0];
-  const images = hoverImage && !photos.some((p) => file(p.url) === file(hoverImage.url)) ? [...photos, hoverImage] : photos;
+  // Shopify decides what shows: the product's images in the order they have in the admin. The
+  // first one is the card's picture and the second one shows when the card is hovered.
+  const images = raw.images.nodes.map((i) => mapImage(i, raw.title));
+  const hoverImage = images[1] ?? null;
   const featuredImage = mapImage(raw.featuredImage ?? raw.images.nodes[0] ?? null, raw.title);
 
   const variants: ProductVariant[] = raw.variants.nodes.map((v) => ({
@@ -461,19 +445,35 @@ export async function fetchVariants(ids: string[]): Promise<Map<string, LiveVari
   return live;
 }
 
+/**
+ * A Shopify cart with these lines; returns its checkout URL. With the signed-in shopper's Customer
+ * Account API token, checkout opens signed in (and the store can follow up an abandoned checkout).
+ * If Shopify refuses the token, the cart is made without it: checkout must never fail for that.
+ */
 export async function createShopifyCart(
   lines: { merchandiseId: string; quantity: number }[],
+  customerAccessToken?: string | null,
 ): Promise<string> {
-  const data = await shopifyFetch<{
-    cartCreate: {
-      cart: { checkoutUrl: string } | null;
-      userErrors: { message: string }[];
-    };
-  }>(CART_CREATE_MUTATION, { lines });
+  const create = async (buyerIdentity: { customerAccessToken: string } | null) => {
+    const data = await shopifyFetch<{
+      cartCreate: {
+        cart: { checkoutUrl: string } | null;
+        userErrors: { message: string }[];
+      };
+    }>(CART_CREATE_MUTATION, { lines, buyerIdentity });
+    const { cart, userErrors } = data.cartCreate;
+    if (!cart || userErrors.length) {
+      throw new Error(userErrors.map((e) => e.message).join("; ") || "Could not create cart");
+    }
+    return cart.checkoutUrl;
+  };
 
-  const { cart, userErrors } = data.cartCreate;
-  if (!cart || userErrors.length) {
-    throw new Error(userErrors.map((e) => e.message).join("; ") || "Could not create cart");
+  if (customerAccessToken) {
+    try {
+      return await create({ customerAccessToken });
+    } catch {
+      // Fall through to a cart without the shopper: they can still sign in at checkout.
+    }
   }
-  return cart.checkoutUrl;
+  return create(null);
 }

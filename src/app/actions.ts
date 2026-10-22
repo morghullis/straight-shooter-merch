@@ -1,6 +1,7 @@
 "use server";
 
 import { createShopifyCart, fetchVariants, isShopifyConfigured } from "@/lib/catalog/shopify";
+import { isFresh, readSession } from "@/lib/customer-account";
 
 export type CheckoutResult = { url: string } | { error: string; removed?: string[] };
 
@@ -93,7 +94,9 @@ export async function createCheckout(
         removed,
       };
     }
-    return { url: await createShopifyCart(clean) };
+    // A signed-in shopper reaches checkout signed in.
+    const session = await readSession();
+    return { url: await createShopifyCart(clean, session && isFresh(session) ? session.accessToken : null) };
   } catch {
     return { error: "We couldn't start checkout. Please try again in a moment." };
   }

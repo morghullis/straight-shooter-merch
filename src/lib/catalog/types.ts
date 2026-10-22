@@ -53,9 +53,9 @@ export interface Product {
   availableForSale: boolean;
   /** The garment on its own, first angle. This is what cards show by default. */
   featuredImage: CatalogImage;
-  /** The garment on a model, shown when a card is hovered (custom field `on_model_image`). */
+  /** Shown when a card is hovered: the product's second image in Shopify (the asset pipeline puts its on-model photo there). */
   hoverImage?: CatalogImage | null;
-  /** The product's images in their Shopify order (then the on-model shot, if it is not one of them); cards turn them into a carousel. */
+  /** The product's images in their Shopify order; cards turn them into a carousel. */
   images: CatalogImage[];
   options: ProductOption[];
   variants: ProductVariant[];

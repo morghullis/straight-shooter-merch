@@ -23,6 +23,11 @@ on:
         description: Most products in this run
         required: false
         default: "3"
+      smoke:
+        description: Free test of the machinery (no Meshy, nothing written to Shopify) with the named products' current 3D models
+        type: boolean
+        required: false
+        default: false
 
 # One run at a time, so a product is never generated twice.
 concurrency:
@@ -43,6 +48,7 @@ jobs:
       # environment, never pasted into the script (generate.mjs validates them).
       PRODUCTS: ${{ inputs.products || '' }}
       MAX: ${{ inputs.max || '3' }}
+      SMOKE: ${{ inputs.smoke && 'true' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -81,4 +87,16 @@ jobs:
           CHROME_PATH: /usr/bin/google-chrome
         run: |
           set -f
-          node tools/pipeline/generate.mjs $PRODUCTS --max "$MAX"
+          if [ -n "$SMOKE" ]; then
+            node tools/pipeline/generate.mjs $PRODUCTS --smoke --local "$RUNNER_TEMP/smoke"
+          else
+            node tools/pipeline/generate.mjs $PRODUCTS --max "$MAX"
+          fi
+
+      - name: Smoke test output
+        if: env.SMOKE != '' && steps.check.outputs.pending != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test
+          path: ${{ runner.temp }}/smoke
+          retention-days: 3
