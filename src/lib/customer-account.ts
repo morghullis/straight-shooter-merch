@@ -251,7 +251,12 @@ export function safeReturnPath(value: string | null | undefined, fallback = "/ac
   const base = "https://this-site.invalid";
   try {
     const url = new URL(value, base);
-    return url.origin === base ? url.pathname + url.search + url.hash : fallback;
+    if (url.origin !== base) return fallback;
+    const path = url.pathname + url.search + url.hash;
+    // Dot segments can leave a path like "//evil.com" ("/.//evil.com"), which a redirect would read
+    // as another site: the result itself must start with a single "/" and still resolve here.
+    if (!path.startsWith("/") || path.startsWith("//") || new URL(path, base).origin !== base) return fallback;
+    return path;
   } catch {
     return fallback;
   }
