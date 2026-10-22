@@ -2,7 +2,7 @@
   "generator": "Meshy text-to-image",
   "model": "gpt-image-2",
   "creditsPerImage": 9,
-  "totalCredits": 117,
+  "totalCredits": 209,
   "generatedOn": "2026-10-20",
   "note": "Originals (PNG/GLB) live in assets-src/. public/ holds web-optimized versions: WebP for photos, trimmed PNG for logos, catalog photos with 6% extra margin baked in, GLBs compressed with gltf-transform (meshopt, 1024px WebP textures).",
   "assets": [
@@ -596,5 +596,56 @@
       "result": "Flat sheets, discarded."
     },
     "frontFix": "A model made from one photo of its back invents its front (a blurred copy of the print). tools/3d/project-front.mjs projects the real front photo onto that side and evens out the roughness map (Meshy makes the invented print shinier)."
+  },
+  "round6": {
+    "date": "2026-10-22",
+    "why": "The store replaced the cap's and the tumbler's photos in Shopify; their 3D models no longer matched the products.",
+    "credits": 92,
+    "tasks": [
+      {
+        "product": "blasphemous-hat",
+        "tool": "multi-image-to-3d",
+        "model": "meshy-7.1",
+        "texture": "8k",
+        "geometry": "2k (Ultra)",
+        "pbr": true,
+        "inputs": [
+          "store photo: front (black-baseball-cap.png)",
+          "store photo: side (black-baseball-cap_copy.png)"
+        ],
+        "task": "01a16182-f61d-758a-8abb-bcf34c28491a",
+        "credits": 40,
+        "fixes": "Meshy misspelt the lettering (BLASPIEMOUS): the real front photo's lettering was projected onto it (tools/3d/project-front.mjs) and an invented mark on the back painted out.",
+        "files": [
+          "assets-src/round6/models/hat-v2-8k.glb (as made)",
+          "assets-src/round6/models/hat-v2-8k-final.glb (used)"
+        ]
+      },
+      {
+        "product": "culture-table-tumbler",
+        "tool": "image-to-3d",
+        "model": "meshy-7.1",
+        "texture": "8k",
+        "geometry": "4k (Ultra)",
+        "pbr": true,
+        "inputs": [
+          "store photo: white tumbler"
+        ],
+        "task": "01a16182-fbd5-7740-b2b7-ba48776f0165",
+        "credits": 40,
+        "files": [
+          "assets-src/round6/models/tumbler-v2-8k.glb"
+        ]
+      },
+      {
+        "product": "culture-table-tumbler",
+        "tool": "image-to-image",
+        "model": "gpt-image-2",
+        "use": "on-model hover photo (a generic person, face out of frame)",
+        "task": "01a16183-0828-7557-9dca-9b9b8ec80c89",
+        "credits": 12
+      }
+    ],
+    "uploaded": "tools/pipeline/generate.mjs --from-glb: GLBs, six-angle turntables (placed before the store's photos) and custom fields in Shopify."
   }
 }

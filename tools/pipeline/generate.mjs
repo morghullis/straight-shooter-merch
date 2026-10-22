@@ -187,6 +187,8 @@ async function processProduct(p, turntable) {
       ...(onModelId ? [mf("onModel", onModelId)] : []),
       mf("model", webId),
       mf("modelHd", hdId),
+      // A new model replaces any older showroom model too, so the showroom shows the same product.
+      mf("modelShowroom", webId),
       mf("view", JSON.stringify({ fit: 2.35, yaw: 0 })),
     ]);
     // The same pictures in Shopify: the renders and the on-model photo lead the product's own photos.
