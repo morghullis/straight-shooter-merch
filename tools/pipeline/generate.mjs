@@ -3,7 +3,7 @@
 //
 //   1. Meshy image to image: the product alone, straight on, on a plain background,
 //      from the merchant's photos                                                    (12 credits)
-//   2. Meshy image to 3D: a textured 3D model of it, 8K, Ultra geometry, PBR         (40 credits)
+//   2. Meshy image to 3D: a textured 3D model of it, Meshy 7.1, 2K texture, PBR       (30 credits)
 //   3. Meshy image to image: the on-model photo shown on hover (a generic model,
 //      never a real person)                                                          (12 credits)
 //   4. the GLB optimised for the web and for big screens, and rendered on sand from the front and the
@@ -41,7 +41,8 @@ loadEnvFile();
 
 const MAX_ATTEMPTS = 3;
 const STALE_RUN_MS = 2 * 60 * 60 * 1000;
-const CREDITS_PER_PRODUCT = 64;
+// Two images (12 each) and the 3D model (see meshy.modelSettings).
+const CREDITS_PER_PRODUCT = 24 + meshy.modelSettings().credits;
 const MIN_BALANCE = Number(process.env.MESHY_MIN_BALANCE ?? 100);
 const TAG = { skip: "no-3d", backPrint: "back-print", redo: "regenerate-assets" };
 

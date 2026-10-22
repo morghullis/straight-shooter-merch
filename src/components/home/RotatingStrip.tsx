@@ -64,17 +64,23 @@ const TURN = { duration: 0.75, ease: [0.65, 0, 0.35, 1] as const };
 
 const SIZES = { single: "(min-width: 1326px) 12.1vw, 160px", main: "(min-width: 1326px) 15.1vw, 200px", second: "(min-width: 1326px) 21.1vw, 280px" };
 
-/** Photo column of a tile. Two-photo tiles (tumbler + hoodie) get their own composition. */
+/**
+ * Photo column of a tile. Two-photo tiles get their own composition.
+ *
+ * Sizes are those of the reference (a 288px tile at 1326px), capped by the tile's own width
+ * (`cqw`, 1rem = 5.56cqw of a 288px tile): between 1024px and 1326px the tiles are narrower than in
+ * the reference, so photo, text and button shrink together instead of the title being cut off.
+ */
 function TileArt({ tile, priority }: { tile: StripTile; priority?: boolean }) {
   if (!tile.image) return null;
 
   if (tile.secondaryImage) {
     return (
       <>
-        <div className="absolute top-[-0.875rem] right-[-3.875rem] h-[13.125rem] w-[17.5rem] [mask-image:linear-gradient(90deg,transparent,#000_34%)]">
+        <div className="absolute top-[-0.875rem] right-[max(-3.875rem,-21.5cqw)] h-[13.125rem] w-[min(17.5rem,97.2cqw)] [mask-image:linear-gradient(90deg,transparent,#000_34%)]">
           <Image src={tile.secondaryImage.url} alt="" fill sizes={SIZES.second} className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
         </div>
-        <div className="absolute top-[-0.75rem] left-[-3.375rem] h-[9.375rem] w-[12.5rem] [mask-image:linear-gradient(90deg,#000_66%,transparent)]">
+        <div className="absolute top-[-0.75rem] left-[max(-3.375rem,-18.75cqw)] h-[9.375rem] w-[min(12.5rem,69.4cqw)] [mask-image:linear-gradient(90deg,#000_66%,transparent)]">
           <Image src={tile.image.url} alt={tile.image.alt} fill priority={priority} sizes={SIZES.main} className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
         </div>
       </>
@@ -82,7 +88,7 @@ function TileArt({ tile, priority }: { tile: StripTile; priority?: boolean }) {
   }
 
   return (
-    <div className="absolute inset-y-0 left-0 w-[9.25rem] [mask-image:linear-gradient(90deg,#000_70%,transparent)] max-lg:w-[10rem]">
+    <div className="absolute inset-y-0 left-0 w-[min(9.25rem,51.4cqw)] [mask-image:linear-gradient(90deg,#000_70%,transparent)] max-lg:w-[10rem]">
       <Image
         src={tile.image.url}
         alt={tile.image.alt}
@@ -100,18 +106,18 @@ function Tile({ tile, theme, first, priority }: { tile: StripTile; theme: TileTh
   const wide = Boolean(tile.secondaryImage);
 
   return (
-    <article className={cn("group shine relative isolate h-full overflow-hidden", t.bg)}>
+    <article className={cn("group shine @container relative isolate h-full overflow-hidden", t.bg)}>
       <TileArt tile={tile} priority={priority} />
 
       <div
         className={cn(
           "absolute inset-y-0 right-0 flex flex-col justify-center pr-3",
-          wide ? "left-[6.3125rem] max-lg:left-[8.125rem]" : "left-[9.1875rem] max-lg:left-[10rem]",
+          wide ? "left-[min(6.3125rem,35.1cqw)] max-lg:left-[8.125rem]" : "left-[min(9.1875rem,51cqw)] max-lg:left-[10rem]",
         )}
       >
         <p
           className={cn(
-            "flex items-center font-nav text-[0.625rem] leading-[0.625rem] font-semibold tracking-[0.07em] whitespace-nowrap uppercase lg:text-[0.4625rem]",
+            "flex items-center font-nav text-[0.625rem] leading-[0.625rem] font-semibold tracking-[0.07em] whitespace-nowrap uppercase lg:text-[length:min(0.4625rem,2.57cqw)]",
             t.label,
           )}
         >
@@ -123,7 +129,7 @@ function Tile({ tile, theme, first, priority }: { tile: StripTile; theme: TileTh
 
         <h3
           className={cn(
-            "mt-[0.5625rem] font-display text-[1.43125rem] leading-[1.1875rem] font-extrabold tracking-[-0.05em] [word-spacing:0.08em] uppercase",
+            "mt-[0.5625rem] font-display text-[length:min(1.43125rem,7.95cqw)] leading-[min(1.1875rem,6.6cqw)] font-extrabold tracking-[-0.05em] [word-spacing:0.08em] uppercase",
             t.title,
           )}
         >
@@ -137,7 +143,7 @@ function Tile({ tile, theme, first, priority }: { tile: StripTile; theme: TileTh
         <Link
           href={tile.href}
           className={cn(
-            "mt-[0.875rem] inline-flex h-10 w-[9.375rem] items-center justify-center gap-[0.375rem] border font-nav text-[0.6875rem] font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-colors after:absolute after:inset-0 after:content-[''] lg:h-[1.3125rem] lg:w-[7.1875rem] lg:text-[0.4875rem]",
+            "mt-[0.875rem] inline-flex h-10 w-[9.375rem] items-center justify-center gap-[0.375rem] border font-nav text-[0.6875rem] font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-colors after:absolute after:inset-0 after:content-[''] lg:h-[1.3125rem] lg:w-[min(7.1875rem,39.9cqw)] lg:text-[length:min(0.4875rem,2.7cqw)]",
             t.cta,
           )}
         >

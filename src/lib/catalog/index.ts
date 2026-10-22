@@ -78,23 +78,37 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
 const hasTag = (p: Product, tag: string) => p.tags.some((t) => t.toLowerCase() === tag);
 
 /**
+ * Every listed product, the ones shoppers engage with most first: page views and adds to the cart
+ * over the last month (see `popularity.ts`). Ties, and the time before there is any data, keep the
+ * catalog's own order (best selling, with Shopify).
+ */
+export async function getProductsByEngagement(): Promise<Product[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products", "popularity");
+
+  const [all, popularity] = await Promise.all([getProducts(), getPopularity()]);
+  return all
+    .map((p, i) => ({ p, i, score: popularity.get(p.handle) ?? 0 }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .map(({ p }) => p);
+}
+
+/**
  * The showroom's products: the one shoppers engage with most in each category (Shopify's product
- * type), among those with a 3D model. Engagement is page views and adds to the cart over the last
- * month (see `popularity.ts`); a product tagged `showroom` in Shopify stands for its category
+ * type), among those with a 3D model. A product tagged `showroom` in Shopify stands for its category
  * whatever its numbers, and one tagged `no-showroom` never shows. Categories come in the order of
- * their product's engagement. Ties, and the time before there is any data, keep the catalog's own
- * order (best selling, with Shopify).
+ * their product's engagement.
  */
 export async function getShowroomProducts(limit = 6): Promise<Product[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products", "popularity");
 
-  const [all, popularity] = await Promise.all([getProducts(), getPopularity()]);
-  const ranked = all
+  const ranked = (await getProductsByEngagement())
     .filter((p) => p.model3d && !hasTag(p, "no-showroom"))
-    .map((p, i) => ({ p, i, pinned: hasTag(p, "showroom") ? 1 : 0, score: popularity.get(p.handle) ?? 0 }))
-    .sort((a, b) => b.pinned - a.pinned || b.score - a.score || a.i - b.i);
+    .map((p, i) => ({ p, i, pinned: hasTag(p, "showroom") ? 1 : 0 }))
+    .sort((a, b) => b.pinned - a.pinned || a.i - b.i);
 
   // The first product of each category in that order is its most engaged-with one.
   const categories = new Set<string>();

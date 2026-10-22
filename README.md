@@ -78,7 +78,7 @@ Nothing user-facing is hard-coded in components: text, art, models and layout nu
 | `src/lib/popularity.ts`, `src/app/api/track/route.ts` | Product views and adds to the cart, counted per day (Netlify Blobs) |
 | `src/app/api/revalidate/route.ts` | Shopify webhook receiver (HMAC-verified); starts the asset pipeline for new products |
 | `tools/pipeline/`, `.github/workflows/product-assets.yml` | The asset pipeline: Meshy 3D model, front and back views and on-model hover photo for new products (and products given a new photo), uploaded to Shopify |
-| `tools/3d/` | Optimise the GLBs, render the angle images from the 8K models, repair a model's front (also used by the pipeline) |
+| `tools/3d/` | Optimise the GLBs, render the front and back views from the original models, repair a model (also used by the pipeline) |
 | `tools/signature/` | `build.py`: the pen route that writes the real hero signature on (Python, numpy + Pillow) |
 | `docs/` | `SHOPIFY.md`, `meshy-assets.json` (what Meshy made and which model won), screenshots |
 | `assets-src/` | Original full-size images and GLBs from Meshy (not served) |
