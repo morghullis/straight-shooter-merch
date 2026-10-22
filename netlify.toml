@@ -6,6 +6,12 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# The Next.js runtime (server functions, image CDN, caching). The CLI adds it on its own, Git builds do
+# not: without it Netlify publishes the raw .next folder and every page is a 404. Pinned in
+# package.json (devDependencies) to the version the site was tested with.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 # This deployment is a preview for showing the design: keep it out of search engines.
 # Remove this block when the site goes live on its real domain.
 [[headers]]
