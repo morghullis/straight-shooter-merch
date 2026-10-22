@@ -55,7 +55,7 @@ export interface Product {
   featuredImage: CatalogImage;
   /** The garment on a model, shown when a card is hovered (custom field `on_model_image`). */
   hoverImage?: CatalogImage | null;
-  /** Every product image in order (the turntable renders, then the on-model shot); cards turn the renders into a carousel. */
+  /** The product's images in their Shopify order (then the on-model shot, if it is not one of them); cards turn them into a carousel. */
   images: CatalogImage[];
   options: ProductOption[];
   variants: ProductVariant[];

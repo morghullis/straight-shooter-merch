@@ -6,7 +6,7 @@ site with the site's look, without touching the code.
 
 | Field | Owner | What the site does with it |
 | --- | --- | --- |
-| `turntable` (list of images) | product | card carousel and product gallery (renders of the 3D model on sand) |
+| `turntable` (list of images) | product | a record of the renders the pipeline made (they are also added to the product's images, which is what the site shows) |
 | `on_model_image` (image) | product | card hover, last photo of the gallery |
 | `model_3d`, `model_3d_hd` (GLB files) | product | 3D viewer on the product page (light / detailed) |
 | `model_3d_showroom` (GLB, optional) | product | the home showroom (defaults to `model_3d`) |
@@ -16,7 +16,7 @@ site with the site's look, without touching the code.
 | `tile_title` (one row per line), `tile_image`, `tile_image_secondary`, `tile_theme` (`cream`/`dark`/`sand`) | collection | the collection's home tile |
 | `position` | collection | order in the navigation, footer and home tiles |
 
-**A new product is on sale at once:** as soon as it is published on the Headless channel (with stock) it shows on the site with the photos uploaded to it in Shopify, and can be bought; the pipeline adds its art in the background and the site switches to it when it is ready. The renders and the on-model photo are also added to the product's own media in Shopify, before its photos, so the store and the site show the same pictures (the site's gallery: renders, on-model photo, then the product's other photos, each file once).
+**What the site shows is the product in Shopify:** its images in the order they have in the admin (the first one is the card's picture, the first six its carousel), its title, price, variants and stock. Change, add, remove or reorder the images in Shopify and the site follows at once (the products webhook refreshes it). **A new product is on sale at once:** as soon as it is published on the Headless channel (with stock) it shows with its own photos and can be bought; the pipeline adds its renders and on-model photo in the background, placed first among its images, and the site shows them when they are ready. Reorder or delete them in Shopify like any image.
 
 Without art a product still shows, with the photos uploaded to it in Shopify; a collection without a tile
 photo shows its first product. Product type (`Hoodie`, `Tee`...) is the category the showroom labels with;

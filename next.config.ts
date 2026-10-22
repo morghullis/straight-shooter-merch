@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // Pages visited or prefetched in the browser are reused for 30 s (the minimum) instead of 5 min,
+    // so a change made in Shopify also shows to a shopper who is already browsing.
+    staleTimes: { static: 30 },
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

@@ -52,6 +52,8 @@ export function CartDrawer() {
       if ("url" in result) {
         window.location.assign(result.url);
       } else {
+        // Items the store no longer sells come out of the cart, so the next try goes through.
+        result.removed?.forEach((variantId) => remove(variantId));
         setError(result.error);
       }
     });

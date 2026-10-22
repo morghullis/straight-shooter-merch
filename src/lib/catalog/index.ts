@@ -98,8 +98,20 @@ export async function getShowroomProducts(limit = 4): Promise<Product[]> {
 }
 
 export async function getProduct(handle: string): Promise<Product | null> {
-  if (!(await isKnownProduct(handle))) return null;
-  return getKnownProduct(handle);
+  if (!isSafeHandle(handle)) return null;
+  if (await isKnownProduct(handle)) return getKnownProduct(handle);
+  // Not in the listings: it may still be "unlisted" in Shopify (hidden from collections and search
+  // but open by its link), so ask the store. The answer is only kept for minutes, so random URLs
+  // cannot pile up cache entries.
+  return isShopifyConfigured ? getUnlistedProduct(handle) : null;
+}
+
+async function getUnlistedProduct(handle: string): Promise<Product | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("products", `product:${handle}`);
+
+  return fetchProduct(handle);
 }
 
 async function getKnownProduct(handle: string): Promise<Product | null> {

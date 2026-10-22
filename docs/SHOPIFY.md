@@ -5,7 +5,7 @@
 | Shopify does | This app does |
 | --- | --- |
 | Products, variants, prices, inventory, categories (product type), collections | Every page you see: header, hero, strip, cards, showroom, fan zone |
-| Each product's art, in its custom fields: turntable renders, on-model photo, 3D models | Scroll animation, hover on-model cards, 3D viewer and showroom |
+| Each product's pictures (its images, in their admin order), on-model photo and 3D models | Scroll animation, hover on-model cards, 3D viewer and showroom |
 | Cart + hosted checkout (payments, taxes, shipping, discount codes) | Cart drawer, then a redirect to Shopify's checkout |
 | Orders, customers, emails, admin | Fast cached pages, kept fresh by webhooks |
 
@@ -36,7 +36,7 @@ With the storefront variables empty the app runs on the demo catalog.
 
 `node tools/pipeline/define-metafields.mjs` creates them (once). Each field is described in [tools/pipeline/README.md](../tools/pipeline/README.md). In short:
 
-- **Products:** `turntable` (the carousel), `on_model_image` (the hover), `model_3d` / `model_3d_hd` / `model_3d_showroom` (GLBs), `model_3d_view` (framing). The pipeline fills them for new products; you can also upload your own photos into them in the admin. A product without them still shows, with its own photos.
+- **Products:** the product's own images are the carousel and gallery, in their admin order (first = card picture); `on_model_image` (the hover), `model_3d` / `model_3d_hd` / `model_3d_showroom` (GLBs), `model_3d_view` (framing). The pipeline fills them for new products; you can also upload your own photos into them in the admin. A product without them still shows, with its own photos.
 - **Collections:** `short_title` (navigation), `tile_title`, `tile_image`, `tile_image_secondary`, `tile_theme` (home tile), `position` (order). A collection without them still shows, named by its title, with its first product as the tile photo.
 - **Product type** is the category ("Hoodie", "Tee"). The tag **`featured`** puts a product in the home page's featured row (six; with fewer tagged, the first six products).
 

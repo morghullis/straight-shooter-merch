@@ -4,12 +4,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 
+import { refreshCart, type LiveLine } from "@/app/actions";
 import { trackInteraction } from "@/lib/track";
 
 export interface CartLine {
@@ -30,6 +32,7 @@ type Action =
   | { type: "add"; line: NewLine; quantity: number }
   | { type: "set"; variantId: string; quantity: number }
   | { type: "remove"; variantId: string }
+  | { type: "sync"; live: LiveLine[] }
   | { type: "clear" };
 
 const STORAGE_KEY = "ssm-cart-v1";
@@ -57,6 +60,14 @@ function reducer(state: CartLine[], action: Action): CartLine[] {
     }
     case "remove":
       return state.filter((l) => l.variantId !== action.variantId);
+    case "sync": {
+      // The store's version of each line wins; lines it no longer has are dropped.
+      const live = new Map(action.live.map((l) => [l.variantId, l]));
+      return state.flatMap((l) => {
+        const now = live.get(l.variantId);
+        return now ? [{ ...l, ...now, image: now.image || l.image, quantity: l.quantity }] : [];
+      });
+    }
     case "clear":
       return [];
   }
@@ -183,6 +194,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
   const remove = useCallback((variantId: string) => dispatch({ type: "remove", variantId }), []);
   const clear = useCallback(() => dispatch({ type: "clear" }), []);
+
+  // Keep the stored cart in step with the store: on arrival and whenever the cart is opened,
+  // prices, names and pictures are refreshed and items the store no longer has are dropped.
+  const ids = lines.map((l) => l.variantId).join(",");
+  useEffect(() => {
+    if (!ids) return;
+    let cancelled = false;
+    void refreshCart(ids.split(",")).then((live) => {
+      if (!cancelled && live) dispatch({ type: "sync", live });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ids, isOpen]);
 
   const value = useMemo<CartContextValue>(() => {
     const count = lines.reduce((n, l) => n + l.quantity, 0);

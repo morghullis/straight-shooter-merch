@@ -53,8 +53,10 @@ export async function POST(request: Request) {
     return Response.json({ revalidated: false, reason: `Ignored topic "${topic}"` }, { status: 202 });
   }
 
-  // "max" = stale-while-revalidate: visitors keep getting the cached page while it refreshes.
-  for (const tag of tags) revalidateTag(tag, "max");
+  // A change made in Shopify must show at once: the cached pages expire now, so the next visitor
+  // gets the store as it is (not one last stale copy while it refreshes).
+  for (const tag of tags) revalidateTag(tag, { expire: 0 });
+  console.info(`[shopify webhook] ${topic}${handle ? ` ${handle}` : ""}: refreshed ${[...tags].join(", ")}`);
   if (topic === "products/create" && handle) {
     const product = handle;
     after(() => startAssetPipeline(product));

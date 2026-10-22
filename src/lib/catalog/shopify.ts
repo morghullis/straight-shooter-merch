@@ -93,9 +93,6 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     priceRange { minVariantPrice { amount currencyCode } }
     collections(first: 10) { nodes { handle } }
     media(first: 10) { nodes { ... on Model3d { sources { url mimeType } } } }
-    turntable: metafield(namespace: "custom", key: "turntable") {
-      references(first: 12) { nodes { ... on MediaImage { image { url altText width height } } } }
-    }
     onModel: metafield(namespace: "custom", key: "on_model_image") {
       reference { ... on MediaImage { image { url altText width height } } }
     }
@@ -168,6 +165,21 @@ const PRODUCT_HANDLES_QUERY = /* GraphQL */ `
   }
 `;
 
+const VARIANTS_QUERY = /* GraphQL */ `
+  query Variants($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on ProductVariant {
+        id
+        title
+        availableForSale
+        price { amount currencyCode }
+        image { url altText }
+        product { handle title featuredImage { url altText } }
+      }
+    }
+  }
+`;
+
 const CART_CREATE_MUTATION = /* GraphQL */ `
   mutation CartCreate($lines: [CartLineInput!]!) {
     cartCreate(input: { lines: $lines }) {
@@ -223,7 +235,6 @@ interface RawProduct {
   priceRange: { minVariantPrice: Money };
   collections: { nodes: { handle: string }[] };
   media?: { nodes: { sources?: { url: string; mimeType: string }[] }[] };
-  turntable?: { references: { nodes: { image?: RawImage | null }[] } | null } | null;
   onModel?: RawImageRef | null;
   model3d?: RawFileRef | null;
   model3dHd?: RawFileRef | null;
@@ -299,15 +310,13 @@ function resolveModel(raw: RawProduct): Model3D | null {
 
 function mapProduct(raw: RawProduct): Product {
   const hoverImage = resolveHoverImage(raw);
-  // The site's look: the product's turntable renders, then its on-model shot, then the other photos
-  // uploaded to the product in Shopify (each file once). Without renders, just the photos.
-  const turntable = (raw.turntable?.references?.nodes ?? []).flatMap((n) => (n.image ? [mapImage(n.image, raw.title)] : []));
+  // Shopify decides what shows: the product's images in the order they have in the admin (the
+  // first one is the card's picture). The on-model shot is added at the end when it is not one of
+  // them already.
   const photos = raw.images.nodes.map((i) => mapImage(i, raw.title));
-  const art = [...turntable, ...(hoverImage ? [hoverImage] : [])];
   const file = (url: string) => url.split("?")[0];
-  const inArt = new Set(art.map((i) => file(i.url)));
-  const images = turntable.length ? [...art, ...photos.filter((i) => !inArt.has(file(i.url)))] : photos;
-  const featuredImage = turntable[0] ?? mapImage(raw.featuredImage ?? raw.images.nodes[0] ?? null, raw.title);
+  const images = hoverImage && !photos.some((p) => file(p.url) === file(hoverImage.url)) ? [...photos, hoverImage] : photos;
+  const featuredImage = mapImage(raw.featuredImage ?? raw.images.nodes[0] ?? null, raw.title);
 
   const variants: ProductVariant[] = raw.variants.nodes.map((v) => ({
     id: v.id,
@@ -410,6 +419,45 @@ export async function fetchProductHandles(max = 5000): Promise<string[]> {
 export async function fetchCollections(): Promise<Collection[]> {
   const data = await shopifyFetch<{ collections: { nodes: RawCollection[] } }>(COLLECTIONS_QUERY);
   return data.collections.nodes.map(mapCollection);
+}
+
+/** A variant as it is in the store right now (for the cart). */
+export interface LiveVariant {
+  id: string;
+  title: string;
+  availableForSale: boolean;
+  price: Money;
+  image: { url: string; altText: string | null } | null;
+  handle: string;
+  productTitle: string;
+}
+
+/** The variants that still exist, by id (a deleted variant is simply missing). */
+export async function fetchVariants(ids: string[]): Promise<Map<string, LiveVariant>> {
+  const data = await shopifyFetch<{
+    nodes: ({
+      id: string;
+      title: string;
+      availableForSale: boolean;
+      price: Money;
+      image: { url: string; altText: string | null } | null;
+      product: { handle: string; title: string; featuredImage: { url: string; altText: string | null } | null };
+    } | null)[];
+  }>(VARIANTS_QUERY, { ids });
+  const live = new Map<string, LiveVariant>();
+  for (const n of data.nodes) {
+    if (!n?.id) continue;
+    live.set(n.id, {
+      id: n.id,
+      title: n.title,
+      availableForSale: n.availableForSale,
+      price: n.price,
+      image: n.image ?? n.product.featuredImage,
+      handle: n.product.handle,
+      productTitle: n.product.title,
+    });
+  }
+  return live;
 }
 
 export async function createShopifyCart(
