@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
 import { copy } from "@/config/copy";
-import { nav } from "@/config/site";
+import type { NavLink } from "@/lib/navigation";
 
-function NavList({ activeHref }: { activeHref?: string }) {
+function NavList({ links, activeHref }: { links: NavLink[]; activeHref?: string }) {
   return (
     <ul className="flex items-center">
-      {nav.map((item, i) => {
+      {links.map((item, i) => {
         const active = activeHref === item.href;
         return (
           <li key={item.href} className="flex items-center">
@@ -31,21 +31,21 @@ function NavList({ activeHref }: { activeHref?: string }) {
   );
 }
 
-function ActiveNav() {
+function ActiveNav({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
-  return <NavList activeHref={pathname} />;
+  return <NavList links={links} activeHref={pathname} />;
 }
 
 /** Desktop primary navigation: white caps separated by thin vertical rules. */
-export function NavLinks() {
+export function NavLinks({ links }: { links: NavLink[] }) {
   return (
     // Centered with flex (no transform) so the 1px separators land on whole pixels.
     <nav
       aria-label={copy.a11y.primaryNav}
       className="absolute inset-x-0 top-(--nav-top) hidden justify-center pr-[0.375rem] lg:flex"
     >
-      <Suspense fallback={<NavList />}>
-        <ActiveNav />
+      <Suspense fallback={<NavList links={links} />}>
+        <ActiveNav links={links} />
       </Suspense>
     </nav>
   );

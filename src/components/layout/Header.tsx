@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { copy } from "@/config/copy";
 import { site } from "@/config/site";
+import { getNavLinks } from "@/lib/navigation";
 
 import { HeaderActions } from "./HeaderActions";
 import { HeaderShell } from "./HeaderShell";
@@ -12,7 +13,8 @@ import { NavLinks } from "./NavLinks";
  * 83px black bar on desktop (the logo hangs below it into the hero, as in the design),
  * a compact 64px sticky bar on phones.
  */
-export function Header() {
+export async function Header() {
+  const links = await getNavLinks();
   return (
     <HeaderShell>
       <div className="relative mx-auto h-(--header-h) max-w-(--container)">
@@ -24,8 +26,8 @@ export function Header() {
           <Logo priority />
         </Link>
 
-        <NavLinks />
-        <HeaderActions />
+        <NavLinks links={links} />
+        <HeaderActions links={links} />
       </div>
     </HeaderShell>
   );

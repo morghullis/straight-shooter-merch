@@ -71,7 +71,7 @@ export function ShowroomTabs({ items }: { items: ShowroomItem[] }) {
                 tabIndex={i === index ? 0 : -1}
                 onClick={() => select(i)}
                 className={cn(
-                  "h-10 border px-4 font-nav text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors",
+                  "h-10 max-w-[14rem] truncate border px-4 font-nav text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors",
                   i === index
                     ? "border-gold bg-gold text-[#14110a]"
                     : "border-white/25 bg-black/50 text-white/75 hover:border-white hover:text-white",

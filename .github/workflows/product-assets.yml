@@ -1,0 +1,65 @@
+# Makes the storefront assets (3D model, turntable renders, on-model photo) of new Shopify products:
+# see tools/pipeline/README.md. Runs when the storefront's Shopify webhook reports a new product, every
+# 30 minutes as a safety net, and by hand from the Actions tab.
+#
+# Needs these repository secrets: SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, MESHY_API_KEY,
+# and the repository variable SHOPIFY_STORE_DOMAIN (e.g. my-store.myshopify.com).
+name: Product assets
+
+on:
+  repository_dispatch:
+    types: [shopify-product-created]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      products:
+        description: Product handles to (re)do, separated by spaces. Empty = every product without assets.
+        required: false
+        default: ""
+      max:
+        description: Most products in this run
+        required: false
+        default: "3"
+
+# One run at a time, so a product is never generated twice.
+concurrency:
+  group: product-assets
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tools/3d/package-lock.json
+
+      # three.js comes from the storefront's dependencies; the 3D tools have their own.
+      - run: npm ci --ignore-scripts
+      - run: npm ci --prefix tools/3d
+
+      - name: Generate
+        env:
+          SHOPIFY_STORE_DOMAIN: ${{ vars.SHOPIFY_STORE_DOMAIN }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          MESHY_API_KEY: ${{ secrets.MESHY_API_KEY }}
+          CHROME_PATH: /usr/bin/google-chrome
+          # Passed through the environment, never pasted into the script (generate.mjs validates them).
+          PRODUCTS: ${{ inputs.products || github.event.client_payload.product || '' }}
+          MAX: ${{ inputs.max || '3' }}
+        # Word splitting on, globbing off: PRODUCTS is a list of handles, never file patterns.
+        run: |
+          set -f
+          node tools/pipeline/generate.mjs $PRODUCTS --max "$MAX"

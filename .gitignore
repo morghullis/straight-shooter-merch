@@ -44,7 +44,6 @@ next-env.d.ts
 # local tooling
 /.claude/
 /tools/3d/node_modules/
-/tools/3d/package-lock.json
 
 # netlify
 .netlify

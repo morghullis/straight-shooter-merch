@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { trackInteraction } from "@/lib/track";
+
 export interface CartLine {
   variantId: string;
   handle: string;
@@ -173,6 +175,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const add = useCallback((line: NewLine, quantity = 1) => {
     dispatch({ type: "add", line, quantity });
     setIsOpen(true);
+    trackInteraction(line.handle, "cart");
   }, []);
   const setQuantity = useCallback(
     (variantId: string, quantity: number) => dispatch({ type: "set", variantId, quantity }),

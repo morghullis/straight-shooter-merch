@@ -1,9 +1,10 @@
+import type { Model3D } from "@/lib/catalog/types";
+
 import type { ArtKey } from "./art";
 
 /**
- * 3D models (Meshy image-to-3D, optimised with gltf-transform) keyed by product handle.
- * `rotation` is the resting pose in radians; `fit` is the size of the longest side
- * in scene units, so every model reads at a similar scale on the stage.
+ * How a 3D model sits on a stage. `rotation` is the resting pose in radians; `fit` is the size
+ * of the longest side in scene units, so every model reads at a similar scale.
  */
 export interface ModelSpec {
   /** Web GLB: 2K base colour, light enough for phones. */
@@ -15,6 +16,11 @@ export interface ModelSpec {
   rotation: [number, number, number];
 }
 
+/**
+ * The demo catalog's 3D models (Meshy image-to-3D, optimised with gltf-transform), keyed by product
+ * handle. With Shopify connected, each product's model comes from its own custom fields instead
+ * (these files were imported there by tools/pipeline/import-site-assets.mjs).
+ */
 export const models: Record<string, ModelSpec> = {
   "blasphemous-hat": { src: "/models/hat.glb", hd: "/models/hat-hd.glb", label: "Cap", fit: 2.45, rotation: [0, 0.5, 0] },
   "straight-shooter-tee": { src: "/models/tee.glb", hd: "/models/tee-hd.glb", label: "Tee", fit: 2.3, rotation: [0, 0, 0] },
@@ -33,10 +39,8 @@ export const models: Record<string, ModelSpec> = {
 };
 
 /**
- * The 3D showroom on the home page keeps the models it was first built with (Meshy, 2K texture,
- * colour only, about 0.4-0.65 MB each), not the 8K ones the product pages use: four light models that
- * all stay loaded, on phones too. To add a product, give it a light GLB here and list it in
- * `showroomOrder`.
+ * The original showroom models (Meshy, 2K texture, colour only, about 0.4-0.65 MB each), lighter
+ * than the 8K ones the product pages use. In Shopify they are these products' `model_3d_showroom`.
  */
 export const showroomModels: Record<string, ModelSpec> = {
   "blasphemous-hat": { src: "/models/showroom/hat.glb", label: "Cap", fit: 2.45, rotation: [0, 0.5, 0] },
@@ -45,8 +49,16 @@ export const showroomModels: Record<string, ModelSpec> = {
   "culture-table-tumbler": { src: "/models/showroom/tumbler.glb", label: "Tumbler", fit: 2.4, rotation: [0, 0, 0] },
 };
 
-/** Brand artwork stuck onto each product's stage in the showroom (positions are Tailwind classes). */
-export const showroomArt: Record<string, { art: ArtKey; className: string }> = {
+export type StageArt = { art: ArtKey; className: string };
+
+/** The sticker on a product's stage in the showroom (positions are Tailwind classes). */
+export const defaultShowroomArt: StageArt = {
+  art: "stickerOfficial",
+  className: "right-[6%] top-[46%] w-[5.75rem] rotate-6 lg:right-[8%] lg:top-[18%] lg:w-[8.125rem]",
+};
+
+/** Art directed for particular products (a stamp instead of the sticker, or a better spot for it). */
+export const showroomArt: Record<string, StageArt> = {
   "blasphemous-hat": { art: "stampBlasphemous", className: "right-[4%] top-[calc(var(--header-h)+1.5rem)] w-[6.5rem] -rotate-6 opacity-90 invert lg:right-[16%] lg:top-[22%] lg:w-[15rem]" },
   "straight-shooter-tee": { art: "stickerOfficial", className: "right-[8%] top-[44%] w-[5.75rem] rotate-12 lg:right-[7%] lg:top-[18%] lg:w-[8.125rem]" },
   "the-silhouette-hoodie": { art: "stickerOfficial", className: "right-[6%] top-[44%] w-[5.75rem] rotate-12 lg:right-[12%] lg:top-[16%] lg:w-[8.125rem]" },
@@ -56,14 +68,26 @@ export const showroomArt: Record<string, { art: ArtKey; className: string }> = {
   "culture-table-tumbler": { art: "stickerOfficial", className: "right-[6%] top-[42%] w-[5.75rem] rotate-6 lg:right-[7%] lg:top-[46%] lg:w-[8.125rem]" },
 };
 
-/** Order of the products in the showroom (each needs an entry in `showroomModels`). */
-export const showroomOrder = ["blasphemous-hat", "straight-shooter-tee", "culture-table-hoodie", "culture-table-tumbler"] as const;
+const DEFAULT_FIT = 2.35;
 
-const DEFAULT_SPEC: Omit<ModelSpec, "src"> = { label: "3D", fit: 2.6, rotation: [0, 0, 0] };
+/** In degrees, as stored in Shopify, from the radians of a ModelSpec. */
+export const yawOf = (spec: ModelSpec) => Math.round((spec.rotation[1] * 180) / Math.PI);
 
-/** Spec for a product: the curated one if we have it, otherwise defaults around a remote GLB. */
-export function modelSpecFor(handle: string, remoteSrc?: string | null): ModelSpec | null {
-  const curated = models[handle];
-  if (curated) return curated;
-  return remoteSrc ? { ...DEFAULT_SPEC, src: remoteSrc } : null;
+/**
+ * The stage spec of a product's 3D model: the light one for the showroom, or the web one plus the
+ * detailed one for the product page. Labelled with the product's category ("Hoodie"), or its title.
+ */
+export function modelSpecFor(
+  product: { title: string; productType?: string; model3d?: Model3D | null },
+  use: "page" | "showroom" = "page",
+): ModelSpec | null {
+  const m = product.model3d;
+  if (!m) return null;
+  return {
+    src: use === "showroom" ? (m.showroom ?? m.src) : m.src,
+    hd: use === "page" ? (m.hd ?? undefined) : undefined,
+    label: product.productType || product.title,
+    fit: m.fit ?? DEFAULT_FIT,
+    rotation: [0, ((m.yaw ?? 0) * Math.PI) / 180, 0],
+  };
 }

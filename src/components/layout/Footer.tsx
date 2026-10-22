@@ -5,7 +5,8 @@ import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
-import { footerColumns, FOOTER_END_ID, site } from "@/config/site";
+import { FOOTER_END_ID, footerHelp, footerShopTitle, site } from "@/config/site";
+import { getNavLinks } from "@/lib/navigation";
 
 async function CurrentYear() {
   "use cache";
@@ -16,7 +17,11 @@ async function CurrentYear() {
 const columnTitle =
   "font-display text-[1.375rem] leading-none font-extrabold tracking-[0.02em] text-gold uppercase";
 
-export function Footer() {
+export async function Footer() {
+  // The shop column is the navigation (collections come from Shopify), without "Home".
+  const shop = { title: footerShopTitle, links: (await getNavLinks()).filter((l) => l.href !== "/") };
+  const columns = [shop, footerHelp];
+
   return (
     <footer className="mt-[0.625rem] border-t border-white/10 bg-black">
       <Container className="grid grid-cols-2 gap-x-6 gap-y-10 py-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
@@ -27,7 +32,7 @@ export function Footer() {
           <p className="mt-4 max-w-[30ch] text-sm leading-relaxed text-white/60">{copy.footer.tagline}</p>
         </div>
 
-        {footerColumns.map((col) => (
+        {columns.map((col) => (
           <nav key={col.title} aria-label={col.title}>
             <h2 className={columnTitle}>{col.title}</h2>
             <ul className="mt-4 space-y-1">

@@ -1,8 +1,9 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { isSafeHandle, normalizeQuery } from "@/lib/format";
+import { getPopularity } from "@/lib/popularity";
 
-import { mockCollections, mockProducts } from "./mock";
+import { allCollection, mockCollections, mockProducts } from "./mock";
 import {
   fetchCollectionProducts,
   fetchCollections,
@@ -35,7 +36,7 @@ async function getProductHandles(): Promise<string[]> {
   return mockProducts.map((p) => p.handle);
 }
 
-async function isKnownProduct(handle: string): Promise<boolean> {
+export async function isKnownProduct(handle: string): Promise<boolean> {
   return isSafeHandle(handle) && (await getProductHandles()).includes(handle);
 }
 
@@ -74,6 +75,28 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
   return (featured.length >= limit ? featured : all).slice(0, limit);
 }
 
+const hasTag = (p: Product, tag: string) => p.tags.some((t) => t.toLowerCase() === tag);
+
+/**
+ * The showroom's products, among those with a 3D model: the ones tagged `showroom` in Shopify
+ * first, then the ones shoppers engage with most (page views and adds to the cart over the last
+ * month, see `popularity.ts`). Tagged `no-showroom` never shows. Ties, and the time before there is
+ * any data, keep the catalog's own order (best selling, with Shopify).
+ */
+export async function getShowroomProducts(limit = 4): Promise<Product[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("products", "popularity");
+
+  const [all, popularity] = await Promise.all([getProducts(), getPopularity()]);
+  return all
+    .filter((p) => p.model3d && !hasTag(p, "no-showroom"))
+    .map((p, i) => ({ p, i, pinned: hasTag(p, "showroom") ? 1 : 0, score: popularity.get(p.handle) ?? 0 }))
+    .sort((a, b) => b.pinned - a.pinned || b.score - a.score || a.i - b.i)
+    .slice(0, limit)
+    .map(({ p }) => p);
+}
+
 export async function getProduct(handle: string): Promise<Product | null> {
   if (!(await isKnownProduct(handle))) return null;
   return getKnownProduct(handle);
@@ -88,16 +111,16 @@ async function getKnownProduct(handle: string): Promise<Product | null> {
   return mockProducts.find((p) => p.handle === handle) ?? null;
 }
 
+/** "Shop all", then the store's collections by their `position` (then title). */
 export async function getCollections(): Promise<Collection[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("collections");
 
-  if (isShopifyConfigured) {
-    const remote = await fetchCollections();
-    return [mockCollections[0], ...remote.filter((c) => c.handle !== "all")];
-  }
-  return mockCollections;
+  if (!isShopifyConfigured) return mockCollections;
+  const remote = (await fetchCollections()).filter((c) => c.handle !== "all");
+  remote.sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.title.localeCompare(b.title));
+  return [allCollection, ...remote];
 }
 
 export async function getCollection(handle: string): Promise<Collection | null> {
@@ -110,7 +133,7 @@ async function getKnownCollection(handle: string): Promise<Collection | null> {
   cacheLife("hours");
   cacheTag("collections", `collection:${handle}`);
 
-  if (handle === "all") return mockCollections[0];
+  if (handle === "all") return allCollection;
 
   if (isShopifyConfigured) {
     const result = await fetchCollectionProducts(handle);

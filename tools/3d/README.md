@@ -14,6 +14,10 @@ cd tools/3d && npm install
 | `project-front.mjs <in.glb> <out.glb> <photo.png> <+z\|-z>` | Puts a real photo of one side (the garment alone, straight on) onto the side of a model that Meshy invented, keeps the fabric plain around the print, evens out the normal map there and the roughness map everywhere (Meshy makes printed areas shinier, which shows as a ghost). Used for the crop tees (their fronts, and the Edible back). |
 | `repair-front.mjs <in.glb> <out.glb>` | Paints the invented front of a model whose only input photo was the back (used for The Silhouette Hoodie): base colour, normal and roughness maps are flattened on every front-facing triangle. |
 
+`lib/optimize.mjs` and `lib/turntable.mjs` are the same steps as functions; the asset pipeline
+(`../pipeline`, which makes new products' art automatically) uses them. The turntable renders with
+software GL, so it also runs on a CI machine without a GPU.
+
 `products.json` holds the camera and the angle-to-yaw map per product. Meshy models face +Z, so yaw 0
 is the front.
 

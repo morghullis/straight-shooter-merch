@@ -1,0 +1,12 @@
+{
+  "name": "straight-shooter-asset-pipeline",
+  "private": true,
+  "type": "module",
+  "description": "Makes every Shopify product's storefront assets (3D model, turntable renders, on-model photo) in the background. Uses ../3d for optimising and rendering.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "define": "node define-metafields.mjs",
+    "generate": "node generate.mjs",
+    "import-site-assets": "node import-site-assets.mjs"
+  }
+}

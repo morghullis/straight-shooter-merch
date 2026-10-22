@@ -4,7 +4,7 @@ Headless Shopify storefront built with **Next.js 16 (App Router, Cache Component
 
 The top of the home page (header, hero, four collection tiles, featured products) is a measured clone of the reference screenshot: container, spacing, type sizes and colours were taken from it pixel by pixel, and everything animated settles back onto that exact layout. Below it, the page is built around the fans.
 
-It runs out of the box on a demo catalog. Add your Shopify credentials and the same pages read your real products. **How this goes live on Shopify is in [docs/SHOPIFY.md](docs/SHOPIFY.md).**
+It runs out of the box on a demo catalog. Add your Shopify credentials and the same pages read your real store: products, collections and every product's art (turntable renders, on-model photo, 3D models) come from Shopify, so a product created there shows on the site with its look, and new products get their 3D model and renders made automatically ([tools/pipeline](tools/pipeline/README.md)). **How this runs on Shopify is in [docs/SHOPIFY.md](docs/SHOPIFY.md).**
 
 ## Run it
 
@@ -25,11 +25,13 @@ npm run build && npm start
 - A thin gold progress rule at the top of the page.
 - **Reduced motion:** the operating system's "reduce motion" setting turns every animation off (CSS and JS); the page then shows the final static layout and the showroom becomes tabs.
 
-**The store's products.** The five products of the Shopify store (kvh0hd-f0.myshopify.com) are in the catalog with the same handles, titles, prices and options (Blasphemous! Hoodie and T Shirt, and the three Culture Table crop tees), and follow exactly the same logic as ours: from the store's photos, Meshy made the garment alone and a 3D model (round 5), which gives the six-angle turntable on the card (the crop tees show their printed back first) and the 3D view on the product page; the store's on-model photo is the hover image. Where Meshy invented the side it never saw, `tools/3d/project-front.mjs` puts the real one on (the Culture Table front of the crop tees, the Edible back). The store's real on-model photos also replace the generated ones for The Silhouette Hoodie and the Stephen A. Smith Hoodie, and its Culture Table table shot is the Culture Table Hoodie's hover. None of the store's page design is copied. Once the Storefront API is connected (see `docs/SHOPIFY.md`) the catalog comes straight from Shopify.
+**The store's products.** The store (kvh0hd-f0.myshopify.com) holds all twelve products: its own five (Blasphemous! Hoodie and T Shirt, and the three Culture Table crop tees) and the seven made for this site, published only on its Headless channel. Every product's art lives in its custom fields in Shopify: the six-angle turntable rendered from its 3D model (the crop tees show their printed back first), the on-model photo for the hover, and the GLBs for the 3D viewer. Where Meshy invented the side it never saw, `tools/3d/project-front.mjs` put the real one on (the Culture Table front of the crop tees, the Edible back). None of the store's page design is copied.
+
+**The strip under the hero** shows four tiles in the reference design, drawn from the store: its collections, then every product (its on-model photo, its collection's name, *Shop it*). Every few seconds a random tile rolls up like a cube and shows the next one, so the strip walks through the whole store; it holds still under the pointer or keyboard focus, off screen and with reduced motion, and the pictures to come are loaded before they turn (`RotatingStrip`).
 
 **Product cards** are carousels of the same product from several angles (front, three-quarter, sides, back), rendered from its 3D model. Swipe on a phone, arrows on hover on a desktop; only the first picture loads up front, the other angles load lazily and fade in. On desktop hover the first slide also cross-fades to the garment **worn by a model**. In horizontal phone rails the rail keeps the swipe.
 
-**3D showroom** — right after the featured products, the four products the showroom was first built with (cap, tee, hoodie, tumbler), using their original light Meshy models (`public/models/showroom/`, 0.4-0.65 MB each; the product pages keep the 8K models) on a concrete wall with a taped title and stickers. **One gesture = one product** (`useProductPager`): a scroll, trackpad swipe, finger swipe or arrow key spins the current product on its axis and carries it off one side while the next one spins in from the other (`ScrubStage`), always at the same easy pace however hard the visitor scrolls. The rest of the gesture (trackpad inertia, phone momentum) is absorbed, so no product is ever skipped; a new gesture during the second half of a change queues the next product. Arriving from above or below, even with a hard fling, the page stops on the first (or last) product at rest; at the first and last product the page scrolls on as usual. The price sits on the tape like a cash-register display (big dollars, raised cents) and its digit wheels spin to the next price on every change, cents first (`PriceRoll`); the name rolls to the new one (`TextSwap`); the tape and the button stay put. No spec list; on phones no number rail either (desktop keeps the named rail). Drag a product to spin it. On phones the product is framed in the free space between the title and the price tape. All four models stay loaded once downloaded (one after the other, the first product first), on phones too, so going back never waits. The feel (pace, thresholds, spin) is set in `src/config/showroom.ts`. Visitors without WebGL or with reduced motion get a tab version.
+**3D showroom** — right after the featured products, the four products shoppers engage with most (product page views and adds to the cart over the last month, counted by the site in Netlify Blobs: `src/lib/popularity.ts`, `/api/track`) among those with a 3D model; before there is any data, Shopify's best-selling order. Each uses its showroom model from Shopify (`model_3d_showroom`: the four original light Meshy models for the cap, tee, hoodie and tumbler, otherwise the web model), on a concrete wall with a taped title and stickers; the rail names each stop by its category, or by the product's name when two share one. In Shopify, the tag `showroom` pins a product into it and `no-showroom` keeps one out. **One gesture = one product** (`useProductPager`): a scroll, trackpad swipe, finger swipe or arrow key spins the current product on its axis and carries it off one side while the next one spins in from the other (`ScrubStage`), always at the same easy pace however hard the visitor scrolls. The rest of the gesture (trackpad inertia, phone momentum) is absorbed, so no product is ever skipped; a new gesture during the second half of a change queues the next product. Arriving from above or below, even with a hard fling, the page stops on the first (or last) product at rest; at the first and last product the page scrolls on as usual. The price sits on the tape like a cash-register display (big dollars, raised cents) and its digit wheels spin to the next price on every change, cents first (`PriceRoll`); the name rolls to the new one (`TextSwap`); the tape and the button stay put. No spec list; on phones no number rail either (desktop keeps the named rail). Drag a product to spin it. On phones the product is framed in the free space between the title and the price tape. All four models stay loaded once downloaded (one after the other, the first product first), on phones too, so going back never waits. The feel (pace, thresholds, spin) is set in `src/config/showroom.ts`. Visitors without WebGL or with reduced motion get a tab version.
 
 **For the fans**
 - *Pick your lane*: Sports, Politics and Culture as paper studio-pass tickets with the real show, channel and schedule, a live **ON AIR** stamp (computed in US Eastern time) and a countdown to the next Wednesday show.
@@ -57,12 +59,12 @@ Nothing user-facing is hard-coded in components: text, art, models and layout nu
 | Path | What |
 | --- | --- |
 | `src/config/copy.ts` | **Every UI string** (labels, a11y text, empty states, errors) |
-| `src/config/site.ts` | Brand, nav, hero lines, collection tiles |
+| `src/config/site.ts` | Brand, the fixed start of the nav (Home, Shop all), hero lines, footer help links |
 | `src/config/fans.ts` | Shows, schedules, catchphrases, quiz questions |
 | `src/config/art.ts` | Brand graphics (and the logo mark) with their real dimensions |
-| `src/config/product-media.ts` | Which angle renders each product has, and in what order |
+| `src/config/product-media.ts` | The demo catalog's angle renders and their order |
 | `src/config/showroom.ts` | The showroom's pace: how long a change takes, how long the page takes to settle, gesture thresholds, spin |
-| `src/config/models.ts` | Which GLB belongs to which product, its fit and resting pose; the showroom's own models, order and stickers |
+| `src/config/models.ts` | How a product's 3D model sits on a stage (`modelSpecFor`), the showroom stickers, and the demo catalog's GLBs |
 | `src/app/globals.css` | Design tokens (container, header height, hero measurements, card ratio), hero keyframes, motion-off rules |
 | `src/components/ui/*` | Reusable primitives: `Button`, `Container`, `Art`, `Tape`, `Carousel`, icons |
 | `src/components/motion/*` | `Reveal`, `RevealText`, `ParallaxLayer`, `ScrollHost`, `VelocityMarquee`, `SmoothScroll`, `useProductPager` (one gesture = one product), scroll progress, motion preference |
@@ -71,27 +73,29 @@ Nothing user-facing is hard-coded in components: text, art, models and layout nu
 | `src/components/brand/Logo.tsx` | The logo mark with its MERCH tag as real text, sized by `--logo-w` |
 | `src/components/three/*` | r3f stages, studio lighting, lazy viewer |
 | `src/components/layout/*` | Header (mobile menu), nav, footer |
-| `src/lib/catalog/*` | Shopify Storefront client, mock catalog, cached data access |
-| `src/app/api/revalidate/route.ts` | Shopify webhook receiver (HMAC-verified) |
-| `tools/3d/` | Offline scripts: optimise the GLBs, render the angle images from the 8K models, repair a model's front |
+| `src/lib/catalog/*` | Shopify Storefront client (data and the art in the custom fields), mock catalog, cached data access, showroom ranking |
+| `src/lib/navigation.ts` | Nav, footer and home tiles from the store's collections |
+| `src/lib/popularity.ts`, `src/app/api/track/route.ts` | Product views and adds to the cart, counted per day (Netlify Blobs) |
+| `src/app/api/revalidate/route.ts` | Shopify webhook receiver (HMAC-verified); starts the asset pipeline for new products |
+| `tools/pipeline/`, `.github/workflows/product-assets.yml` | The asset pipeline: Meshy 3D model, turntable and on-model photo for new products, uploaded to Shopify |
+| `tools/3d/` | Optimise the GLBs, render the angle images from the 8K models, repair a model's front (also used by the pipeline) |
 | `tools/signature/` | `build.py`: the pen route that writes the real hero signature on (Python, numpy + Pillow) |
 | `docs/` | `SHOPIFY.md`, `meshy-assets.json` (what Meshy made and which model won), screenshots |
 | `assets-src/` | Original full-size images and GLBs from Meshy (not served) |
 
 ## Connect Shopify
 
-Short version (full walkthrough, with the metafield and webhook steps, in [docs/SHOPIFY.md](docs/SHOPIFY.md)):
+Short version (full walkthrough in [docs/SHOPIFY.md](docs/SHOPIFY.md), the art fields and the pipeline in [tools/pipeline/README.md](tools/pipeline/README.md)):
 
-1. Create a custom app with the Storefront API scopes listed in `.env.example`.
-2. Copy `.env.example` to `.env.local` and fill in the store domain and token.
-3. Create collections `straight-shooter`, `stephen-a-smith`, `potus`, `culture-table`; tag six products `featured`.
-4. Optional: metafield `custom.on_model_image` for the hover photo, a `.glb` as 3D media for the 3D switch. The card carousel uses the product's own images, in order.
-5. Add the webhook (`SHOPIFY_WEBHOOK_SECRET`) so changes appear instantly.
+1. Headless channel → a storefront → its private Storefront token in `.env.local` with the store domain.
+2. A Dev Dashboard app with Admin access for the pipeline; `node tools/pipeline/define-metafields.mjs` creates the custom fields.
+3. Create products and collections in Shopify; publish them on the Headless channel. New products get their art automatically (the GitHub Action needs its secrets).
+4. Deploy, then `node tools/pipeline/register-webhooks.mjs https://<your-domain>` and set `SHOPIFY_WEBHOOK_SECRET`.
 
 ## Before you launch
 
 - **Hero photo** (`public/images/hero/hero-photo.webp`, 1611 × 851) is cut from the store's own hero banner (`assets-src/hero/store-banner-original.jpg`), with the signature printed on it taken out (filled from the wall around it), so the page can write the real signature on top. The whole head is in frame now. For an even sharper hero, use the original photo file. You need the rights to use that photograph.
-- **Product photos**: the angle renders come from AI-generated 3D models, the on-model photos and the brand graphics are AI mockups made with Meshy. Swap in real photography in Shopify; no code change needed.
+- **Product photos**: the angle renders come from AI-generated 3D models, the on-model photos and the brand graphics are AI mockups made with Meshy (and the pipeline makes the same for new products). Swap in real photography in the product's fields in Shopify; no code change needed.
 - The 3D models are single-photo reconstructions: the back and sides are inferred, and tiny parts of the generated embroidery are imperfect (a few fragments on the cap's brim). The Silhouette Hoodie was made from a back-view photo; its front is repaired to plain black. Fine for a showroom, not for a catalog of record.
 - The *Shipping & returns* and *Contact* copy on `/account` is neutral placeholder text.
 - Set `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SHOPIFY_ACCOUNT_URL`, `SHOPIFY_WEBHOOK_SECRET` and `FAN_SIGNUP_WEBHOOK`.

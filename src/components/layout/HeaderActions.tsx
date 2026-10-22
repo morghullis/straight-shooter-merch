@@ -12,8 +12,9 @@ import { AccountIcon, BagCartIcon, MenuBarsIcon, ScopeIcon } from "@/components/
 import { CloseIcon } from "@/components/ui/Icons";
 import { CartFlame } from "@/components/ui/CartFlame";
 import { copy } from "@/config/copy";
-import { nav, site } from "@/config/site";
+import { site } from "@/config/site";
 import { cn } from "@/lib/cn";
+import type { NavLink } from "@/lib/navigation";
 import { lockPageScroll } from "@/lib/scroll-lock";
 
 const iconButton =
@@ -81,7 +82,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
 }
 
 /** Full-screen menu for phones and tablets: big type, numbered, staggered in. */
-function MobileMenu({ onClose }: { onClose: () => void }) {
+function MobileMenu({ links, onClose }: { links: NavLink[]; onClose: () => void }) {
   const motionOn = useMotionEnabled();
   const first = useRef<HTMLAnchorElement>(null);
   useEscape(onClose);
@@ -116,7 +117,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
     >
       <nav aria-label={copy.a11y.mobileNav}>
         <ul>
-          {nav.map((link, i) => (
+          {links.map((link, i) => (
             <motion.li key={link.href} {...item(i)} className="border-t border-white/15 last:border-b">
               <Link
                 ref={i === 0 ? first : undefined}
@@ -134,7 +135,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         </ul>
       </nav>
 
-      <motion.div {...item(nav.length)} className="mt-auto pt-8">
+      <motion.div {...item(links.length)} className="mt-auto pt-8">
         <Button href="/collections/all" onClick={onClose} size="lg" arrow className="w-full">
           {copy.header.menuCta}
         </Button>
@@ -151,7 +152,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 }
 
 /** Search, account and cart icons (plus the menu toggle below lg). */
-function Actions({ pathname }: { pathname: string }) {
+function Actions({ links, pathname }: { links: NavLink[]; pathname: string }) {
   const { count, open: openCart } = useCart();
 
   // A panel only counts as open on the route where it was opened, so navigating
@@ -234,24 +235,24 @@ function Actions({ pathname }: { pathname: string }) {
       </div>
 
       {panel === "search" && <SearchPanel onClose={closePanel} />}
-      <AnimatePresence>{panel === "menu" && <MobileMenu onClose={closePanel} />}</AnimatePresence>
+      <AnimatePresence>{panel === "menu" && <MobileMenu links={links} onClose={closePanel} />}</AnimatePresence>
     </>
   );
 }
 
-function ActionsAtRoute() {
+function ActionsAtRoute({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
-  return <Actions pathname={pathname} />;
+  return <Actions links={links} pathname={pathname} />;
 }
 
 /**
  * The current route is read inside <Suspense>, so pages rendered on demand (a product added after the
  * last deploy) can still be prerendered with an instant shell; the fallback is the same bar.
  */
-export function HeaderActions() {
+export function HeaderActions({ links }: { links: NavLink[] }) {
   return (
-    <Suspense fallback={<Actions pathname="" />}>
-      <ActionsAtRoute />
+    <Suspense fallback={<Actions links={links} pathname="" />}>
+      <ActionsAtRoute links={links} />
     </Suspense>
   );
 }

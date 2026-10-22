@@ -1,0 +1,470 @@
+{
+  "hoodie": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/hoodie/front.webp",
+        "alt": "Blasphemous! Hoodie, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/hoodie/quarter-right.webp",
+        "alt": "Blasphemous! Hoodie, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/hoodie/side-right.webp",
+        "alt": "Blasphemous! Hoodie, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/hoodie/back.webp",
+        "alt": "Blasphemous! Hoodie, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/hoodie/side-left.webp",
+        "alt": "Blasphemous! Hoodie, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/hoodie/quarter-left.webp",
+        "alt": "Blasphemous! Hoodie, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/hoodie.webp",
+      "alt": "Man wearing the black Blasphemous! hoodie"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/blasphemous-hoodie.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/blasphemous-hoodie-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.35,
+      "yaw": 0
+    }
+  },
+  "blasphemous-t-shirt": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-t-shirt/front.webp",
+        "alt": "Blasphemous! T Shirt, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-t-shirt/quarter-right.webp",
+        "alt": "Blasphemous! T Shirt, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-t-shirt/side-right.webp",
+        "alt": "Blasphemous! T Shirt, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-t-shirt/back.webp",
+        "alt": "Blasphemous! T Shirt, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-t-shirt/side-left.webp",
+        "alt": "Blasphemous! T Shirt, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-t-shirt/quarter-left.webp",
+        "alt": "Blasphemous! T Shirt, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/blasphemous-t-shirt.webp",
+      "alt": "Man wearing the black Blasphemous! tee"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/blasphemous-tee.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/blasphemous-tee-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.3,
+      "yaw": 0
+    }
+  },
+  "i-would-date-the-bus-driver": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-would-date-the-bus-driver/back.webp",
+        "alt": "I Would Date The Bus Driver, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-would-date-the-bus-driver/quarter-back-right.webp",
+        "alt": "I Would Date The Bus Driver, back three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-would-date-the-bus-driver/side-right.webp",
+        "alt": "I Would Date The Bus Driver, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-would-date-the-bus-driver/front.webp",
+        "alt": "I Would Date The Bus Driver, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-would-date-the-bus-driver/side-left.webp",
+        "alt": "I Would Date The Bus Driver, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-would-date-the-bus-driver/quarter-back-left.webp",
+        "alt": "I Would Date The Bus Driver, back three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/i-would-date-the-bus-driver.webp",
+      "alt": "Woman wearing the black crop tee, seen from behind: I would date the bus driver"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/busdriver-crop.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/busdriver-crop-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.3,
+      "yaw": 180
+    }
+  },
+  "i-m-not-above-an-edible": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-m-not-above-an-edible/back.webp",
+        "alt": "I\u2019m not above an Edible, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-m-not-above-an-edible/quarter-back-right.webp",
+        "alt": "I\u2019m not above an Edible, back three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-m-not-above-an-edible/side-right.webp",
+        "alt": "I\u2019m not above an Edible, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-m-not-above-an-edible/front.webp",
+        "alt": "I\u2019m not above an Edible, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-m-not-above-an-edible/side-left.webp",
+        "alt": "I\u2019m not above an Edible, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/i-m-not-above-an-edible/quarter-back-left.webp",
+        "alt": "I\u2019m not above an Edible, back three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/i-m-not-above-an-edible.webp",
+      "alt": "Woman wearing the black crop tee, seen from behind: I'm not above an Edible"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/edible-crop.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/edible-crop-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.3,
+      "yaw": 180
+    }
+  },
+  "theres-right-theres-wrongs-theres-reality": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/theres-right-theres-wrongs-theres-reality/back.webp",
+        "alt": "There's Right, There's Wrongs & There's REALITY, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/theres-right-theres-wrongs-theres-reality/quarter-back-right.webp",
+        "alt": "There's Right, There's Wrongs & There's REALITY, back three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/theres-right-theres-wrongs-theres-reality/side-right.webp",
+        "alt": "There's Right, There's Wrongs & There's REALITY, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/theres-right-theres-wrongs-theres-reality/front.webp",
+        "alt": "There's Right, There's Wrongs & There's REALITY, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/theres-right-theres-wrongs-theres-reality/side-left.webp",
+        "alt": "There's Right, There's Wrongs & There's REALITY, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/theres-right-theres-wrongs-theres-reality/quarter-back-left.webp",
+        "alt": "There's Right, There's Wrongs & There's REALITY, back three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/theres-right-theres-wrongs-theres-reality.webp",
+      "alt": "Woman wearing the white crop tee, seen from behind: There's Right, There's Wrong & There's Reality"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/reality-crop.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/reality-crop-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.3,
+      "yaw": 180
+    }
+  },
+  "the-silhouette-hoodie": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/the-silhouette-hoodie/back.webp",
+        "alt": "The Silhouette Hoodie, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/the-silhouette-hoodie/quarter-back-right.webp",
+        "alt": "The Silhouette Hoodie, back three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/the-silhouette-hoodie/side-right.webp",
+        "alt": "The Silhouette Hoodie, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/the-silhouette-hoodie/front.webp",
+        "alt": "The Silhouette Hoodie, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/the-silhouette-hoodie/side-left.webp",
+        "alt": "The Silhouette Hoodie, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/the-silhouette-hoodie/quarter-back-left.webp",
+        "alt": "The Silhouette Hoodie, back three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/the-silhouette-hoodie.webp",
+      "alt": "Man wearing the black hoodie, seen from behind, showing the silhouette graphic"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/silhouette.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/silhouette-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.35,
+      "yaw": 157
+    }
+  },
+  "blasphemous-hat": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-hat/front.webp",
+        "alt": "Blasphemous Hat, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-hat/quarter-right.webp",
+        "alt": "Blasphemous Hat, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-hat/side-right.webp",
+        "alt": "Blasphemous Hat, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-hat/back.webp",
+        "alt": "Blasphemous Hat, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-hat/side-left.webp",
+        "alt": "Blasphemous Hat, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/blasphemous-hat/quarter-left.webp",
+        "alt": "Blasphemous Hat, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/blasphemous-hat.webp",
+      "alt": "Model wearing the black Blasphemous cap"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/hat.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/hat-hd.glb",
+    "modelShowroom": "gid://shopify/GenericFile/46432986202182",
+    "view": {
+      "fit": 2.45,
+      "yaw": 29
+    }
+  },
+  "stephen-a-smith-hoodie": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/stephen-a-smith-hoodie/front.webp",
+        "alt": "Stephen A. Smith Hoodie, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/stephen-a-smith-hoodie/quarter-right.webp",
+        "alt": "Stephen A. Smith Hoodie, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/stephen-a-smith-hoodie/side-right.webp",
+        "alt": "Stephen A. Smith Hoodie, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/stephen-a-smith-hoodie/back.webp",
+        "alt": "Stephen A. Smith Hoodie, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/stephen-a-smith-hoodie/side-left.webp",
+        "alt": "Stephen A. Smith Hoodie, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/stephen-a-smith-hoodie/quarter-left.webp",
+        "alt": "Stephen A. Smith Hoodie, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/stephen-a-smith-hoodie.webp",
+      "alt": "Man wearing the black hoodie with the Stephen A. Smith chest logo"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/sas.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/sas-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.35,
+      "yaw": 0
+    }
+  },
+  "culture-table-tumbler": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-tumbler/front.webp",
+        "alt": "Culture Table Tumbler, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-tumbler/quarter-right.webp",
+        "alt": "Culture Table Tumbler, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-tumbler/side-right.webp",
+        "alt": "Culture Table Tumbler, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-tumbler/back.webp",
+        "alt": "Culture Table Tumbler, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-tumbler/side-left.webp",
+        "alt": "Culture Table Tumbler, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-tumbler/quarter-left.webp",
+        "alt": "Culture Table Tumbler, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/culture-table-tumbler.webp",
+      "alt": "Model holding the cream Culture Table tumbler"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/tumbler.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/tumbler-hd.glb",
+    "modelShowroom": "https://straight-shooter-merch.netlify.app/models/showroom/tumbler.glb",
+    "view": {
+      "fit": 2.4,
+      "yaw": 0
+    }
+  },
+  "culture-table-hoodie": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-hoodie/front.webp",
+        "alt": "Culture Table Hoodie, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-hoodie/quarter-right.webp",
+        "alt": "Culture Table Hoodie, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-hoodie/side-right.webp",
+        "alt": "Culture Table Hoodie, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-hoodie/back.webp",
+        "alt": "Culture Table Hoodie, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-hoodie/side-left.webp",
+        "alt": "Culture Table Hoodie, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/culture-table-hoodie/quarter-left.webp",
+        "alt": "Culture Table Hoodie, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/culture-table-hoodie.webp",
+      "alt": "The Culture Table hoodie with the tumbler, tote and tee on a table"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/hoodie.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/hoodie-hd.glb",
+    "modelShowroom": "https://straight-shooter-merch.netlify.app/models/showroom/hoodie.glb",
+    "view": {
+      "fit": 2.4,
+      "yaw": 0
+    }
+  },
+  "straight-shooter-tee": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/straight-shooter-tee/front.webp",
+        "alt": "Straight Shooter Tee, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/straight-shooter-tee/quarter-right.webp",
+        "alt": "Straight Shooter Tee, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/straight-shooter-tee/side-right.webp",
+        "alt": "Straight Shooter Tee, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/straight-shooter-tee/back.webp",
+        "alt": "Straight Shooter Tee, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/straight-shooter-tee/side-left.webp",
+        "alt": "Straight Shooter Tee, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/straight-shooter-tee/quarter-left.webp",
+        "alt": "Straight Shooter Tee, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/straight-shooter-tee.webp",
+      "alt": "Model wearing the black Straight Shooter tee"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/tee.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/tee-hd.glb",
+    "modelShowroom": "https://straight-shooter-merch.netlify.app/models/showroom/tee.glb",
+    "view": {
+      "fit": 2.35,
+      "yaw": 0
+    }
+  },
+  "potus-hoodie": {
+    "turntable": [
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/potus-hoodie/front.webp",
+        "alt": "POTUS Hoodie, front view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/potus-hoodie/quarter-right.webp",
+        "alt": "POTUS Hoodie, three-quarter view, right"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/potus-hoodie/side-right.webp",
+        "alt": "POTUS Hoodie, right side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/potus-hoodie/back.webp",
+        "alt": "POTUS Hoodie, back view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/potus-hoodie/side-left.webp",
+        "alt": "POTUS Hoodie, left side view"
+      },
+      {
+        "url": "https://straight-shooter-merch.netlify.app/images/products/angles/potus-hoodie/quarter-left.webp",
+        "alt": "POTUS Hoodie, three-quarter view, left"
+      }
+    ],
+    "onModel": {
+      "url": "https://straight-shooter-merch.netlify.app/images/products/on-model/potus-hoodie.webp",
+      "alt": "Model wearing the gray POTUS hoodie"
+    },
+    "model": "https://straight-shooter-merch.netlify.app/models/potus.glb",
+    "modelHd": "https://straight-shooter-merch.netlify.app/models/potus-hd.glb",
+    "modelShowroom": null,
+    "view": {
+      "fit": 2.35,
+      "yaw": 0
+    }
+  }
+}

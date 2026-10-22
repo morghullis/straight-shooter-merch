@@ -7,6 +7,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductForm } from "@/components/product/ProductForm";
 import { ProductMedia } from "@/components/product/ProductMedia";
+import { TrackProductView } from "@/components/product/TrackProductView";
 import { Carousel } from "@/components/ui/Carousel";
 import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
@@ -128,8 +129,9 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
           <ProductMedia
             title={product.title}
             images={product.images.map((i) => ({ url: i.url, alt: i.altText }))}
-            model={modelSpecFor(product.handle, product.model)}
+            model={modelSpecFor(product)}
           />
+          <TrackProductView handle={product.handle} />
 
           <div>
             <p className="font-nav text-[0.75rem] font-semibold tracking-[0.12em] text-gold-soft uppercase">

@@ -193,7 +193,8 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
               )}
             >
               <span>
-                <span className="tabular-nums">{String(i + 1).padStart(2, "0")}</span> {it.model.label}
+                <span className="tabular-nums">{String(i + 1).padStart(2, "0")}</span>{" "}
+                <span className="inline-block max-w-[16ch] truncate align-bottom">{it.model.label}</span>
               </span>
               <span
                 aria-hidden="true"
@@ -222,11 +223,11 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
                 />
               </p>
             </Tape>
-            <h3 className="mt-3 font-display text-[clamp(2.75rem,10.5vw,4.75rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-5">
+            <h3 className="mt-3 font-display text-[clamp(2.75rem,10.5vw,4.75rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-8">
               <TextSwap value={items[index].title} direction={direction} display="block" />
             </h3>
 
-            <Button href={items[index].href} arrow className="mt-5 w-full sm:w-auto">
+            <Button href={items[index].href} arrow className="mt-5 w-full sm:w-auto lg:mt-11">
               {copy.showroom.shop}
             </Button>
           </div>
