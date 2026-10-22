@@ -241,7 +241,18 @@ export async function fetchCustomer(accessToken: string): Promise<Customer | nul
   return { firstName: c.firstName, lastName: c.lastName, email: c.emailAddress?.emailAddress ?? null, orders: c.orders.nodes };
 }
 
-/** A same-site path to return to after signing in (never another site). */
+/**
+ * A same-site path to return to (never another site). The value is resolved the way a browser would
+ * (which drops tabs and newlines and reads `\` as `/`, so "/\t/evil.com" means "//evil.com") and kept
+ * only if it stays on this site; only its path, query and hash are returned.
+ */
 export function safeReturnPath(value: string | null | undefined, fallback = "/account"): string {
-  return value && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\") ? value : fallback;
+  if (!value || /[\t\n\r\\]/.test(value)) return fallback;
+  const base = "https://this-site.invalid";
+  try {
+    const url = new URL(value, base);
+    return url.origin === base ? url.pathname + url.search + url.hash : fallback;
+  } catch {
+    return fallback;
+  }
 }
