@@ -72,6 +72,7 @@ export type TileTheme = "cream" | "dark" | "sand";
 export interface CollectionTile {
   /** One entry per row of the big title. */
   title: string[];
+  /** The tile's own photo (custom field `tile_image`); without one the tile shows a product. */
   image: CatalogImage | null;
   /** Optional second photo: the tile becomes a two-photo composition. */
   secondaryImage?: CatalogImage | null;
@@ -86,5 +87,7 @@ export interface Collection {
   shortTitle?: string | null;
   /** Order in the navigation and on the home page, lowest first (custom field `position`). */
   position?: number | null;
+  /** The collection's own image in Shopify. */
+  image?: CatalogImage | null;
   tile?: CollectionTile | null;
 }

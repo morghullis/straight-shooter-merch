@@ -27,12 +27,12 @@ the tag `featured` puts a product in the home page's featured row. The 3D showro
 `generate.mjs` makes a product's art from its own photos in Shopify:
 
 1. Meshy image to image: the product alone, straight on, on a plain background, from its photos (up to 4: the main one and any just added) (12 credits)
-2. Meshy image to 3D: Meshy 7.1, 8K texture, Ultra geometry, PBR (40 credits)
+2. Meshy image to 3D: Meshy 7.1, 2K texture, standard geometry, PBR (30 credits): light and quick, plenty for the web model, the detail model and the renders. `MESHY_3D_MODEL` (`meshy-6-lite` = 15 credits), `MESHY_TEXTURE` and `MESHY_GEOMETRY` change it
 3. Meshy image to image: the on-model photo shown on hover, a generic model (never a real person) (12 credits)
 4. the GLB optimised (web + detail) and rendered on sand **from the front and the back only**, with `../3d`; a product tagged `back-print` (graphic on the back) shows its back first and faces the 3D viewer with its back
 5. everything uploaded to Shopify Files: the views and the on-model photo lead the product's images, the images of an earlier run are taken off the product (they stay in Files) and the fields are filled in
 
-So about **64 credits per product**. A product runs when:
+So about **54 credits per product**. A product runs when:
 
 - it is new (has photos and no 3D model yet);
 - **a photo is added to it**: the pipeline records which of the merchant's photos it used (its own images do not count), so a new one makes it redo the product with it;

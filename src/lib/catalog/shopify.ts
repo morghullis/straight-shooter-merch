@@ -348,7 +348,7 @@ function mapProduct(raw: RawProduct): Product {
 const TILE_THEMES: readonly TileTheme[] = ["cream", "dark", "sand"];
 
 function mapCollection(raw: RawCollection): Collection {
-  const image = raw.tileImage?.reference?.image ?? raw.image;
+  const image = raw.tileImage?.reference?.image;
   const secondary = raw.tileImageSecondary?.reference?.image;
   const theme = TILE_THEMES.find((t) => t === raw.tileTheme?.value) ?? null;
   const position = Number.parseInt(raw.position?.value ?? "", 10);
@@ -360,6 +360,7 @@ function mapCollection(raw: RawCollection): Collection {
     description: raw.description,
     shortTitle: raw.shortTitle?.value || null,
     position: Number.isFinite(position) ? position : null,
+    image: raw.image ? mapImage(raw.image, raw.title) : null,
     tile: {
       title: tileTitle?.length ? tileTitle : balancedRows(raw.title),
       image: image ? mapImage(image, raw.title) : null,

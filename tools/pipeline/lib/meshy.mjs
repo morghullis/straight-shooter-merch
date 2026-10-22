@@ -51,19 +51,34 @@ export async function imageToImage({ prompt, imageUrls, aspectRatio, model = "gp
 }
 
 /**
- * A textured 3D model from one image: Meshy 7.1, 8K base colour, Ultra (4K) geometry, PBR maps,
- * the quality the site's own products have (40 credits).
+ * How the 3D models are made. Light by default: Meshy 7.1 (its best model) with a 2K base colour and
+ * standard geometry, which is quicker and gives much smaller files than 8K + Ultra, and is plenty
+ * for the web model, the detail model and the renders. Overridable from the environment:
+ * MESHY_3D_MODEL (meshy-7.1 | meshy-6 | meshy-6-lite), MESHY_TEXTURE (2k | 4k | 8k),
+ * MESHY_GEOMETRY (standard | 2k | 4k).
  */
+export function modelSettings() {
+  const model = process.env.MESHY_3D_MODEL || "meshy-7.1";
+  const lite = model === "meshy-6-lite";
+  const texture = lite ? "2k" : process.env.MESHY_TEXTURE || "2k";
+  const geometry = lite || model !== "meshy-7.1" ? "standard" : process.env.MESHY_GEOMETRY || "standard";
+  // Meshy's price list: textured model 30 (meshy-6-lite 15), +5 for an 8K texture, +5 for Ultra geometry.
+  const credits = (lite ? 15 : 30) + (texture === "8k" ? 5 : 0) + (geometry !== "standard" ? 5 : 0);
+  return { model, texture, geometry, credits };
+}
+
+/** A textured 3D model from one image, with PBR maps (see `modelSettings`). */
 export async function imageTo3d({ imageUrl, log }) {
+  const { model, texture, geometry } = modelSettings();
   const { result } = await call("/image-to-3d", {
     method: "POST",
     body: JSON.stringify({
       image_url: imageUrl,
-      ai_model: "meshy-7.1",
+      ai_model: model,
       should_texture: true,
       enable_pbr: true,
-      texture_resolution: "8k",
-      geometry_resolution: "4k",
+      texture_resolution: texture,
+      ...(geometry !== "standard" ? { geometry_resolution: geometry } : {}),
       target_formats: ["glb"],
     }),
   });

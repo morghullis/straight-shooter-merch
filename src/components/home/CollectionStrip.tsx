@@ -1,5 +1,5 @@
 import { home } from "@/config/site";
-import { getCollections, getProducts } from "@/lib/catalog";
+import { getCollections, getProducts, getProductsByEngagement } from "@/lib/catalog";
 import type { CatalogImage } from "@/lib/catalog/types";
 import { balancedRows } from "@/lib/format";
 
@@ -10,15 +10,17 @@ const pic = (image: CatalogImage | null | undefined, fallbackAlt: string) =>
 
 /**
  * The tiles under the hero, from the store: its collections first, then every product (its on-model
- * photo, its collection's name). Four show at a time and turn, one by one, to the next.
+ * photo, its collection's name). Four show at a time and turn, one by one, to the next. A collection
+ * without its own tile photo (custom field `tile_image`) shows its most viewed product, so the tile
+ * always shows something that is on sale (its own Shopify image only when it has no products).
  */
 export async function CollectionStrip() {
-  const [collections, products] = await Promise.all([getCollections(), getProducts()]);
+  const [collections, products, byEngagement] = await Promise.all([getCollections(), getProducts(), getProductsByEngagement()]);
   const stores = collections.filter((c) => c.handle !== "all");
   const nameOf = new Map(stores.map((c) => [c.handle, c.shortTitle || c.title]));
 
   const collectionTiles: StripTile[] = stores.map((c) => {
-    const image = c.tile?.image ?? products.find((p) => p.collections.includes(c.handle))?.featuredImage;
+    const image = c.tile?.image ?? byEngagement.find((p) => p.collections.includes(c.handle))?.featuredImage ?? c.image;
     return {
       key: `collection:${c.handle}`,
       href: `/collections/${c.handle}`,
