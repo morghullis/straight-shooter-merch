@@ -38,8 +38,6 @@ jobs:
     timeout-minutes: 120
     env:
       SHOPIFY_STORE_DOMAIN: ${{ vars.SHOPIFY_STORE_DOMAIN }}
-      SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
-      SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
       # Only a run started by hand names products (they are redone even if up to date); a webhook's
       # run checks the whole store, so an edit never forces a regeneration. Passed through the
       # environment, never pasted into the script (generate.mjs validates them).
@@ -58,8 +56,12 @@ jobs:
 
       # Plain Node, nothing installed: is there anything to make? Sets `pending`.
       # Word splitting on, globbing off: PRODUCTS is a list of handles, never file patterns.
+      # Secrets go only to the steps that use them, never to the installs (dependency scripts run there).
       - name: Check
         id: check
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
         run: |
           set -f
           node tools/pipeline/generate.mjs $PRODUCTS --check
@@ -73,6 +75,8 @@ jobs:
       - name: Generate
         if: steps.check.outputs.pending != '0'
         env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
           MESHY_API_KEY: ${{ secrets.MESHY_API_KEY }}
           CHROME_PATH: /usr/bin/google-chrome
         run: |
