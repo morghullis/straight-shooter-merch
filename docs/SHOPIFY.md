@@ -36,7 +36,7 @@ With the storefront variables empty the app runs on the demo catalog.
 
 `node tools/pipeline/define-metafields.mjs` creates them (once). Each field is described in [tools/pipeline/README.md](../tools/pipeline/README.md). In short:
 
-- **Products:** the product's own images are the carousel and gallery, in their admin order (first = card picture); `on_model_image` (the hover), `model_3d` / `model_3d_hd` / `model_3d_showroom` (GLBs), `model_3d_view` (framing). The pipeline fills them for new products; you can also upload your own photos into them in the admin. A product without them still shows, with its own photos.
+- **Products:** the product's own images are the carousel and gallery, in their admin order (first = card picture, **second = the picture shown on hover**); `on_model_image` (a record of the pipeline's on-model photo), `model_3d` / `model_3d_hd` / `model_3d_showroom` (GLBs), `model_3d_view` (framing). The pipeline fills them for new products; you can also upload your own photos into them in the admin. A product without them still shows, with its own photos.
 - **Collections:** `short_title` (navigation), `tile_title`, `tile_image`, `tile_image_secondary`, `tile_theme` (home tile), `position` (order). A collection without them still shows, named by its title, with its first product as the tile photo.
 - **Product type** is the category ("Hoodie", "Tee"). The tag **`featured`** puts a product in the home page's featured row (six; with fewer tagged, the first six products).
 
@@ -55,13 +55,31 @@ Catalog reads are cached for an hour; webhooks make changes show at once and sta
 
 ## 4. Deploy (Netlify)
 
-1. Environment variables on the site (see `.env.example`): `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_STOREFRONT_ACCESS_TOKEN`, `SHOPIFY_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`, optionally `GITHUB_DISPATCH_TOKEN`, `GITHUB_DISPATCH_REPO`, `FAN_SIGNUP_WEBHOOK`.
+1. Environment variables on the site (see `.env.example`): `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_STOREFRONT_ACCESS_TOKEN`, `SHOPIFY_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`, optionally `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` (step 6), `GITHUB_DISPATCH_TOKEN`, `GITHUB_DISPATCH_REPO`, `FAN_SIGNUP_WEBHOOK`.
 2. GitHub repository settings for the pipeline Action: secrets `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, `MESHY_API_KEY`; variable `SHOPIFY_STORE_DOMAIN`.
-3. Deploy, then register the webhooks (step 3).
+3. The site is linked to the GitHub repository: a push to `main` builds and publishes it, a pull request gets a deploy preview. `netlify.toml` declares the Next.js runtime (`@netlify/plugin-nextjs`, pinned in `package.json`): Git builds need it.
+4. Deploy, then register the webhooks (step 3).
 
 ## 5. How the cart works
 
-The cart lives in the browser. **Checkout** runs a server action that creates a Shopify cart (`cartCreate`) and redirects to its `checkoutUrl`. Payment, tax, shipping rates, discounts and order emails are all Shopify's.
+The cart lives in the browser. **Checkout** runs a server action that creates a Shopify cart (`cartCreate`) and redirects to its `checkoutUrl`. Payment, tax, shipping rates, discounts and order emails are all Shopify's. A signed-in shopper's cart carries their Customer Account API token (`buyerIdentity.customerAccessToken`), so checkout opens signed in; if Shopify refuses the token, the cart is made without it.
+
+## 6. Customer accounts
+
+The store uses Shopify's **new customer accounts**: no passwords, the shopper enters their email and gets a code; a new email creates the account. "My Account" (header, menu, footer) leads to `/account`:
+
+- **Connected** (`SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` set): *Sign in* / *Create account* go to Shopify's sign-in page and back to `/account` signed in (Customer Account API, OAuth 2.0 with PKCE: `src/lib/customer-account.ts`, routes `/account/login`, `/account/authorize`, `/account/refresh`, `/account/logout`). The page shows the shopper's name and orders (with Shopify's tracking page), a link to addresses and details on Shopify, and *Sign out*. The tokens stay in an httpOnly cookie.
+- **Not connected**: the same buttons open Shopify's hosted account pages (`https://<store domain>/account`).
+
+To connect it, in the Shopify admin: **Sales channels → Headless → (your storefront) → Customer Account API settings**:
+
+1. **Client type**: Public.
+2. **Application setup → Edit**: *Callback URI(s)* `https://<site>/account/authorize`; *JavaScript origin(s)* `https://<site>`; *Logout URI* `https://<site>/account`.
+3. Copy the **Client ID** (Credentials) into `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` on Netlify and redeploy. (A Confidential client also needs `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET`.)
+
+Shopify only accepts HTTPS callbacks, so sign-in works on the deployed site (not on localhost, nor on deploy previews unless their URL is added).
+
+**Reminders** (abandoned checkout and others) are Shopify's own automations: **Marketing → Automations** (for example *Abandoned checkout*). They reach shoppers who left checkout after giving their email, or who were signed in.
 
 ## What to know before launch
 

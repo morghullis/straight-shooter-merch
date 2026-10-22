@@ -4,7 +4,7 @@
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { dedup, meshopt, prune, simplify, textureCompress, weld } from "@gltf-transform/functions";
-import { MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
+import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
 import sharp from "sharp";
 import fs from "node:fs";
 import path from "node:path";
@@ -21,9 +21,11 @@ const triangleCount = (doc) =>
 
 /** Writes both variants and returns their paths: { web, hd }. */
 export async function optimizeGlb(input, outDir, name, { log = console.log } = {}) {
-  await MeshoptEncoder.ready;
-  await MeshoptSimplifier.ready;
-  const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ "meshopt.encoder": MeshoptEncoder });
+  await Promise.all([MeshoptDecoder.ready, MeshoptEncoder.ready, MeshoptSimplifier.ready]);
+  // The decoder also reads GLBs that were already optimised (a model from Shopify, a smoke test).
+  const io = new NodeIO()
+    .registerExtensions(ALL_EXTENSIONS)
+    .registerDependencies({ "meshopt.decoder": MeshoptDecoder, "meshopt.encoder": MeshoptEncoder });
   fs.mkdirSync(outDir, { recursive: true });
 
   const out = {};

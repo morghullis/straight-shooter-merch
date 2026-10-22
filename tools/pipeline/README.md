@@ -7,7 +7,7 @@ site with the site's look, without touching the code.
 | Field | Owner | What the site does with it |
 | --- | --- | --- |
 | `turntable` (list of images) | product | a record of the views the pipeline made, front and back (they are also added to the product's images, which is what the site shows) |
-| `on_model_image` (image) | product | card hover, last photo of the gallery |
+| `on_model_image` (image) | product | a record of the on-model photo the pipeline made (the site's hover is the product's **second image**, where the pipeline puts it) |
 | `model_3d`, `model_3d_hd` (GLB files) | product | 3D viewer on the product page (light / detailed) |
 | `model_3d_showroom` (GLB, optional) | product | the home showroom (defaults to `model_3d`) |
 | `model_3d_view` (JSON `{ "fit": 2.35, "yaw": 0 }`) | product | how the model sits on stage |
@@ -16,7 +16,7 @@ site with the site's look, without touching the code.
 | `tile_title` (one row per line), `tile_image`, `tile_image_secondary`, `tile_theme` (`cream`/`dark`/`sand`) | collection | the collection's home tile |
 | `position` | collection | order in the navigation, footer and home tiles |
 
-**What the site shows is the product in Shopify:** its images in the order they have in the admin (the first one is the card's picture, the first six its carousel), its title, price, variants and stock. Change, add, remove or reorder the images in Shopify and the site follows at once (the products webhook refreshes it). **A new product is on sale at once:** as soon as it is published on the Headless channel (with stock) it shows with its own photos and can be bought; the pipeline adds its front and back views and its on-model photo in the background, placed first among its images, and the site shows them when they are ready. Reorder or delete them in Shopify like any image.
+**What the site shows is the product in Shopify:** its images in the order they have in the admin (the first one is the card's picture, **the second one shows on hover**, the first six are its carousel), its title, price, variants and stock. Change, add, remove or reorder the images in Shopify and the site follows at once (the products webhook refreshes it). **A new product is on sale at once:** as soon as it is published on the Headless channel (with stock) it shows with its own photos and can be bought; the pipeline adds its front and back views and its on-model photo in the background, placed first among its images, and the site shows them when they are ready. Reorder or delete them in Shopify like any image.
 
 Without art a product still shows, with the photos uploaded to it in Shopify; a collection without a tile
 photo shows its first product. Product type (`Hoodie`, `Tee`...) is the category the showroom labels with;
@@ -30,7 +30,7 @@ the tag `featured` puts a product in the home page's featured row. The 3D showro
 2. Meshy image to 3D: Meshy 7.1, 2K texture, standard geometry, PBR (30 credits): light and quick, plenty for the web model, the detail model and the renders. `MESHY_3D_MODEL` (`meshy-6-lite` = 15 credits), `MESHY_TEXTURE` and `MESHY_GEOMETRY` change it
 3. Meshy image to image: the on-model photo shown on hover, a generic model (never a real person) (12 credits)
 4. the GLB optimised (web + detail) and rendered on sand **from the front and the back only**, with `../3d`; a product tagged `back-print` (graphic on the back) shows its back first and faces the 3D viewer with its back
-5. everything uploaded to Shopify Files: the views and the on-model photo lead the product's images, the images of an earlier run are taken off the product (they stay in Files) and the fields are filled in
+5. everything uploaded to Shopify Files: the first view, the on-model photo (2nd = the hover) and the other view lead the product's images, the images of an earlier run are taken off the product (they stay in Files) and the fields are filled in
 
 So about **54 credits per product**. A product runs when:
 
