@@ -179,7 +179,9 @@ async function processProduct(p, tools) {
     state: "running",
     attempts: before.state === "failed" && sameSource ? (before.attempts ?? 0) + 1 : 1,
     startedAt: new Date().toISOString(),
-    photos: source,
+    // The photos of the last good run: they change only when this run succeeds, so a failed run
+    // with a new photo is tried again.
+    photos: photosUsed(before) ?? [],
     generated: Array.isArray(before.generated) ? before.generated : [],
   };
   if (!args.local) await setPipeline(p.id, record);
@@ -258,7 +260,7 @@ async function processProduct(p, tools) {
     await detachFromProduct(p.id, old);
     await attachToProduct(p.id, lead);
     if (hasTag(p, TAG.redo)) await setTag(p.id, TAG.redo, false);
-    await setPipeline(p.id, { ...record, state: "done", finishedAt: new Date().toISOString(), tasks, generated: lead });
+    await setPipeline(p.id, { ...record, state: "done", finishedAt: new Date().toISOString(), tasks, photos: source, generated: lead });
     progress("done");
   } catch (err) {
     if (!args.local) {
