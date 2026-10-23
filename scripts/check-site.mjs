@@ -92,8 +92,9 @@ try {
   const to = new URL(login.headers.get("location") ?? "/", origin);
   if (login.status >= 300 && login.status < 400 && (to.hostname === "shopify.com" || to.hostname.endsWith(".myshopify.com"))) {
     const redirect = to.searchParams.get("redirect_uri");
-    const callback = redirect ? new URL(redirect) : null;
-    if (callback && (!sameSite(callback) || callback.pathname !== "/account/authorize")) fail(`sign-in callback is ${redirect}`);
+    // Strict: Shopify only accepts the registered callback, on the site's public address.
+    const expected = `https://${siteName(site.hostname)}/account/authorize`;
+    if (redirect && redirect !== expected) fail(`sign-in callback is ${redirect}, Shopify expects ${expected}`);
     else ok(`sign-in goes to Shopify (${to.hostname}${to.pathname.includes("oauth") ? ", OAuth" : ", hosted account"})`);
   } else fail(`/account/login -> ${login.status} ${login.headers.get("location")}`);
 
