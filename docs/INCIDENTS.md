@@ -42,6 +42,8 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
 - macOS has no `timeout` command; a script piped into `| head` gets killed early (EPIPE) and may not
   write its output.
 - The Netlify CLI sometimes hangs for minutes; the API answers meanwhile (`npx netlify api …`).
+- zsh (the macOS shell) does not split an unquoted variable into words like bash: `set -- $line`
+  passes one argument. Split with `awk` or `${=line}`; `check-site.mjs` now refuses a malformed address.
 - Running `read -s` through Claude Code's `!` gives it no keyboard: secrets go in the Netlify UI or a
   real terminal tab.
 - Type checks passed locally but failed in CI: Next generates the route types (`PageProps`) into
