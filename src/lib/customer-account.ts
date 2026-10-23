@@ -4,6 +4,9 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { cacheLife } from "next/cache";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+
+import { safeReturnPath } from "./safe-path";
 
 /**
  * Shopify customer accounts on this site, through the Customer Account API (OAuth 2.0 + PKCE).
@@ -242,3 +245,12 @@ export async function fetchCustomer(accessToken: string): Promise<Customer | nul
 }
 
 export { safeReturnPath } from "./safe-path";
+export { publicOrigin } from "./site-origin";
+
+/**
+ * A redirect within this site. The Location is relative, so the browser stays on the address it is
+ * on (where its cookies are), whatever address the function was reached under.
+ */
+export function localRedirect(path: string, status = 307): NextResponse {
+  return new NextResponse(null, { status, headers: { Location: safeReturnPath(path) } });
+}

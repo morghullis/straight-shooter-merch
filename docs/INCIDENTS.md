@@ -21,6 +21,7 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
 
 | Date (UTC) | What happened | Impact | Cause | Fix | Guard |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-23 | Sign-in on the site gave Shopify the deploy's own address (`<deploy-id>--site.netlify.app`) as its callback | Live for ~10 minutes right after customer sign-in was switched on: "Sign in" would have ended on Shopify's "redirect_uri mismatch". Found by checking production, rolled back to the hosted-account version, publishing locked until fixed | Netlify hands functions the deploy address; the routes built Shopify's addresses (and their own redirects) from the request | Shopify's addresses come from the public URL (`publicOrigin`: `NEXT_PUBLIC_SITE_URL`, else Netlify's `URL`); redirects within the site are relative (`localRedirect`), so the shopper stays on the host with their cookies | `tests/site-origin.test.ts`, route guard in `tests/deploy-guards.test.ts`, strict callback check in site health |
 | 2026-10-22/23 | `/account/refresh?to=…` could send a shopper to another site, first with `/\t/evil.com`, then (after a first fix) with `/.//evil.com` | Open redirect on the live site for about a day (usable in phishing links; no data exposed) | The return path was checked with prefix rules; the URL parser drops tabs and collapses dot segments, so the value checked was not the value redirected to | Resolve the value like a browser, reject tabs, newlines and backslashes, check the returned path itself and the final redirect's origin (#4, #5) | `tests/safe-path.test.ts` (23 cases), site health probes |
 | 2026-10-22 | `/account/login` was built as a static page when no client ID was set at build time | Caught before release: every shopper would have shared one state and PKCE code | Next 16 prerenders a GET route handler that touches no request data | `await connection()` at the top of the route | `tests/deploy-guards.test.ts`, `scripts/check-build.mjs` |
 | 2026-10-22 04:10 | The first Git build on Netlify published the raw `.next` folder | Production answered 404 on every page for ~15 minutes | The Next.js runtime (`@netlify/plugin-nextjs`) is added on its own by the CLI but not by Git builds | Rolled back (`restoreSiteDeploy`), locked publishing, declared and pinned the runtime, tested the preview, published, unlocked | `tests/deploy-guards.test.ts`, site health |
@@ -46,6 +47,9 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
 - Type checks passed locally but failed in CI: Next generates the route types (`PageProps`) into
   `.next/types`, which a clean machine does not have. `npm run typecheck` is now
   `next typegen && tsc --noEmit`, as Next's docs advise.
+- Loosening a check to silence a false alarm can hide a real bug: making `check-site.mjs` accept any
+  of the site's Netlify names also let a wrong sign-in callback through. Where an outside system is
+  strict (Shopify accepts only the exact registered callback), the check is just as strict.
 - A new check must be tried on a known-good and a known-bad target before trusting it: the first
   version of `check-site.mjs` flagged a healthy preview, because Netlify serves one site under several
   names (`<deploy-id>--site`, `deploy-preview-<n>--site`). It now compares the site, not the host.
