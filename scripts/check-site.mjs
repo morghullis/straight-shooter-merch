@@ -8,7 +8,12 @@
 // signing in never leads to another site. Exits 1 on any failure.
 import { createHash } from "node:crypto";
 
-const site = new URL(process.argv[2] ?? process.env.SITE_URL ?? "https://straight-shooter-merch.netlify.app");
+const target = process.argv[2] || process.env.SITE_URL || "https://straight-shooter-merch.netlify.app";
+if (!URL.canParse(target) || !/^https?:$/.test(new URL(target).protocol)) {
+  console.error(`Not a site address: ${JSON.stringify(target)} (expected something like https://my-site.netlify.app)`);
+  process.exit(2);
+}
+const site = new URL(target);
 const origin = site.origin;
 const UA = { "User-Agent": "Mozilla/5.0 (site-health-check)" };
 const failures = [];
