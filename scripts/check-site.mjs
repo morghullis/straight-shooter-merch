@@ -13,6 +13,9 @@ const origin = site.origin;
 const UA = { "User-Agent": "Mozilla/5.0 (site-health-check)" };
 const failures = [];
 const ok = (msg) => console.log(`ok    ${msg}`);
+// Netlify serves one site under several names (<deploy-id>--site, deploy-preview-<n>--site): same site.
+const siteName = (host) => (host.includes("--") ? host.slice(host.lastIndexOf("--") + 2) : host);
+const sameSite = (url) => url.protocol === site.protocol && siteName(url.hostname) === siteName(site.hostname);
 const fail = (msg) => {
   failures.push(msg);
   console.log(`FAIL  ${msg}`);
@@ -63,9 +66,7 @@ async function staysOnSite(to) {
   const res = await get(`/account/refresh?to=${encodeURIComponent(to)}`);
   const location = res.headers.get("location") ?? "";
   const target = location ? new URL(location, origin) : null;
-  // Netlify's deploy permalinks (<id>--site.netlify.app) are the same site.
-  const same = target && (target.origin === origin || target.hostname.endsWith(`--${site.hostname}`));
-  if (res.status >= 300 && res.status < 400 && same) ok(`return path ${JSON.stringify(to)} stays on the site`);
+  if (res.status >= 300 && res.status < 400 && target && sameSite(target)) ok(`return path ${JSON.stringify(to)} stays on the site`);
   else fail(`return path ${JSON.stringify(to)} -> ${res.status} ${location}`);
 }
 
@@ -86,7 +87,8 @@ try {
   const to = new URL(login.headers.get("location") ?? "/", origin);
   if (login.status >= 300 && login.status < 400 && (to.hostname === "shopify.com" || to.hostname.endsWith(".myshopify.com"))) {
     const redirect = to.searchParams.get("redirect_uri");
-    if (redirect && redirect !== `${origin}/account/authorize`) fail(`sign-in callback is ${redirect}`);
+    const callback = redirect ? new URL(redirect) : null;
+    if (callback && (!sameSite(callback) || callback.pathname !== "/account/authorize")) fail(`sign-in callback is ${redirect}`);
     else ok(`sign-in goes to Shopify (${to.hostname}${to.pathname.includes("oauth") ? ", OAuth" : ", hosted account"})`);
   } else fail(`/account/login -> ${login.status} ${login.headers.get("location")}`);
 
