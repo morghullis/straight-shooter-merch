@@ -43,17 +43,22 @@ trigger a run. A product tagged `no-3d` is left alone, as is one that failed 3 t
 photos (add a photo or the tag to retry). The pipeline stops when Meshy's balance would drop below
 `MESHY_MIN_BALANCE` (default 100).
 
-It runs in the GitHub Action `.github/workflows/product-assets.yml`: every 5 minutes it takes a quick
-look at the store (plain Node, nothing installed, no credits) and only installs the 3D tools and calls
-Meshy when a product needs it; the storefront's products webhook can start that look right away; and by
-hand from the Actions tab (give handles to redo exactly those products).
+It runs in the GitHub Action `.github/workflows/product-assets.yml`, which first takes a quick look at
+the store (plain Node, nothing installed, no credits) and only installs the 3D tools and calls Meshy
+when a product needs it. It starts:
+
+- **right away** when the storefront's products webhook asks for it: the site needs
+  `GITHUB_DISPATCH_TOKEN` (see below). This is the trigger to rely on;
+- by hand from the Actions tab (give handles to redo exactly those products);
+- on a schedule, as a safety net only: it asks for every 5 minutes, but GitHub delays and drops
+  scheduled runs when it is busy, and here it ran every 3 to 5 hours.
 
 The Action needs, in the repository settings:
 
 - secrets `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET` (the Dev Dashboard app) and `MESHY_API_KEY`
 - variable `SHOPIFY_STORE_DOMAIN` (`your-store.myshopify.com`)
 
-Optional, for the immediate look instead of within 5 minutes: the site (Netlify) needs
+For the immediate start (without it a new photo can wait hours for the schedule), the site (Netlify) needs
 `GITHUB_DISPATCH_TOKEN` (a fine-grained token with *Contents: read and write* on this repository) and
 `GITHUB_DISPATCH_REPO` (`owner/name`).
 
@@ -67,7 +72,7 @@ credentials come from `PIPELINE_ENV_FILE` (default `./.env`, ignored by git): `S
 | --- | --- |
 | `node define-metafields.mjs` | Creates the field definitions above in the store (safe to run again). |
 | `node generate.mjs --dry-run` | Lists every product and what the pipeline would do with it. |
-| `node generate.mjs --check` | Counts the products that need a run (what the Action does every 5 minutes; needs no 3D tools). |
+| `node generate.mjs --check` | Counts the products that need a run (the Action's first step; needs no 3D tools). |
 | `node generate.mjs [handle ...] [--max n]` | Processes the products that need it (or exactly these). |
 | `node generate.mjs <handle> --from-glb file.glb --local out/` | Optimises and renders a GLB into `out/` without Meshy or Shopify: a free test. |
 | `node generate.mjs <handle> --from-glb file.glb` | Redoes a product's art from a GLB you made or fixed by hand (no credits). |
