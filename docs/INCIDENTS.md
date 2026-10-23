@@ -43,6 +43,9 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
 - The Netlify CLI sometimes hangs for minutes; the API answers meanwhile (`npx netlify api …`).
 - Running `read -s` through Claude Code's `!` gives it no keyboard: secrets go in the Netlify UI or a
   real terminal tab.
+- Type checks passed locally but failed in CI: Next generates the route types (`PageProps`) into
+  `.next/types`, which a clean machine does not have. `npm run typecheck` is now
+  `next typegen && tsc --noEmit`, as Next's docs advise.
 - A new check must be tried on a known-good and a known-bad target before trusting it: the first
   version of `check-site.mjs` flagged a healthy preview, because Netlify serves one site under several
   names (`<deploy-id>--site`, `deploy-preview-<n>--site`). It now compares the site, not the host.
