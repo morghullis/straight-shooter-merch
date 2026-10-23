@@ -16,7 +16,8 @@ import { isSafeHandle } from "@/lib/format";
  *
  * A new or changed product also asks the asset pipeline (the GitHub Action in
  * .github/workflows/product-assets.yml) to look at it right away when GITHUB_DISPATCH_TOKEN and
- * GITHUB_DISPATCH_REPO are set; otherwise the Action's 5-minute check picks it up. The pipeline only
+ * GITHUB_DISPATCH_REPO are set; otherwise only the Action's schedule picks it up (GitHub runs it every
+ * few hours, not every 5 minutes as asked). The pipeline only
  * spends credits when the product needs it (new, a photo added, or tagged "regenerate-assets").
  */
 export async function POST(request: Request) {
@@ -84,6 +85,6 @@ async function startAssetPipeline(handle: string) {
       body: JSON.stringify({ event_type: "shopify-product-changed", client_payload: { handle } }),
     });
   } catch {
-    // The 5-minute check will pick the product up.
+    // The Action's schedule will pick the product up, later.
   }
 }
