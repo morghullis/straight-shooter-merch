@@ -57,7 +57,7 @@ Catalog reads are cached for an hour; webhooks make changes show at once and sta
 
 1. Environment variables on the site (see `.env.example`): `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_STOREFRONT_ACCESS_TOKEN`, `SHOPIFY_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`, optionally `SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` (step 6), `GITHUB_DISPATCH_TOKEN`, `GITHUB_DISPATCH_REPO`, `FAN_SIGNUP_WEBHOOK`.
 2. GitHub repository settings for the pipeline Action: secrets `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, `MESHY_API_KEY`; variable `SHOPIFY_STORE_DOMAIN`.
-3. The site is linked to the GitHub repository: a push to `main` builds and publishes it, a pull request gets a deploy preview. `netlify.toml` declares the Next.js runtime (`@netlify/plugin-nextjs`, pinned in `package.json`): Git builds need it.
+3. The site is linked to the GitHub repository: a push to `main` builds and publishes it, a pull request gets a deploy preview and runs CI (`.github/workflows/ci.yml`); *Site health* checks production after every push and twice an hour. If production breaks, follow [INCIDENTS.md](INCIDENTS.md#if-production-breaks). `netlify.toml` declares the Next.js runtime (`@netlify/plugin-nextjs`, pinned in `package.json`): Git builds need it.
 4. Deploy, then register the webhooks (step 3).
 
 ## 5. How the cart works

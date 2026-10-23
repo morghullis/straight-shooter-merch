@@ -1,0 +1,36 @@
+# Is the live site healthy? Pages answer, images are real and distinct, the Shopify webhook has its
+# secret, sign-in goes to Shopify, and no return path leads to another site (scripts/check-site.mjs).
+# Runs twice an hour, after every push to main (once Netlify has had time to publish), and by hand.
+# A failed run means something is wrong in production: GitHub emails the repository owner.
+name: Site health
+
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-health
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://straight-shooter-merch.netlify.app' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Netlify builds and publishes main in about four minutes.
+      - name: Wait for the new deploy
+        if: github.event_name == 'push'
+        run: sleep 420
+      - run: node scripts/check-site.mjs "$SITE_URL"
