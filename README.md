@@ -4,7 +4,7 @@ Headless Shopify storefront built with **Next.js 16 (App Router, Cache Component
 
 The top of the home page (header, hero, four collection tiles, featured products) is a measured clone of the reference screenshot: container, spacing, type sizes and colours were taken from it pixel by pixel, and everything animated settles back onto that exact layout. Below it, the page is built around the fans.
 
-It runs out of the box on a demo catalog. Add your Shopify credentials and the same pages read your real store: products, collections and every product's art (turntable renders, on-model photo, 3D models) come from Shopify, so a product created there shows on the site with its look, and new products get their 3D model, front and back views and hover photo made automatically, redone when a photo is added ([tools/pipeline](tools/pipeline/README.md)). **How this runs on Shopify is in [docs/SHOPIFY.md](docs/SHOPIFY.md).**
+It runs out of the box on a demo catalog. Add your Shopify credentials and the same pages read your real store: products, collections and every product's art (turntable renders, on-model photo, 3D models) come from Shopify, so a product created there shows on the site with its look, and new products get their 3D model, front and back views and hover photo made automatically, redone when a photo is added ([tools/pipeline](tools/pipeline/README.md)). **How this runs on Shopify is in [docs/SHOPIFY.md](docs/SHOPIFY.md); what went wrong, the guards that now prevent it and what to do if production breaks are in [docs/INCIDENTS.md](docs/INCIDENTS.md).**
 
 ## Run it
 

@@ -1,8 +1,8 @@
 # Makes the storefront assets (3D model, front and back renders, on-model hover photo) of Shopify
 # products: see tools/pipeline/README.md. A product runs when it is new, when the merchant adds a photo,
-# or when it is tagged "regenerate-assets". Checks every 10 minutes (a quick look at the store that
-# installs nothing), right away when the storefront's Shopify webhook asks for it, and by hand from
-# the Actions tab.
+# or when it is tagged "regenerate-assets". Takes a quick look at the store (that installs nothing)
+# every 5 minutes, GitHub's shortest schedule (it can run a little late when GitHub is busy); right
+# away when the storefront's Shopify webhook asks for it; and by hand from the Actions tab.
 #
 # Needs these repository secrets: SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, MESHY_API_KEY,
 # and the repository variable SHOPIFY_STORE_DOMAIN (e.g. my-store.myshopify.com).
@@ -12,7 +12,7 @@ on:
   repository_dispatch:
     types: [shopify-product-changed, shopify-product-created]
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
       products:
