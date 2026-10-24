@@ -58,6 +58,11 @@ The Action needs, in the repository settings:
 - secrets `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET` (the Dev Dashboard app) and `MESHY_API_KEY`
 - variable `SHOPIFY_STORE_DOMAIN` (`your-store.myshopify.com`)
 
+**Set up on 2026-10-24** (verified: a Shopify edit started the Action 5 seconds later). The token
+`straight-shooter-dispatch` (only this repository, Contents read and write) **expires on
+2027-10-23**: renew it in GitHub (Settings → Developer settings → Fine-grained tokens) and replace the
+value on Netlify before then. If it lapses nothing breaks, new photos just wait for the schedule.
+
 For the immediate start (without it a new photo can wait hours for the schedule), the site (Netlify) needs
 `GITHUB_DISPATCH_TOKEN` (a fine-grained token with *Contents: read and write* on this repository) and
 `GITHUB_DISPATCH_REPO` (`owner/name`).
