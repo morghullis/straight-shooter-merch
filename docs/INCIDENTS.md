@@ -57,6 +57,11 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
   version of `check-site.mjs` flagged a healthy preview, because Netlify serves one site under several
   names (`<deploy-id>--site`, `deploy-preview-<n>--site`). It now compares the site, not the host.
 
+## Dates to remember
+
+- **2027-10-23**: the GitHub token `straight-shooter-dispatch` (`GITHUB_DISPATCH_TOKEN` on Netlify)
+  expires. Renew it before, or new photos wait hours for GitHub's schedule (see `tools/pipeline/README.md`).
+
 ## If production breaks
 
 1. **Roll back first, investigate second.** Netlify → Deploys → pick the last good deploy → *Publish
