@@ -85,7 +85,7 @@ Shopify only accepts HTTPS callbacks, so sign-in works on the deployed site (not
 
 ## 7. Your own domain
 
-One domain, two jobs (live since 2026-11-16 with `straightshootershop.com`, registered at GoDaddy):
+One domain, two jobs (live since 2026-11-17 UTC with `straightshootershop.com`, registered at GoDaddy):
 
 | Address | Serves | DNS (at the registrar) | Where it is set up |
 | --- | --- | --- | --- |
