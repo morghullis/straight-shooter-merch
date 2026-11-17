@@ -68,8 +68,10 @@ The cart lives in the browser. **Checkout** runs a server action that creates a 
 
 The store uses Shopify's **new customer accounts**: no passwords, the shopper enters their email and gets a code; a new email creates the account. "My Account" (header, menu, footer) leads to `/account`:
 
-- **Connected** (`SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` set): *Sign in* / *Create account* go to Shopify's sign-in page and back to `/account` signed in (Customer Account API, OAuth 2.0 with PKCE: `src/lib/customer-account.ts`, routes `/account/login`, `/account/authorize`, `/account/refresh`, `/account/logout`). The page shows the shopper's name and orders (with Shopify's tracking page), a link to addresses and details on Shopify, and *Sign out*. The tokens stay in an httpOnly cookie.
-- **Not connected**: the same buttons open Shopify's hosted account pages (`https://<store domain>/account`).
+- **Connected** (`SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID` set): *Sign in* / *Create account* go to Shopify's sign-in page and back to `/account` signed in (Customer Account API, OAuth 2.0 with PKCE: `src/lib/customer-account.ts`, routes `/account/login`, `/account/authorize`, `/account/refresh`, `/account/logout`). The page shows the shopper's name and orders (with Shopify's tracking page), *Manage account* (addresses and details on Shopify, through `/account/manage`), and *Sign out*. The tokens stay in an httpOnly cookie.
+- **Not connected**: the same buttons open Shopify's hosted account pages, through `/account/manage`.
+
+`/account/manage` asks Shopify for the store's primary domain and sends the shopper to its `/account`, so the site never links to the store's `.myshopify.com` name.
 
 To connect it, in the Shopify admin: **Sales channels → Headless → (your storefront) → Customer Account API settings**:
 
@@ -80,6 +82,28 @@ To connect it, in the Shopify admin: **Sales channels → Headless → (your sto
 Shopify only accepts HTTPS callbacks, so sign-in works on the deployed site (not on localhost, nor on deploy previews unless their URL is added).
 
 **Reminders** (abandoned checkout and others) are Shopify's own automations: **Marketing → Automations** (for example *Abandoned checkout*). They reach shoppers who left checkout after giving their email, or who were signed in.
+
+## 7. Your own domain
+
+One domain, two jobs (live since 2026-11-16 with `straightshootershop.com`, registered at GoDaddy):
+
+| Address | Serves | DNS (at the registrar) | Where it is set up |
+| --- | --- | --- | --- |
+| `straightshootershop.com` | this site | `A @ 75.2.60.5` (Netlify) | Netlify → Domain management (custom domain, HTTPS by Let's Encrypt) |
+| `www.straightshootershop.com` | forwards to the one above | `CNAME www <site>.netlify.app` | Netlify (domain alias) |
+| `checkout.straightshootershop.com` | Shopify checkout, order status, Shopify's pages | `CNAME checkout shops.myshopify.com` | Shopify → Settings → Domains, **Primary** |
+
+Shopify's checkout and emails use the store's primary domain, so making `checkout.` primary is what keeps the `.myshopify.com` name out of sight. Shoppers never see it on the site either: the health check fails if a page shows it.
+
+Moving the site to a new address, in this order (each step keeps the site working):
+
+1. Connect `checkout.<domain>` in Shopify, make it **Primary**, and check that a checkout from the site opens there.
+2. At the registrar: `A @` → `75.2.60.5`, `CNAME www` → `<site>.netlify.app`. Leave Shopify's `checkout` and verification records alone.
+3. Netlify: add the domain and `www` as an alias; HTTPS follows within minutes.
+4. Shopify → Settings → Domains: **delete** the domain and `www` there (only the connection: the domain stays at the registrar). Shopify then shows "Invalid DNS" until they are gone; never press *Connect automatically*, it would point the domain back at Shopify.
+5. Webhooks: `node tools/pipeline/register-webhooks.mjs https://<domain>` (it removes the ones on the old address; Shopify refuses webhooks to a domain still connected to the store, hence step 4 first).
+6. Customer Account API (section 6): add `https://<domain>/account/authorize`, origin `https://<domain>` and logout `https://<domain>/account`; set `NEXT_PUBLIC_SITE_URL=https://<domain>` on Netlify and redeploy.
+7. `node scripts/check-site.mjs https://<domain>`, a sign-in, and a checkout.
 
 ## What to know before launch
 

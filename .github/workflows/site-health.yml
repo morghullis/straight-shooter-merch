@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SITE_URL: ${{ vars.SITE_URL || 'https://straight-shooter-merch.netlify.app' }}
+      SITE_URL: ${{ vars.SITE_URL || 'https://straightshootershop.com' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

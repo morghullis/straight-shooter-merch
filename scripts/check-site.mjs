@@ -1,14 +1,19 @@
 // Health check of a deployed site (production by default), with Node 20+ and nothing installed:
 //
 //   node scripts/check-site.mjs [https://site]
+//   PUBLIC_SITE_URL=https://straightshootershop.com node scripts/check-site.mjs https://deploy-preview-8--straight-shooter-merch.netlify.app
 //
 // It checks what broke or could have broken before (see docs/INCIDENTS.md): pages answer, every
-// optimised image is a real and distinct picture (one image everywhere = broken image route), the
-// Shopify webhook has its secret, sign-in redirects only to Shopify, and the return path after
-// signing in never leads to another site. Exits 1 on any failure.
+// optimised image is a real and distinct picture (one image everywhere = broken image route), no page
+// shows the store's .myshopify.com name, the Shopify webhook has its secret, sign-in redirects only to
+// Shopify with the site's public callback, Shopify's account pages are reached on the store's own
+// domain, and the return path after signing in never leads to another site. Exits 1 on any failure.
+//
+// PUBLIC_SITE_URL: the address the site was built for (NEXT_PUBLIC_SITE_URL), when checking a deploy
+// preview of it: sign-in hands Shopify that address's callback, not the preview's.
 import { createHash } from "node:crypto";
 
-const target = process.argv[2] || process.env.SITE_URL || "https://straight-shooter-merch.netlify.app";
+const target = process.argv[2] || process.env.SITE_URL || "https://straightshootershop.com";
 if (!URL.canParse(target) || !/^https?:$/.test(new URL(target).protocol)) {
   console.error(`Not a site address: ${JSON.stringify(target)} (expected something like https://my-site.netlify.app)`);
   process.exit(2);
@@ -25,6 +30,8 @@ const fail = (msg) => {
   failures.push(msg);
   console.log(`FAIL  ${msg}`);
 };
+const publicSite = process.env.PUBLIC_SITE_URL ? new URL(process.env.PUBLIC_SITE_URL) : null;
+const myshopify = /[a-z0-9-]+\.myshopify\.com/i;
 
 async function get(path, init = {}) {
   return fetch(new URL(path, origin), { redirect: "manual", headers: UA, ...init, signal: AbortSignal.timeout(30_000) });
@@ -35,6 +42,9 @@ async function page(path) {
   const html = await res.text();
   if (res.status === 200 && /<title>/.test(html)) ok(`${path} -> 200`);
   else fail(`${path} -> ${res.status}`);
+  // Shoppers only see the store's own domains (the .myshopify.com name is for API calls).
+  const leak = html.match(myshopify);
+  if (leak) fail(`${path} shows the store's Shopify name (${leak[0]})`);
   return html;
 }
 
@@ -77,6 +87,7 @@ async function staysOnSite(to) {
 
 try {
   const home = await page("/");
+  await page("/account");
   await images("/", home);
   const all = await page("/collections/all");
   await images("/collections/all", all);
@@ -93,10 +104,16 @@ try {
   if (login.status >= 300 && login.status < 400 && (to.hostname === "shopify.com" || to.hostname.endsWith(".myshopify.com"))) {
     const redirect = to.searchParams.get("redirect_uri");
     // Strict: Shopify only accepts the registered callback, on the site's public address.
-    const expected = `https://${siteName(site.hostname)}/account/authorize`;
+    const expected = publicSite ? new URL("/account/authorize", publicSite).toString() : `https://${siteName(site.hostname)}/account/authorize`;
     if (redirect && redirect !== expected) fail(`sign-in callback is ${redirect}, Shopify expects ${expected}`);
     else ok(`sign-in goes to Shopify (${to.hostname}${to.pathname.includes("oauth") ? ", OAuth" : ", hosted account"})`);
   } else fail(`/account/login -> ${login.status} ${login.headers.get("location")}`);
+
+  const manage = await get("/account/manage");
+  const account = URL.canParse(manage.headers.get("location") ?? "") ? new URL(manage.headers.get("location")) : null;
+  if (manage.status >= 300 && manage.status < 400 && account?.protocol === "https:" && !myshopify.test(account.hostname)) {
+    ok(`Shopify's account pages open on ${account.hostname}`);
+  } else fail(`/account/manage -> ${manage.status} ${manage.headers.get("location")} (expected the store's own domain)`);
 
   for (const trick of ["//example.com", "/\t/example.com", "/.//example.com", "/..//example.com", "https://example.com"]) await staysOnSite(trick);
 } catch (err) {
