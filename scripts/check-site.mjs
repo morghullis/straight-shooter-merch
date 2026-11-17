@@ -35,6 +35,13 @@ const fail = (msg) => {
 const publicSite = process.env.PUBLIC_SITE_URL ? new URL(process.env.PUBLIC_SITE_URL) : null;
 const myshopify = /[a-z0-9-]+\.myshopify\.com/i;
 const redirectDomains = (process.env.REDIRECT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
+for (const d of redirectDomains) {
+  if (!URL.canParse(d) || !/^https?:$/.test(new URL(d).protocol)) {
+    console.error(`Not an address in REDIRECT_DOMAINS: ${JSON.stringify(d)}`);
+    process.exit(2);
+  }
+}
+const knownHosts = new Set([site.hostname, ...redirectDomains.map((d) => new URL(d).hostname)]);
 
 async function get(path, init = {}) {
   return fetch(new URL(path, origin), { redirect: "manual", headers: UA, ...init, signal: AbortSignal.timeout(30_000) });
@@ -128,8 +135,15 @@ try {
       const res = await fetch(at, { redirect: "manual", headers: UA, signal: AbortSignal.timeout(30_000) });
       const location = res.headers.get("location");
       hops.push(`${res.status}`);
-      if (![301, 308].includes(res.status) || !location) break;
-      at = new URL(location, at).toString();
+      if (![301, 308].includes(res.status) || !location || !URL.canParse(location, at)) break;
+      const next = new URL(location, at);
+      // Only ever follow to the addresses named here: a redirect elsewhere is a failure, never fetched.
+      if (!/^https?:$/.test(next.protocol) || !knownHosts.has(next.hostname)) {
+        at = next.toString();
+        hops.push("off-site");
+        break;
+      }
+      at = next.toString();
     }
     if (at === expected) ok(`${new URL(from).origin} forwards to the site (${hops.join(" -> ")})`);
     else fail(`${new URL(from).origin} ended on ${at} (${hops.join(" -> ")}), expected a permanent redirect to ${expected}`);
