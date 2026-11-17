@@ -11,6 +11,8 @@
 //
 // PUBLIC_SITE_URL: the address the site was built for (NEXT_PUBLIC_SITE_URL), when checking a deploy
 // preview of it: sign-in hands Shopify that address's callback, not the preview's.
+// REDIRECT_DOMAINS: addresses that must forward to the site, same path, in one permanent redirect
+// (comma-separated, e.g. https://stephenasmithshop.com,https://www.straightshootershop.com).
 import { createHash } from "node:crypto";
 
 const target = process.argv[2] || process.env.SITE_URL || "https://straightshootershop.com";
@@ -32,6 +34,14 @@ const fail = (msg) => {
 };
 const publicSite = process.env.PUBLIC_SITE_URL ? new URL(process.env.PUBLIC_SITE_URL) : null;
 const myshopify = /[a-z0-9-]+\.myshopify\.com/i;
+const redirectDomains = (process.env.REDIRECT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
+for (const d of redirectDomains) {
+  if (!URL.canParse(d) || !/^https?:$/.test(new URL(d).protocol)) {
+    console.error(`Not an address in REDIRECT_DOMAINS: ${JSON.stringify(d)}`);
+    process.exit(2);
+  }
+}
+const knownHosts = new Set([site.hostname, ...redirectDomains.map((d) => new URL(d).hostname)]);
 
 async function get(path, init = {}) {
   return fetch(new URL(path, origin), { redirect: "manual", headers: UA, ...init, signal: AbortSignal.timeout(30_000) });
@@ -114,6 +124,30 @@ try {
   if (manage.status >= 300 && manage.status < 400 && account?.protocol === "https:" && !myshopify.test(account.hostname)) {
     ok(`Shopify's account pages open on ${account.hostname}`);
   } else fail(`/account/manage -> ${manage.status} ${manage.headers.get("location")} (expected the store's own domain)`);
+
+  for (const from of redirectDomains) {
+    // A real path, so a redirect that drops the path (to the home page) is caught too. Permanent
+    // redirects only (301/308), at most 3 (http -> https -> the site), ending on the same page.
+    const expected = new URL("/collections/all?ref=check", origin).toString();
+    let at = new URL("/collections/all?ref=check", from).toString();
+    const hops = [];
+    while (hops.length < 3 && at !== expected) {
+      const res = await fetch(at, { redirect: "manual", headers: UA, signal: AbortSignal.timeout(30_000) });
+      const location = res.headers.get("location");
+      hops.push(`${res.status}`);
+      if (![301, 308].includes(res.status) || !location || !URL.canParse(location, at)) break;
+      const next = new URL(location, at);
+      // Only ever follow to the addresses named here: a redirect elsewhere is a failure, never fetched.
+      if (!/^https?:$/.test(next.protocol) || !knownHosts.has(next.hostname)) {
+        at = next.toString();
+        hops.push("off-site");
+        break;
+      }
+      at = next.toString();
+    }
+    if (at === expected) ok(`${new URL(from).origin} forwards to the site (${hops.join(" -> ")})`);
+    else fail(`${new URL(from).origin} ended on ${at} (${hops.join(" -> ")}), expected a permanent redirect to ${expected}`);
+  }
 
   for (const trick of ["//example.com", "/\t/example.com", "/.//example.com", "/..//example.com", "https://example.com"]) await staysOnSite(trick);
 } catch (err) {

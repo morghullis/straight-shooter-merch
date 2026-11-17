@@ -92,6 +92,9 @@ One domain, two jobs (live since 2026-11-17 UTC with `straightshootershop.com`, 
 | `straightshootershop.com` | this site | `A @ 75.2.60.5` (Netlify) | Netlify → Domain management (custom domain, HTTPS by Let's Encrypt) |
 | `www.straightshootershop.com` | forwards to the one above | `CNAME www <site>.netlify.app` | Netlify (domain alias) |
 | `checkout.straightshootershop.com` | Shopify checkout, order status, Shopify's pages | `CNAME checkout shops.myshopify.com` | Shopify → Settings → Domains, **Primary** |
+| `stephenasmithshop.com` (+ `www`) | the link handed out: forwards to `straightshootershop.com`, same path (301) | `A @ 75.2.60.5`, `CNAME www stephenasmithshop.com` | Netlify (domain aliases) + redirect rules in `netlify.toml` |
+
+Another domain that should lead to the shop: add it (and its `www`) as domain aliases on Netlify, add its redirect rules to `netlify.toml` and its address to `REDIRECT_DOMAINS` in `.github/workflows/site-health.yml`, then point its DNS at Netlify. Netlify's redirect works on `https://` links too, unlike a registrar's plain forwarding.
 
 Shopify's checkout and emails use the store's primary domain, so making `checkout.` primary is what keeps the `.myshopify.com` name out of sight. Shoppers never see it on the site either: the health check fails if a page shows it.
 
