@@ -446,6 +446,18 @@ export async function fetchVariants(ids: string[]): Promise<Map<string, LiveVari
 }
 
 /**
+ * The store's primary public address (Shopify admin > Settings > Domains), e.g.
+ * `https://checkout.example.com`. Shoppers only ever see this one, never the store's .myshopify.com
+ * name, which stays behind the scenes for API calls.
+ */
+export async function fetchPrimaryDomainUrl(): Promise<string> {
+  const data = await shopifyFetch<{ shop: { primaryDomain: { url: string } } }>(
+    /* GraphQL */ `query PrimaryDomain { shop { primaryDomain { url } } }`,
+  );
+  return data.shop.primaryDomain.url;
+}
+
+/**
  * A Shopify cart with these lines; returns its checkout URL. With the signed-in shopper's Customer
  * Account API token, checkout opens signed in (and the store can follow up an abandoned checkout).
  * If Shopify refuses the token, the cart is made without it: checkout must never fail for that.

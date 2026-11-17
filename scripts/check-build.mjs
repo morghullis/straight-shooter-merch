@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const manifest = JSON.parse(readFileSync(new URL("../.next/prerender-manifest.json", import.meta.url), "utf8"));
 const prerendered = Object.keys(manifest.routes ?? {});
-const mustBeDynamic = ["/account/login", "/account/authorize", "/account/refresh", "/account/logout", "/api/revalidate", "/api/track"];
+const mustBeDynamic = ["/account/login", "/account/authorize", "/account/refresh", "/account/logout", "/account/manage", "/api/revalidate", "/api/track"];
 const wrong = mustBeDynamic.filter((route) => prerendered.includes(route));
 
 if (wrong.length) {

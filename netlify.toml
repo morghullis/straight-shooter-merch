@@ -12,6 +12,14 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# One public address: the site's Netlify name forwards to the store's domain (deploy previews keep
+# their own names). Shopify's webhooks go to the domain itself (Shopify does not follow redirects).
+[[redirects]]
+  from = "https://straight-shooter-merch.netlify.app/*"
+  to = "https://straightshootershop.com/:splat"
+  status = 301
+  force = true
+
 # This deployment is a preview for showing the design: keep it out of search engines.
 # Remove this block when the site goes live on its real domain.
 [[headers]]

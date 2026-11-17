@@ -47,3 +47,15 @@ test("the account routes give Shopify the public address and redirect within the
     assert.doesNotMatch(code, /request\.url/, `${file}: build same-site redirects with localRedirect()`);
   }
 });
+
+test("pages never link to the store's .myshopify.com name (shoppers only see the store's own domains)", () => {
+  const files = (dir: string): string[] =>
+    readdirSync(new URL(`../${dir}`, import.meta.url), { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? files(`${dir}/${e.name}`) : /\.(tsx?|mjs)$/.test(e.name) ? [`${dir}/${e.name}`] : [],
+    );
+  for (const file of [...files("src/app"), ...files("src/components")]) {
+    assert.doesNotMatch(read(file), /myshopify|SHOPIFY_STORE_DOMAIN/, `${file} builds an address from the store's Shopify name`);
+  }
+  const accounts = read("src/lib/customer-account.ts");
+  assert.doesNotMatch(accounts, /export const \w+\s*=\s*domain\s*\?\s*`https:\/\/\$\{domain\}/, "no exported link built from SHOPIFY_STORE_DOMAIN");
+});

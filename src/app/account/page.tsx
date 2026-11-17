@@ -10,9 +10,9 @@ import {
   ACCOUNT_PATHS,
   accountsConnected,
   fetchCustomer,
-  hostedAccountUrl,
   isFresh,
   readSession,
+  shopAccountsAvailable,
   type Customer,
   type CustomerOrder,
 } from "@/lib/customer-account";
@@ -81,7 +81,7 @@ async function AccountPanel({ searchParams }: { searchParams: Promise<{ signin?:
 /** Sign in or create an account: both on Shopify's page (an emailed code; new emails get an account). */
 function SignedOut({ error }: { error?: SignInError | null }) {
   // Forms, not links: the browser goes there for real (Shopify's page), no prefetching.
-  const action = accountsConnected ? ACCOUNT_PATHS.login : hostedAccountUrl;
+  const action = accountsConnected ? ACCOUNT_PATHS.login : shopAccountsAvailable ? ACCOUNT_PATHS.manage : null;
   return (
     <div>
       <h2 className={sectionTitle}>{copy.account.ordersTitle}</h2>
@@ -145,8 +145,8 @@ function SignedIn({ customer }: { customer: Customer }) {
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        {hostedAccountUrl && (
-          <form action={hostedAccountUrl} method="get">
+        {shopAccountsAvailable && (
+          <form action={ACCOUNT_PATHS.manage} method="get">
             <Button type="submit" variant="ink">
               {copy.account.manage}
             </Button>

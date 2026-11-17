@@ -6,6 +6,7 @@ import { cacheLife } from "next/cache";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { fetchPrimaryDomainUrl } from "./catalog/shopify";
 import { safeReturnPath } from "./safe-path";
 
 /**
@@ -27,10 +28,40 @@ const clientSecret = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET ?? "";
 
 /** Sign in happens on this site (true) or on Shopify's hosted account pages (false). */
 export const accountsConnected = Boolean(domain && clientId);
-/** Shopify's hosted account pages (sign in, create an account, orders), or null in demo mode. */
-export const hostedAccountUrl = domain ? `https://${domain}/account` : null;
+/** The store has Shopify's own account pages (profile, addresses; sign-in when not connected). False in demo mode. */
+export const shopAccountsAvailable = Boolean(domain);
 
-export const ACCOUNT_PATHS = { login: "/account/login", callback: "/account/authorize", refresh: "/account/refresh", logout: "/account/logout" };
+export const ACCOUNT_PATHS = {
+  login: "/account/login",
+  callback: "/account/authorize",
+  refresh: "/account/refresh",
+  logout: "/account/logout",
+  /** Off to Shopify's account pages, through this site: pages never link to a Shopify address. */
+  manage: "/account/manage",
+};
+
+/** The primary domain's account address, cached for a few hours (it only changes in Settings > Domains). */
+async function primaryAccountUrl(): Promise<string> {
+  "use cache";
+  cacheLife("hours");
+  const url = new URL("/account", await fetchPrimaryDomainUrl());
+  if (url.protocol !== "https:") throw new Error(`Unexpected primary domain ${url.origin}`);
+  return url.toString();
+}
+
+/**
+ * Shopify's account pages for this store, on the store's own primary domain (Shopify forwards from
+ * there to where it hosts accounts). Never the .myshopify.com name, which shoppers must not see;
+ * only if Shopify cannot be asked does the redirect fall back to it (still never shown on a page).
+ */
+export async function shopAccountUrl(): Promise<string | null> {
+  if (!domain) return null;
+  try {
+    return await primaryAccountUrl();
+  } catch {
+    return `https://${domain}/account`;
+  }
+}
 
 const SESSION_COOKIE = "ss_customer";
 const LOGIN_COOKIE = "ss_customer_login";
