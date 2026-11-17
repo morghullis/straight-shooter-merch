@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 15
     env:
       SITE_URL: ${{ vars.SITE_URL || 'https://straightshootershop.com' }}
+      # The links handed out and the old addresses: each must forward to the site, same path.
+      REDIRECT_DOMAINS: https://stephenasmithshop.com,https://www.stephenasmithshop.com,http://stephenasmithshop.com,https://www.straightshootershop.com,https://straight-shooter-merch.netlify.app
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

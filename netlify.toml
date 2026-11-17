@@ -20,6 +20,32 @@
   status = 301
   force = true
 
+# stephenasmithshop.com is the link handed out: it and its www forward to the shop, same path (domain
+# aliases of this site, DNS at GoDaddy). Both schemes, so a plain http:// link takes one hop.
+[[redirects]]
+  from = "https://stephenasmithshop.com/*"
+  to = "https://straightshootershop.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://stephenasmithshop.com/*"
+  to = "https://straightshootershop.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.stephenasmithshop.com/*"
+  to = "https://straightshootershop.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.stephenasmithshop.com/*"
+  to = "https://straightshootershop.com/:splat"
+  status = 301
+  force = true
+
 # This deployment is a preview for showing the design: keep it out of search engines.
 # Remove this block when the site goes live on its real domain.
 [[headers]]
