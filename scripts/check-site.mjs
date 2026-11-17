@@ -117,7 +117,10 @@ try {
 
   for (const trick of ["//example.com", "/\t/example.com", "/.//example.com", "/..//example.com", "https://example.com"]) await staysOnSite(trick);
 } catch (err) {
-  fail(`check crashed: ${err.message}`);
+  // "fetch failed" alone says nothing: the cause tells a DNS or TLS problem (e.g. a resolver still
+  // giving the domain's old address right after a DNS change) from the site being down.
+  const cause = err.cause ? ` (${[err.cause.code, err.cause.message?.split("\n")[0]].filter(Boolean).join(": ")})` : "";
+  fail(`check crashed: ${err.message}${cause}`);
 }
 
 console.log(failures.length ? `\n${failures.length} problem(s) on ${origin}` : `\nall good on ${origin}`);

@@ -63,7 +63,9 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
   record's TTL (1 hour): Chrome showed Cloudflare's "Error 1001" (Shopify's network no longer knowing the
   domain), and `curl` hit Shopify. Public resolvers had the new answer: check with `dig @8.8.8.8 <domain>`
   and test the new host with `curl --resolve <domain>:443:<new ip>` (arguments written out: zsh does not
-  split `$R`).
+  split `$R`). GitHub's runners had the same stale answer: the first site health run on the domain failed
+  with "fetch failed" (a TLS handshake failure on Shopify's old address). `check-site.mjs` now prints the
+  cause.
 - Next.js stops the first build on a machine with "SecurityFatalError" to recommend an upgrade; running
   the build again continues. On 2026-11-17 the advisory was GHSA-mfr8-8qww-v76h (moderate; only for
   `unstable_cache()`, which this site does not use); the fix is next 16.4.6.
