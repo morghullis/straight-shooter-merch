@@ -1,8 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 
-import { Reveal } from "@/components/motion/Reveal";
+import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { ProductCard } from "@/components/product/ProductCard";
 import { CloseIcon, SearchIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
@@ -28,17 +29,19 @@ const currentQuery = () => window.location.search;
 
 const toggle = (list: string[], value: string) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
+/** The site's chip: the collection buttons' type (nav caps), black when on. */
+const chip = (on: boolean) =>
+  cn(
+    "inline-flex h-11 items-center gap-2 border px-3.5 font-nav text-[0.75rem] font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-colors duration-300 ease-out lg:h-10",
+    on ? "border-black bg-black text-white" : "border-black/15 bg-transparent hover:border-black",
+  );
+
+/** Slow, settling ease for everything that moves here. */
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 function Chip({ pressed, onClick, children }: { pressed: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className={cn(
-        "inline-flex h-10 items-center gap-2 border px-3.5 text-[0.8125rem] font-medium transition-colors",
-        pressed ? "border-black bg-black text-white" : "border-black/20 bg-white/50 hover:border-black",
-      )}
-    >
+    <button type="button" aria-pressed={pressed} onClick={onClick} className={chip(pressed)}>
       {children}
     </button>
   );
@@ -47,18 +50,21 @@ function Chip({ pressed, onClick, children }: { pressed: boolean; onClick: () =>
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <fieldset className="min-w-0">
-      <legend className="font-nav text-[0.75rem] font-semibold tracking-[0.12em] text-black/55 uppercase">{title}</legend>
+      <legend className="font-nav text-[0.6875rem] font-semibold tracking-[0.12em] text-black/50 uppercase">{title}</legend>
       <div className="mt-2.5 flex flex-wrap gap-2">{children}</div>
     </fieldset>
   );
 }
 
 /**
- * A collection's products with a search box, filters (category, colour, size, in stock) and sort.
- * Everything it offers comes from the products in Shopify; the default order is Shopify's. The
- * choice is kept in the link (`?q=…&type=…`), so it can be shared and survives a reload.
+ * A collection's products with a search box, filters (category, colour, size, in stock) and sort,
+ * in the site's own type: the search reads like the header's, the chips like the collection buttons.
+ * Everything it offers comes from the products in Shopify; the default order is Shopify's. The choice
+ * is kept in the link (`?q=…&type=…`). The panel unfolds and the grid re-flows smoothly (none of it
+ * with reduced motion).
  */
 export function CollectionBrowser({ products }: { products: Product[] }) {
+  const motionOn = useMotionEnabled();
   const facets = useMemo(() => facetsOf(products), [products]);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -86,21 +92,24 @@ export function CollectionBrowser({ products }: { products: Product[] }) {
   const active = activeCount(filters);
   const colorHex = new Map(facets.colors.map((c) => [c.label, c.hex]));
 
-  const chips: { label: string; remove: Partial<Filters> }[] = [
+  const pills: { label: string; remove: Partial<Filters> }[] = [
     ...filters.types.map((v) => ({ label: v, remove: { types: filters.types.filter((x) => x !== v) } })),
     ...filters.colors.map((v) => ({ label: v, remove: { colors: filters.colors.filter((x) => x !== v) } })),
     ...filters.sizes.map((v) => ({ label: v, remove: { sizes: filters.sizes.filter((x) => x !== v) } })),
     ...(filters.inStock ? [{ label: t.inStock, remove: { inStock: false } }] : []),
   ];
 
+  const move = motionOn ? { duration: 0.5, ease: EASE } : { duration: 0 };
+
   return (
     <div>
-      <div className="flex flex-wrap items-stretch gap-2">
-        <div className="relative min-w-[min(100%,15rem)] flex-[1_1_18rem]">
+      <div className="flex flex-wrap items-end gap-x-3 gap-y-3">
+        {/* The header search's look: big display caps on a single rule. */}
+        <div className="relative min-w-[min(100%,16rem)] flex-[1_1_20rem]">
           <label htmlFor="collection-search" className="sr-only">
             {t.search}
           </label>
-          <SearchIcon size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-black/50" />
+          <SearchIcon size={20} className="pointer-events-none absolute top-1/2 left-0 -translate-y-1/2 text-black/45" />
           <input
             id="collection-search"
             type="search"
@@ -110,133 +119,163 @@ export function CollectionBrowser({ products }: { products: Product[] }) {
             autoComplete="off"
             enterKeyHint="search"
             maxLength={80}
-            className="h-11 w-full border border-black/20 bg-white/70 pr-11 pl-10 text-[0.9375rem] outline-none placeholder:text-black/40 focus:border-black [&::-webkit-search-cancel-button]:hidden"
+            className="h-12 w-full border-b-2 border-black/20 bg-transparent pr-10 pl-8 font-display text-[1.375rem] font-extrabold tracking-[0.01em] text-black uppercase transition-colors duration-300 placeholder:text-black/30 focus:border-black focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {filters.q && (
             <button
               type="button"
               aria-label={t.clearSearch}
               onClick={() => update({ q: "" })}
-              className="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center text-black/55 hover:text-black"
+              className="absolute top-1/2 right-0 grid size-11 -translate-y-1/2 place-items-center text-black/55 transition-colors hover:text-black"
             >
-              <CloseIcon size={15} />
+              <CloseIcon size={16} />
             </button>
           )}
         </div>
 
-        <button
-          type="button"
-          aria-expanded={panelOpen}
-          aria-controls="collection-filters"
-          onClick={() => setPanelOpen((open) => !open)}
-          className={cn(
-            "inline-flex h-11 items-center gap-2 border px-4 font-nav text-[0.8125rem] font-semibold tracking-[0.08em] uppercase transition-colors",
-            panelOpen ? "border-black bg-black text-white" : "border-black/20 hover:border-black",
-          )}
-        >
-          {t.filters}
-          {active > 0 && (
-            <span className={cn("grid min-w-5 place-items-center rounded-full px-1.5 text-[0.6875rem] leading-5", panelOpen ? "bg-gold text-black" : "bg-black text-white")}>
-              {active}
-            </span>
-          )}
-        </button>
-
-        <div className="relative">
-          <label htmlFor="collection-sort" className="sr-only">
-            {t.sortBy}
-          </label>
-          <select
-            id="collection-sort"
-            value={filters.sort}
-            onChange={(e) => update({ sort: e.target.value as SortKey })}
-            className="h-11 cursor-pointer appearance-none border border-black/20 bg-white/70 pr-9 pl-3.5 text-[0.875rem] outline-none hover:border-black focus:border-black"
+        <div className="flex flex-[0_0_auto] gap-2 max-sm:w-full">
+          <button
+            type="button"
+            aria-expanded={panelOpen}
+            aria-controls="collection-filters"
+            onClick={() => setPanelOpen((open) => !open)}
+            className={cn(chip(panelOpen), "max-sm:flex-1 max-sm:justify-center")}
           >
-            {SORTS.map((s) => (
-              <option key={s} value={s}>
-                {t.sorts[s]}
-              </option>
-            ))}
-          </select>
-          <span aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-2 -translate-y-[70%] rotate-45 border-r-[1.5px] border-b-[1.5px] border-black" />
+            {t.filters}
+            {active > 0 && (
+              <span className={cn("grid min-w-5 place-items-center rounded-full px-1.5 text-[0.6875rem] leading-5 tracking-normal", panelOpen ? "bg-gold text-black" : "bg-black text-white")}>
+                {active}
+              </span>
+            )}
+          </button>
+
+          <div className="relative max-sm:flex-1">
+            <label htmlFor="collection-sort" className="sr-only">
+              {t.sortBy}
+            </label>
+            <select
+              id="collection-sort"
+              value={filters.sort}
+              onChange={(e) => update({ sort: e.target.value as SortKey })}
+              className={cn(chip(false), "w-full cursor-pointer appearance-none pr-9 focus:border-black focus:outline-none")}
+            >
+              {SORTS.map((s) => (
+                <option key={s} value={s}>
+                  {t.sorts[s]}
+                </option>
+              ))}
+            </select>
+            <span aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-1.5 -translate-y-[70%] rotate-45 border-r-[1.5px] border-b-[1.5px] border-black" />
+          </div>
         </div>
       </div>
 
-      <div id="collection-filters" hidden={!panelOpen} className="mt-3 border border-black/10 bg-white/40 p-4 sm:p-5">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.2fr_1.6fr_1fr]">
-          {facets.types.length > 1 && (
-            <Group title={t.groups.type}>
-              {facets.types.map((type) => (
-                <Chip key={type} pressed={filters.types.includes(type)} onClick={() => update({ types: toggle(filters.types, type) })}>
-                  {type}
-                </Chip>
-              ))}
+      {/* Unfolds smoothly (grid rows 0fr -> 1fr); closed, it is out of the tab order. */}
+      <div
+        id="collection-filters"
+        inert={!panelOpen}
+        className={cn("grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]", panelOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-4 grid gap-5 border-y border-black/10 py-5 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_1.7fr_0.9fr]">
+            {facets.types.length > 1 && (
+              <Group title={t.groups.type}>
+                {facets.types.map((type) => (
+                  <Chip key={type} pressed={filters.types.includes(type)} onClick={() => update({ types: toggle(filters.types, type) })}>
+                    {type}
+                  </Chip>
+                ))}
+              </Group>
+            )}
+            {facets.colors.length > 1 && (
+              <Group title={t.groups.color}>
+                {facets.colors.map((c) => (
+                  <Chip key={c.label} pressed={filters.colors.includes(c.label)} onClick={() => update({ colors: toggle(filters.colors, c.label) })}>
+                    {c.hex && <span aria-hidden="true" style={{ backgroundColor: c.hex }} className="size-3 rounded-full ring-1 ring-black/25" />}
+                    {c.label}
+                  </Chip>
+                ))}
+              </Group>
+            )}
+            {facets.sizes.length > 1 && (
+              <Group title={t.groups.size}>
+                {facets.sizes.map((size) => (
+                  <Chip key={size} pressed={filters.sizes.includes(size)} onClick={() => update({ sizes: toggle(filters.sizes, size) })}>
+                    {size}
+                  </Chip>
+                ))}
+              </Group>
+            )}
+            <Group title={t.groups.availability}>
+              <Chip pressed={filters.inStock} onClick={() => update({ inStock: !filters.inStock })}>
+                {t.inStock}
+              </Chip>
             </Group>
-          )}
-          {facets.colors.length > 1 && (
-            <Group title={t.groups.color}>
-              {facets.colors.map((c) => (
-                <Chip key={c.label} pressed={filters.colors.includes(c.label)} onClick={() => update({ colors: toggle(filters.colors, c.label) })}>
-                  {c.hex && <span aria-hidden="true" style={{ backgroundColor: c.hex }} className="size-3.5 rounded-full ring-1 ring-black/25" />}
-                  {c.label}
-                </Chip>
-              ))}
-            </Group>
-          )}
-          {facets.sizes.length > 1 && (
-            <Group title={t.groups.size}>
-              {facets.sizes.map((size) => (
-                <Chip key={size} pressed={filters.sizes.includes(size)} onClick={() => update({ sizes: toggle(filters.sizes, size) })}>
-                  {size}
-                </Chip>
-              ))}
-            </Group>
-          )}
-          <Group title={t.groups.availability}>
-            <Chip pressed={filters.inStock} onClick={() => update({ inStock: !filters.inStock })}>
-              {t.inStock}
-            </Chip>
-          </Group>
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 flex min-h-8 flex-wrap items-center gap-2">
-        <p className="mr-auto text-[0.75rem] text-black/60" aria-live="polite">
+      <div className="mt-4 flex min-h-9 flex-wrap items-center gap-2">
+        <p className="mr-auto font-nav text-[0.6875rem] font-semibold tracking-[0.12em] text-black/55 uppercase" aria-live="polite">
           {t.showing(shown.length, products.length)}
         </p>
-        {chips.map((chip) => (
+        <AnimatePresence initial={false}>
+          {pills.map((pill) => (
+            <motion.button
+              key={pill.label}
+              layout={motionOn ? "position" : false}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={motionOn ? { duration: 0.3, ease: EASE } : { duration: 0 }}
+              type="button"
+              aria-label={t.remove(pill.label)}
+              onClick={() => update(pill.remove)}
+              className="inline-flex h-9 items-center gap-1.5 bg-black px-3 font-nav text-[0.6875rem] font-semibold tracking-[0.06em] text-white uppercase transition-colors hover:bg-black/80"
+            >
+              {colorHex.get(pill.label) && <span aria-hidden="true" style={{ backgroundColor: colorHex.get(pill.label) ?? undefined }} className="size-2.5 rounded-full ring-1 ring-white/50" />}
+              {pill.label}
+              <CloseIcon size={12} />
+            </motion.button>
+          ))}
+        </AnimatePresence>
+        {(pills.length > 0 || filters.q) && (
           <button
-            key={chip.label}
             type="button"
-            aria-label={t.remove(chip.label)}
-            onClick={() => update(chip.remove)}
-            className="inline-flex h-8 items-center gap-1.5 bg-black px-2.5 text-[0.75rem] font-medium text-white hover:bg-black/80"
+            onClick={() => update({ ...NO_FILTERS, sort: filters.sort })}
+            className="h-9 px-1 font-nav text-[0.6875rem] font-semibold tracking-[0.06em] uppercase underline underline-offset-4 transition-colors hover:text-gold-soft"
           >
-            {colorHex.get(chip.label) && <span aria-hidden="true" style={{ backgroundColor: colorHex.get(chip.label) ?? undefined }} className="size-2.5 rounded-full ring-1 ring-white/50" />}
-            {chip.label}
-            <CloseIcon size={12} />
-          </button>
-        ))}
-        {(chips.length > 0 || filters.q) && (
-          <button type="button" onClick={() => update({ ...NO_FILTERS, sort: filters.sort })} className="h-8 px-1 text-[0.75rem] font-semibold underline underline-offset-4 hover:text-gold-soft">
             {t.clearAll}
           </button>
         )}
       </div>
 
       {shown.length === 0 ? (
-        <p className="py-16 text-center text-black/60">{products.length ? t.none : copy.collection.empty}</p>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={move} className="py-16 text-center text-black/60">
+          {products.length ? t.none : copy.collection.empty}
+        </motion.p>
       ) : (
+        // Cards glide to their new places, fade in and out, when the search or a filter changes.
         <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-          {shown.map((original, i) => {
-            // Filtered by colour: the card shows (and opens on) that colour.
-            const { product, variantId } = inColor(original, filters.colors);
-            return (
-              <Reveal as="li" key={product.id} delay={(i % 4) * 0.06}>
-                <ProductCard product={product} size="lg" priority={i < 4} variantId={variantId} />
-              </Reveal>
-            );
-          })}
+          {/* First paint comes from the server, already visible (fast); only later changes animate. */}
+          <AnimatePresence initial={false} mode="popLayout">
+            {shown.map((original, i) => {
+              // Filtered by colour: the card shows (and opens on) that colour.
+              const { product, variantId } = inColor(original, filters.colors);
+              return (
+                <motion.li
+                  key={product.id}
+                  layout={motionOn}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0, transition: motionOn ? { ...move, delay: Math.min(i, 8) * 0.04 } : move }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={move}
+                >
+                  <ProductCard product={product} size="lg" priority={i < 4} variantId={variantId} />
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
         </ul>
       )}
     </div>

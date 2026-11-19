@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Tape } from "@/components/ui/Tape";
 import { copy } from "@/config/copy";
 import { showroomMotion as motionCfg } from "@/config/showroom";
-import { useAfterLoad, useMediaQuery } from "@/lib/browser";
+import { useAfterLoad, useFirstInteraction, useMediaQuery } from "@/lib/browser";
 import { cn } from "@/lib/cn";
 
 import type { ShowroomItem } from "./showroom-types";
@@ -42,8 +42,11 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
   const motionOn = useMotionEnabled();
   const desktop = useMediaQuery("(min-width: 1024px)", true);
 
+  // The 3D warms up after the page has loaded and the visitor has started browsing (or when the
+  // showroom comes near): never during the first load, which stays fast.
   const loaded = useAfterLoad();
-  const near = useInView(sectionRef, { once: true, margin: "100% 0px" });
+  const browsing = useFirstInteraction();
+  const near = useInView(sectionRef, { once: true, margin: "50% 0px" });
   const visible = useInView(sectionRef, { margin: "120px 0px" });
 
   const [anyReady, setAnyReady] = useState(false);
@@ -110,7 +113,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
           className="absolute inset-0 z-[1] cursor-grab active:cursor-grabbing"
         >
           <div data-showroom-stage className="absolute inset-0">
-            {(loaded || near) && (
+            {((loaded && browsing) || near) && (
               <ScrubStage
                 models={items.map((i) => i.model)}
                 position={position}

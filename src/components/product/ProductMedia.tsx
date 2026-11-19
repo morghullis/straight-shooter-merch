@@ -1,8 +1,10 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useRef, useState, type PointerEvent } from "react";
 
+import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { ModelViewer } from "@/components/three/ModelViewer";
 import { Art, textureStyle } from "@/components/ui/Art";
 import { copy } from "@/config/copy";
@@ -38,6 +40,7 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
   const slides = [...images.map((image) => ({ kind: "photo" as const, image })), ...(model ? [{ kind: "3d" as const }] : [])];
   const [active, setActive] = useState(0);
   const slide = slides[active];
+  const motionOn = useMotionEnabled();
   const startX = useRef<number | null>(null);
   // The detail model (4K texture) only on a big screen with a mouse; phones keep the light one.
   const detail = useMediaQuery("(min-width: 1024px) and (pointer: fine)");
@@ -78,17 +81,29 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
           slide.kind === "3d" ? "bg-[#101010]" : "bg-sand",
         )}
       >
-        {slide.kind === "photo" ? (
-          <Image
-            key={slide.image.url}
-            src={slide.image.url}
-            alt={slide.image.alt || title}
-            fill
-            priority={active === 0}
-            sizes="(min-width: 1326px) 42.2vw, (min-width: 1024px) 560px, 100vw"
-            className="animate-[fade-in_0.4s_ease-out] object-contain"
-          />
-        ) : (
+        {/* Photos cross-fade: the next one fades in over the last, never through an empty frame. */}
+        <AnimatePresence initial={false}>
+          {slide.kind === "photo" && (
+            <motion.div
+              key={slide.image.url}
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={motionOn ? { duration: 0.55, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
+            >
+              <Image
+                src={slide.image.url}
+                alt={slide.image.alt || title}
+                fill
+                priority={active === 0}
+                sizes="(min-width: 1326px) 42.2vw, (min-width: 1024px) 560px, 100vw"
+                className="object-contain"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {slide.kind === "photo" ? null : (
           model && (
             <>
               <div aria-hidden="true" className="absolute inset-0 opacity-90" style={textureStyle("concrete")} />
@@ -123,7 +138,7 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
                 aria-label={s.kind === "3d" ? copy.product.threeD : copy.product.viewImage(i + 1)}
                 onClick={() => setActive(i)}
                 className={cn(
-                  "relative block aspect-square w-full overflow-hidden rounded-[0.25rem] bg-sand outline-2 -outline-offset-2 transition-[outline-color,opacity]",
+                  "relative block aspect-square w-full overflow-hidden rounded-[0.25rem] bg-sand outline-2 -outline-offset-2 transition-[outline-color,opacity] duration-300 ease-out",
                   i === active ? "outline-black" : "opacity-70 outline-transparent hover:opacity-100",
                 )}
               >
