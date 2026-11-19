@@ -4,15 +4,16 @@ import type { ReactNode } from "react";
 import { copy } from "@/config/copy";
 import type { Product } from "@/lib/catalog";
 
+import { AccordionGroup } from "./AccordionGroup";
 import { productColors, Swatches } from "./Swatches";
 
 const s = copy.product.sections;
 const spec = copy.product.specs;
 
-/** One folding block: a ruled row with the title and a plus that turns into a cross when open. */
+/** One folding block: a ruled row with the title and a plus that turns into a cross when open. Same `name`: one open at a time. */
 function Section({ title, open = false, children }: { title: string; open?: boolean; children: ReactNode }) {
   return (
-    <details open={open} className="group border-b border-black/10 [&_summary::-webkit-details-marker]:hidden">
+    <details name="product-info" open={open} className="group border-b border-black/10 [&_summary::-webkit-details-marker]:hidden">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 font-nav text-[0.8125rem] font-semibold tracking-[0.12em] uppercase select-none hover:text-gold-soft focus-visible:outline-offset-2">
         <h2>{title}</h2>
         <span aria-hidden="true" className="relative size-3 flex-none transition-transform duration-300 group-open:rotate-45">
@@ -86,7 +87,7 @@ export function ProductInfo({ product }: { product: Product }) {
   ].filter((row) => row.value);
 
   return (
-    <div className="mt-8 border-t border-black/10">
+    <AccordionGroup className="border-t border-black/10">
       {(product.descriptionHtml || product.description) && (
         <Section title={s.description} open>
           {product.descriptionHtml ? (
@@ -135,6 +136,6 @@ export function ProductInfo({ product }: { product: Product }) {
       <Section title={s.shipping}>
         <DashList items={d?.shippingNote ? [d.shippingNote, ...copy.product.details] : [...copy.product.details]} />
       </Section>
-    </div>
+    </AccordionGroup>
   );
 }

@@ -77,6 +77,7 @@ export const copy = {
     home: "Home",
     shopAll: "Shop all",
     womens: "Women's",
+    sale: "Sale",
     /** The product page's information blocks; each shows only when the product has something for it. */
     sections: {
       highlights: "Highlights",
@@ -107,6 +108,20 @@ export const copy = {
     count: (n: number) => `${n} ${plural(n, "product", "products")}`,
     empty: "Nothing here yet. Check back soon.",
     filter: "Collections",
+    /** The search and filter bar on collection pages. */
+    browse: {
+      search: "Search this collection",
+      clearSearch: "Clear search",
+      filters: "Filters",
+      sortBy: "Sort by",
+      sorts: { shopify: "Featured", "price-asc": "Price: low to high", "price-desc": "Price: high to low", title: "Name: A to Z" },
+      groups: { type: "Category", color: "Color", size: "Size", availability: "Availability" },
+      inStock: "In stock only",
+      remove: (label: string) => `Remove filter: ${label}`,
+      clearAll: "Clear all",
+      none: "No products match. Try fewer filters or another word.",
+      showing: (n: number, total: number) => (n === total ? `${n} ${plural(n, "product", "products")}` : `${n} of ${total} products`),
+    },
   },
 
   search: {
