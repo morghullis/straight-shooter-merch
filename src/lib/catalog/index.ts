@@ -31,7 +31,7 @@ export type { Collection, Product, ProductColor, ProductDetails } from "./types"
 /** Every product handle in the catalog. */
 async function getProductHandles(): Promise<string[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products");
 
   if (isShopifyConfigured) return fetchProductHandles();
@@ -54,7 +54,7 @@ export async function getProducts(opts: { collection?: string } = {}): Promise<P
 
 async function getProductsIn(collection: string): Promise<Product[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products");
 
   if (isShopifyConfigured) {
@@ -76,7 +76,7 @@ async function getProductsIn(collection: string): Promise<Product[]> {
 
 export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products");
 
   // Tagged `featured` in Shopify, in Shopify's order, grouped by category, women's last.
@@ -90,7 +90,7 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
  */
 export async function getProductsByEngagement(): Promise<Product[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products", "popularity");
 
   const [all, popularity] = await Promise.all([getProducts(), getPopularity()]);
@@ -107,7 +107,7 @@ export async function getProductsByEngagement(): Promise<Product[]> {
  */
 export async function getShowroomProducts(): Promise<Product[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products", "popularity");
 
   return showroomPicks(await getProductsByEngagement(), home.showroomTypes);
@@ -132,7 +132,7 @@ async function getUnlistedProduct(handle: string): Promise<Product | null> {
 
 async function getKnownProduct(handle: string): Promise<Product | null> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products", `product:${handle}`);
 
   if (isShopifyConfigured) return fetchProduct(handle);
@@ -142,7 +142,7 @@ async function getKnownProduct(handle: string): Promise<Product | null> {
 /** "Shop all", then the store's collections by their `position` (then title). */
 export async function getCollections(): Promise<Collection[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("collections");
 
   if (!isShopifyConfigured) return mockCollections;
@@ -158,7 +158,7 @@ export async function getCollection(handle: string): Promise<Collection | null> 
 
 async function getKnownCollection(handle: string): Promise<Collection | null> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("collections", `collection:${handle}`);
 
   if (handle === "all") return allCollection;
@@ -194,7 +194,7 @@ async function searchNormalized(q: string): Promise<Product[]> {
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("catalog");
   cacheTag("products");
 
   const all = await getProducts();

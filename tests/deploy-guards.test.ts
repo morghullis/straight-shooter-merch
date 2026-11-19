@@ -59,3 +59,11 @@ test("pages never link to the store's .myshopify.com name (shoppers only see the
   const accounts = read("src/lib/customer-account.ts");
   assert.doesNotMatch(accounts, /export const \w+\s*=\s*domain\s*\?\s*`https:\/\/\$\{domain\}/, "no exported link built from SHOPIFY_STORE_DOMAIN");
 });
+
+test("Shopify data refreshes within minutes even without a webhook (fields set by apps, collection order)", () => {
+  const catalog = read("src/lib/catalog/index.ts");
+  const lifetimes = [...catalog.matchAll(/cacheLife\("([^"]+)"\)/g)].map((m) => m[1]);
+  assert.ok(lifetimes.length > 0);
+  for (const life of lifetimes) assert.ok(["catalog", "minutes"].includes(life), `catalog data cached with "${life}": use "catalog"`);
+  assert.match(read("next.config.ts"), /catalog:\s*{[^}]*revalidate:\s*300/, "the catalog profile revalidates every 5 minutes");
+});

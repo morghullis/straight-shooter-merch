@@ -42,6 +42,8 @@ With the storefront variables empty the app runs on the demo catalog.
 - **Shopify's category fields** (Products > the product > Category) are used too: *Target gender* gives "Made for" and the "Women's" label (women's pieces go last in Featured), *Color* gives the colour dots on cards and in Details.
 - **Product type** is the category ("Hoodie", "Tee"). The tag **`featured`** puts a product in the home page's featured row (six; with fewer tagged, every product).
 
+**How fast changes show:** a product saved in the admin shows on the site within seconds (webhook). Anything Shopify sends no webhook for (a field filled by an app, a collection's manual order) shows within about 5 minutes (the `catalog` cache profile in `next.config.ts`).
+
 **Order: Shopify decides.** The order you give the **Shop All** collection (Products > Collections > Shop All > Sort: Manually, drag) is the order of every list on the site; a listed product not in Shop All comes after. Featured Products takes the `featured` products in that order, grouped by category (each category where its first product sits), women's categories last. The strip under the hero: its first three tiles only turn between the products of **The Stephen A. Smith Show** collection (its own manual order); the fourth turns between the collections and everything else (`home.stripLead` in `src/config/site.ts`).
 
 **Stock:** products track inventory (the store's own have 100-200 per variant, the site's products 100). A product with no stock left shows as sold out and cannot be bought.
