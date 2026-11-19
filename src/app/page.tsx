@@ -1,6 +1,4 @@
 import { CollectionStrip } from "@/components/home/CollectionStrip";
-import { CrewBand } from "@/components/home/CrewBand";
-import { FanZone } from "@/components/home/FanZone";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { Hero } from "@/components/home/Hero";
 import { Marquee } from "@/components/home/Marquee";
@@ -14,11 +12,9 @@ export default function HomePage() {
       <CollectionStrip />
       <FeaturedProducts />
 
-      {/* Below the fold: 3D first, then the fan experience. */}
+      {/* Below the fold: the 3D showroom and the catchphrases. */}
       <Showroom />
       <Marquee />
-      <FanZone />
-      <CrewBand />
     </>
   );
 }

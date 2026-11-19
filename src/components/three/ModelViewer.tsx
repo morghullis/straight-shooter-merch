@@ -51,7 +51,7 @@ export function ModelViewer({ src, fit, rotation, fallbackImage, fallbackAlt, cl
       {!webgl ? (
         <div className="absolute inset-0 grid place-items-center p-6">
           <div className="relative h-full w-full max-w-[35rem] overflow-hidden rounded-[0.375rem] bg-sand">
-            <Image src={fallbackImage} alt={fallbackAlt} fill sizes="(min-width: 1326px) 42.2vw, 560px" className="object-cover" />
+            <Image src={fallbackImage} alt={fallbackAlt} fill sizes="(min-width: 1326px) 42.2vw, 560px" className="object-contain" />
           </div>
         </div>
       ) : (

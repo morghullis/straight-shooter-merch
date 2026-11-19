@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductForm } from "@/components/product/ProductForm";
+import { ProductHighlights, ProductInfo, ProductTagline } from "@/components/product/ProductInfo";
 import { ProductMedia } from "@/components/product/ProductMedia";
 import { TrackProductView } from "@/components/product/TrackProductView";
 import { Carousel } from "@/components/ui/Carousel";
@@ -14,6 +15,7 @@ import { copy } from "@/config/copy";
 import { modelSpecFor } from "@/config/models";
 import { site } from "@/config/site";
 import { getProduct, getProducts, getRelatedProducts } from "@/lib/catalog";
+import { isWomens } from "@/lib/catalog/order";
 import { isSafeHandle } from "@/lib/format";
 
 export async function generateStaticParams() {
@@ -135,26 +137,19 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
 
           <div>
             <p className="font-nav text-[0.75rem] font-semibold tracking-[0.12em] text-gold-soft uppercase">
-              {site.shortName}
+              {[product.collectionLabel ?? site.shortName, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ")}
             </p>
             <h1 className="mt-2 font-display text-[clamp(2.75rem,8vw,3.75rem)] leading-[0.95] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase">
               {product.title}
             </h1>
+            <ProductTagline product={product} />
 
-            <div className="mt-4">
+            <div className="mt-5">
               <ProductForm product={product} />
             </div>
 
-            <p className="mt-8 text-[0.9375rem] leading-relaxed text-black/75">{product.description}</p>
-
-            <ul className="mt-6 space-y-2 border-t border-black/10 pt-5 text-[0.8125rem] text-black/70">
-              {copy.product.details.map((d) => (
-                <li key={d} className="flex items-start gap-2">
-                  <span aria-hidden="true" className="mt-[0.4375rem] h-[0.125rem] w-3 flex-none bg-gold-soft" />
-                  {d}
-                </li>
-              ))}
-            </ul>
+            <ProductHighlights product={product} />
+            <ProductInfo product={product} />
           </div>
         </div>
       </section>

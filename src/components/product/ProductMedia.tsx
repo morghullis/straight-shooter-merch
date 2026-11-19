@@ -70,7 +70,7 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
             fill
             priority={active === 0}
             sizes="(min-width: 1326px) 42.2vw, (min-width: 1024px) 560px, 100vw"
-            className="animate-[fade-in_0.4s_ease-out] object-cover"
+            className="animate-[fade-in_0.4s_ease-out] object-contain"
           />
         ) : (
           model && (
@@ -112,7 +112,7 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
                 )}
               >
                 {s.kind === "photo" ? (
-                  <Image src={s.image.url} alt="" fill sizes="(min-width: 1326px) 8.3vw, 110px" className="object-cover" />
+                  <Image src={s.image.url} alt="" fill sizes="(min-width: 1326px) 8.3vw, 110px" className="object-contain" />
                 ) : (
                   <span className="grid size-full place-items-center bg-black font-display text-[1.625rem] leading-none font-extrabold text-gold">
                     {copy.product.threeD}

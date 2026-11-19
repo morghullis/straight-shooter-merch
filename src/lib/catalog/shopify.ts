@@ -2,12 +2,15 @@ import "server-only";
 
 import { balancedRows } from "@/lib/format";
 
+import { cleanDescriptionHtml } from "./description";
 import type {
   CatalogImage,
   Collection,
   Model3D,
   Money,
   Product,
+  ProductColor,
+  ProductDetails,
   ProductVariant,
   TileTheme,
 } from "./types";
@@ -75,6 +78,7 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     handle
     title
     description
+    descriptionHtml
     productType
     availableForSale
     tags
@@ -91,7 +95,31 @@ const PRODUCT_FIELDS = /* GraphQL */ `
       }
     }
     priceRange { minVariantPrice { amount currencyCode } }
-    collections(first: 10) { nodes { handle } }
+    collections(first: 10) {
+      nodes {
+        handle
+        title
+        shortTitle: metafield(namespace: "custom", key: "short_title") { value }
+        position: metafield(namespace: "custom", key: "position") { value }
+      }
+    }
+    tagline: metafield(namespace: "custom", key: "tagline") { value }
+    highlights: metafield(namespace: "custom", key: "highlights") { value }
+    material: metafield(namespace: "custom", key: "material") { value }
+    fit: metafield(namespace: "custom", key: "fit") { value }
+    care: metafield(namespace: "custom", key: "care") { value }
+    sizeChart: metafield(namespace: "custom", key: "size_chart") {
+      reference { ... on MediaImage { image { url altText width height } } }
+    }
+    shippingNote: metafield(namespace: "custom", key: "shipping_note") { value }
+    audience: metafield(namespace: "shopify", key: "target-gender") {
+      references(first: 5) { nodes { ... on Metaobject { label: field(key: "label") { value } } } }
+    }
+    colorPattern: metafield(namespace: "shopify", key: "color-pattern") {
+      references(first: 20) {
+        nodes { ... on Metaobject { label: field(key: "label") { value } color: field(key: "color") { value } } }
+      }
+    }
     media(first: 10) { nodes { ... on Model3d { sources { url mimeType } } } }
     model3d: metafield(namespace: "custom", key: "model_3d") { reference { ... on GenericFile { url } } }
     model3dHd: metafield(namespace: "custom", key: "model_3d_hd") { reference { ... on GenericFile { url } } }
@@ -209,11 +237,16 @@ interface RawValue {
   value: string;
 }
 
+interface RawMetaobjectList {
+  references: { nodes: { label?: RawValue | null; color?: RawValue | null }[] } | null;
+}
+
 interface RawProduct {
   id: string;
   handle: string;
   title: string;
   description: string;
+  descriptionHtml?: string;
   productType: string;
   availableForSale: boolean;
   tags: string[];
@@ -230,7 +263,16 @@ interface RawProduct {
     }[];
   };
   priceRange: { minVariantPrice: Money };
-  collections: { nodes: { handle: string }[] };
+  collections: { nodes: { handle: string; title?: string; shortTitle?: RawValue | null; position?: RawValue | null }[] };
+  tagline?: RawValue | null;
+  highlights?: RawValue | null;
+  material?: RawValue | null;
+  fit?: RawValue | null;
+  care?: RawValue | null;
+  sizeChart?: RawImageRef | null;
+  shippingNote?: RawValue | null;
+  audience?: RawMetaobjectList | null;
+  colorPattern?: RawMetaobjectList | null;
   media?: { nodes: { sources?: { url: string; mimeType: string }[] }[] };
   model3d?: RawFileRef | null;
   model3dHd?: RawFileRef | null;
@@ -295,6 +337,59 @@ function resolveModel(raw: RawProduct): Model3D | null {
   };
 }
 
+const text = (v: RawValue | null | undefined) => v?.value.trim() || null;
+const lines = (v: string | null | undefined) => (v ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+/** A list field (JSON array of strings) or, for a field made by hand, plain lines. */
+function list(v: RawValue | null | undefined): string[] {
+  if (!v?.value) return [];
+  try {
+    const parsed = JSON.parse(v.value) as unknown;
+    if (Array.isArray(parsed)) return parsed.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
+  } catch {
+    /* not JSON */
+  }
+  return lines(v.value);
+}
+
+/** The product page's extra fields; null when none is filled in. */
+function mapDetails(raw: RawProduct): ProductDetails | null {
+  const chart = raw.sizeChart?.reference?.image;
+  const details: ProductDetails = {
+    tagline: text(raw.tagline),
+    highlights: list(raw.highlights),
+    material: text(raw.material),
+    fit: text(raw.fit),
+    care: lines(raw.care?.value),
+    sizeChart: chart ? mapImage(chart, `${raw.title} size chart`) : null,
+    shippingNote: text(raw.shippingNote),
+  };
+  const empty = !details.tagline && !details.highlights.length && !details.material && !details.fit && !details.care.length && !details.sizeChart && !details.shippingNote;
+  return empty ? null : details;
+}
+
+/** Shopify's taxonomy says "Female"/"Male"; shoppers read "Women's"/"Men's". */
+const AUDIENCE: Record<string, string> = { female: "Women's", male: "Men's", unisex: "Unisex" };
+
+function mapAudience(raw: RawProduct): string[] {
+  return (raw.audience?.references?.nodes ?? [])
+    .map((n) => n.label?.value?.trim() ?? "")
+    .filter(Boolean)
+    .map((label) => AUDIENCE[label.toLowerCase()] ?? label);
+}
+
+function mapColors(raw: RawProduct): ProductColor[] {
+  return (raw.colorPattern?.references?.nodes ?? [])
+    .map((n) => ({ label: n.label?.value?.trim() ?? "", hex: /^#[0-9a-f]{3,8}$/i.test(n.color?.value ?? "") ? n.color!.value : null }))
+    .filter((c) => c.label);
+}
+
+/** The product's show: its first collection that has a place in the navigation (a `position` of 1 or more). */
+function collectionLabel(raw: RawProduct): string | null {
+  const show = raw.collections.nodes.find((c) => Number.parseInt(c.position?.value ?? "", 10) >= 1);
+  return show ? show.shortTitle?.value || show.title || null : null;
+}
+
 function mapProduct(raw: RawProduct): Product {
   // Shopify decides what shows: the product's images in the order they have in the admin. The
   // first one is the card's picture and the second one shows when the card is hovered.
@@ -315,6 +410,11 @@ function mapProduct(raw: RawProduct): Product {
     handle: raw.handle,
     title: raw.title,
     description: raw.description,
+    descriptionHtml: cleanDescriptionHtml(raw.descriptionHtml ?? ""),
+    details: mapDetails(raw),
+    audience: mapAudience(raw),
+    colors: mapColors(raw),
+    collectionLabel: collectionLabel(raw),
     productType: raw.productType,
     availableForSale: raw.availableForSale,
     featuredImage,

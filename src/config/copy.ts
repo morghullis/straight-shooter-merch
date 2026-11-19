@@ -76,6 +76,25 @@ export const copy = {
     related: "You may also like",
     home: "Home",
     shopAll: "Shop all",
+    womens: "Women's",
+    /** The product page's information blocks; each shows only when the product has something for it. */
+    sections: {
+      highlights: "Highlights",
+      description: "Description",
+      details: "Details",
+      sizeGuide: "Size guide",
+      care: "Care",
+      shipping: "Shipping & returns",
+    },
+    specs: {
+      category: "Category",
+      material: "Material",
+      fit: "Fit",
+      madeFor: "Made for",
+      colors: "Colors",
+      sizes: "Sizes",
+    },
+    sizeChartAlt: (title: string) => `${title} size chart`,
     details: [
       "Official licensed merch",
       "Ships from our fulfilment partner",

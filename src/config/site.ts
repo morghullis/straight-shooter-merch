@@ -13,22 +13,35 @@ export const site = {
   currency: "USD",
 } as const;
 
+/**
+ * Which Shopify collections drive the site's order. The merchant sorts them by hand in the admin
+ * (Products > Collections > sort: Manually); the site follows.
+ */
+export const catalogOrder = {
+  /** Its order is the order of every product list on the site (new products not in it come after). */
+  collection: "shop-all",
+} as const;
+
 /** Home page content that is not part of the hero or the tiles. */
 export const home = {
   featured: { title: "Featured Products", count: 6, cta: { label: "View all", href: "/collections/all" } },
   tilesLabel: "Collections and products",
   tileCta: "Shop the collection",
   tileProductCta: "Shop it",
+  /**
+   * The strip's first `slots` tiles only turn between this collection's products (in its Shopify
+   * order); the last tile turns between the collections and every other product.
+   */
+  stripLead: { collection: "the-stephen-a-smith-show", slots: 3 },
+  /** The showroom's pieces: one product per Shopify product type, in this order. */
+  showroomTypes: ["Hoodie", "Hat", "Tee"],
 } as const;
 
 /**
  * The navigation starts with these; every collection published on the storefront follows, by its
- * `position` in Shopify (see `getNavLinks`).
+ * `position` in Shopify (see `getNavLinks`). "Shop All" is a collection in Shopify (position 0).
  */
-export const navStart = [
-  { label: "Home", href: "/" },
-  { label: "Shop All", href: "/collections/all" },
-] as const;
+export const navStart = [{ label: "Home", href: "/" }] as const;
 
 export const hero = {
   lines: [

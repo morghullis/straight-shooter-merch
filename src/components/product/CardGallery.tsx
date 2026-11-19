@@ -119,10 +119,9 @@ export function CardGallery({ title, href, images, hover, priority = false, size
                   priority={priority}
                   sizes={sizes}
                   className={cn(
-                    "object-cover transition-[opacity,transform] duration-500 ease-out",
-                    hover
-                      ? "group-hover/card:scale-[1.03] group-hover/card:opacity-0 group-focus-within/card:opacity-0"
-                      : "group-hover/card:scale-[1.05]",
+                    // Whole picture, never cropped or zoomed: the merchant's photo as it is.
+                    "object-contain transition-opacity duration-500 ease-out",
+                    hover && "group-hover/card:opacity-0 group-focus-within/card:opacity-0",
                   )}
                 />
                 {hover && (
@@ -131,7 +130,7 @@ export function CardGallery({ title, href, images, hover, priority = false, size
                     alt={hover.alt}
                     fill
                     sizes={sizes}
-                    className="object-cover opacity-0 transition-[opacity,transform] duration-500 ease-out group-hover/card:opacity-100 group-focus-within/card:opacity-100"
+                    className="object-contain opacity-0 transition-opacity duration-500 ease-out group-hover/card:opacity-100 group-focus-within/card:opacity-100"
                   />
                 )}
               </Link>
@@ -217,7 +216,7 @@ function LazySlide({ image, sizes }: { image: GalleryImage; sizes: string }) {
       fill
       sizes={sizes}
       onLoad={() => setLoaded(true)}
-      className={cn("object-cover transition-opacity duration-500", loaded ? "opacity-100" : "opacity-0")}
+      className={cn("object-contain transition-opacity duration-500", loaded ? "opacity-100" : "opacity-0")}
     />
   );
 }

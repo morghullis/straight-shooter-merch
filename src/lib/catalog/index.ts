@@ -1,9 +1,11 @@
 import { cacheLife, cacheTag } from "next/cache";
 
+import { catalogOrder, home } from "@/config/site";
 import { isSafeHandle, normalizeQuery } from "@/lib/format";
 import { getPopularity } from "@/lib/popularity";
 
 import { allCollection, mockCollections, mockProducts } from "./mock";
+import { featuredOrder, inShopifyOrder, showroomPicks } from "./order";
 import {
   fetchCollectionProducts,
   fetchCollections,
@@ -14,7 +16,7 @@ import {
 } from "./shopify";
 import type { Collection, Product } from "./types";
 
-export type { Collection, Product } from "./types";
+export type { Collection, Product, ProductColor, ProductDetails } from "./types";
 
 /**
  * Data access used by every page. All functions are cached with the Cache
@@ -56,7 +58,14 @@ async function getProductsIn(collection: string): Promise<Product[]> {
   cacheTag("products");
 
   if (isShopifyConfigured) {
-    if (!collection || collection === "all") return fetchProducts();
+    if (!collection || collection === "all") {
+      // Shopify's order: the "Shop All" collection as the merchant sorted it, then anything not in it.
+      const [ordered, everything] = await Promise.all([
+        fetchCollectionProducts(catalogOrder.collection).catch(() => null),
+        fetchProducts(),
+      ]);
+      return inShopifyOrder(ordered?.products ?? [], everything);
+    }
     const result = await fetchCollectionProducts(collection);
     return result?.products ?? [];
   }
@@ -70,12 +79,9 @@ export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
   cacheLife("hours");
   cacheTag("products");
 
-  const all = await getProducts();
-  const featured = all.filter((p) => p.tags.includes("featured"));
-  return (featured.length >= limit ? featured : all).slice(0, limit);
+  // Tagged `featured` in Shopify, in Shopify's order, grouped by category, women's last.
+  return featuredOrder(await getProducts(), limit);
 }
-
-const hasTag = (p: Product, tag: string) => p.tags.some((t) => t.toLowerCase() === tag);
 
 /**
  * Every listed product, the ones shoppers engage with most first: page views and adds to the cart
@@ -95,31 +101,16 @@ export async function getProductsByEngagement(): Promise<Product[]> {
 }
 
 /**
- * The showroom's products: the one shoppers engage with most in each category (Shopify's product
- * type), among those with a 3D model. A product tagged `showroom` in Shopify stands for its category
- * whatever its numbers, and one tagged `no-showroom` never shows. Categories come in the order of
- * their product's engagement.
+ * The showroom's products: one per product type in `home.showroomTypes` (hoodie, cap, tee), in that
+ * order, among those with a 3D model. A product tagged `showroom` in Shopify stands for its type;
+ * otherwise the one shoppers engage with most. One tagged `no-showroom` never shows.
  */
-export async function getShowroomProducts(limit = 6): Promise<Product[]> {
+export async function getShowroomProducts(): Promise<Product[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products", "popularity");
 
-  const ranked = (await getProductsByEngagement())
-    .filter((p) => p.model3d && !hasTag(p, "no-showroom"))
-    .map((p, i) => ({ p, i, pinned: hasTag(p, "showroom") ? 1 : 0 }))
-    .sort((a, b) => b.pinned - a.pinned || a.i - b.i);
-
-  // The first product of each category in that order is its most engaged-with one.
-  const categories = new Set<string>();
-  const picks: Product[] = [];
-  for (const { p } of ranked) {
-    const category = (p.productType || p.handle).trim().toLowerCase();
-    if (categories.has(category)) continue;
-    categories.add(category);
-    picks.push(p);
-  }
-  return picks.slice(0, limit);
+  return showroomPicks(await getProductsByEngagement(), home.showroomTypes);
 }
 
 export async function getProduct(handle: string): Promise<Product | null> {

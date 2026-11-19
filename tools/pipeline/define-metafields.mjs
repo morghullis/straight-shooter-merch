@@ -10,7 +10,7 @@ loadEnvFile();
 async function existing(ownerType) {
   const data = await gql(
     `query($o: MetafieldOwnerType!, $ns: String!) {
-      metafieldDefinitions(first: 100, ownerType: $o, namespace: $ns) { nodes { id key access { storefront } } }
+      metafieldDefinitions(first: 100, ownerType: $o, namespace: $ns) { nodes { id key pinnedPosition access { storefront } } }
     }`,
     { o: ownerType, ns: NAMESPACE },
   );
@@ -39,6 +39,19 @@ async function define(ownerType, fields) {
     } else {
       console.log(`ok       ${ownerType.toLowerCase()} ${NAMESPACE}.${f.key}`);
     }
+  }
+
+  // Pinned fields show on every owner's admin page (each product), in this order.
+  const after = await existing(ownerType);
+  for (const f of Object.values(fields)) {
+    const d = after.get(f.key);
+    if (!f.pin || !d || d.pinnedPosition != null) continue;
+    const data = await gql(
+      `mutation($id: ID!) { metafieldDefinitionPin(definitionId: $id) { pinnedDefinition { id } userErrors { field message } } }`,
+      { id: d.id },
+    );
+    check(data.metafieldDefinitionPin, `pin ${ownerType} ${f.key}`);
+    console.log(`pinned   ${ownerType.toLowerCase()} ${NAMESPACE}.${f.key}`);
   }
 }
 
