@@ -1,8 +1,10 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/CartProvider";
+import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { Button } from "@/components/ui/Button";
 import { MinusIcon, PlusIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
@@ -29,6 +31,7 @@ export function ProductForm({ product }: { product: Product }) {
 
   // The chosen variant lives in VariantProvider (shared with the gallery, kept in the link).
   const { selection, variant, choose } = useVariant();
+  const motionOn = useMotionEnabled();
   const [quantity, setQuantity] = useState(1);
   const [announce, setAnnounce] = useState("");
 
@@ -86,7 +89,20 @@ export function ProductForm({ product }: { product: Product }) {
   return (
     <div>
       <p className="flex items-baseline gap-3 text-[1.375rem] font-medium" aria-live="polite">
-        <span>{priceLabel}</span>
+        {/* A new price (another size) slides in softly over the old one. */}
+        <span className="relative inline-grid overflow-hidden">
+          <AnimatePresence initial={false} mode="popLayout">
+            <motion.span
+              key={priceLabel}
+              initial={{ opacity: 0, y: "60%" }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: "-60%" }}
+              transition={motionOn ? { duration: 0.4, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
+            >
+              {priceLabel}
+            </motion.span>
+          </AnimatePresence>
+        </span>
         {compareAt && (
           <>
             <s className="text-[1rem] font-normal text-black/45">{formatMoney(compareAt.amount, compareAt.currencyCode)}</s>
@@ -116,7 +132,7 @@ export function ProductForm({ product }: { product: Product }) {
                       aria-label={available ? undefined : `${value}, ${copy.product.soldOut.toLowerCase()}`}
                       onClick={() => choose(option.name, value)}
                       className={cn(
-                        "inline-flex h-11 min-w-12 items-center justify-center gap-2 border px-4 text-[0.875rem] font-medium transition-colors",
+                        "inline-flex h-11 min-w-12 items-center justify-center gap-2 border px-4 text-[0.875rem] font-medium transition-colors duration-300 ease-out",
                         selected ? "border-black bg-black text-white" : "border-black/20 hover:border-black",
                         !available && (selected ? "text-white/55 line-through" : "text-black/35 line-through"),
                       )}

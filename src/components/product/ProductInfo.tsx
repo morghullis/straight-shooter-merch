@@ -13,10 +13,10 @@ const spec = copy.product.specs;
 /** One folding block: a ruled row with the title and a plus that turns into a cross when open. Same `name`: one open at a time. */
 function Section({ title, open = false, children }: { title: string; open?: boolean; children: ReactNode }) {
   return (
-    <details name="product-info" open={open} className="group border-b border-black/10 [&_summary::-webkit-details-marker]:hidden">
-      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 font-nav text-[0.8125rem] font-semibold tracking-[0.12em] uppercase select-none hover:text-gold-soft focus-visible:outline-offset-2">
+    <details name="product-info" open={open} className="fold group border-b border-black/10 [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 font-nav text-[0.8125rem] font-semibold tracking-[0.12em] uppercase transition-colors duration-300 select-none hover:text-gold-soft focus-visible:outline-offset-2">
         <h2>{title}</h2>
-        <span aria-hidden="true" className="relative size-3 flex-none transition-transform duration-300 group-open:rotate-45">
+        <span aria-hidden="true" className="relative size-3 flex-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-open:rotate-45">
           <span className="absolute inset-x-0 top-1/2 h-[0.09375rem] -translate-y-1/2 bg-current" />
           <span className="absolute inset-y-0 left-1/2 w-[0.09375rem] -translate-x-1/2 bg-current" />
         </span>
