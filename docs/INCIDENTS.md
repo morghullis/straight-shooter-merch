@@ -22,6 +22,8 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
 
 | Date (UTC) | What happened | Impact | Cause | Fix | Guard |
 | --- | --- | --- | --- | --- | --- |
+| 2026-11-19 | Site health failed on a deploy preview: two products showed the same picture under two addresses | Caught before release; nothing broken for shoppers | The squared Stay Off the Weed photos were uploaded once per product (copies) | Both products now use the same files in Shopify (one file, two products) | Site health's "real and distinct images" check (kept strict) |
+| 2026-11-19 | Home page slow on phones (Lighthouse mobile 47, 1.1 s blocked, 4.4 MB) | Slower first visit | The showroom's three 3D models (~1.4 MB) and their set-up started right after load | They warm up after load once the visitor interacts, or half a screen before the showroom (home now 82, 80 ms, 1 MB) | Measure with Lighthouse on production (deploy previews add Netlify's drawer, ~1.3 MB) |
 | 2026-11-19 | A product field set through the API (`metafieldsSet`) did not show on the site within 2 minutes | Found by a test before anyone relied on it: such a change could take hours to show (the catalog was cached for hours) | Shopify sends `products/update` when a product is saved (the admin's Save: shown in 7 s), not when only a field is set by an app or script | Catalog data now uses the `catalog` cache profile (`next.config.ts`): refreshed in the background after 5 minutes; the webhook still refreshes saved products at once | `tests/deploy-guards.test.ts` (no hour-long catalog cache) |
 | 2026-11-17 | Move to straightshootershop.com: sign-in on the new domain handed Shopify the old `netlify.app` callback until the site was rebuilt | About 40 minutes between the DNS switch and the deploy: a sign-in started on the new domain would have come back to the old one without its cookie ("sign-in failed") | `NEXT_PUBLIC_SITE_URL` is written into the build; the domain went live before a build with the new value | Variable set to `https://straightshootershop.com`, deployed (#10). Next time: build with the new address as soon as HTTPS is live on it | Order in `docs/SHOPIFY.md` §7; strict callback check in site health |
 | 2026-11-17 | Webhooks could not move to the new domain at first | None: the script stopped before changing anything | Shopify refuses webhook addresses on a domain still connected to the store | Domain and `www` deleted from Shopify's Domains first; then `register-webhooks.mjs` moved all 7 and removed the old ones | `docs/SHOPIFY.md` §7 order; the script deletes only after every topic is created |
@@ -70,6 +72,12 @@ is the point. If a mistake has no guard yet, write one (a test, a check, a rule 
 - Next.js stops the first build on a machine with "SecurityFatalError" to recommend an upgrade; running
   the build again continues. On 2026-11-17 the advisory was GHSA-mfr8-8qww-v76h (moderate; only for
   `unstable_cache()`, which this site does not use); the fix is next 16.4.6.
+- In zsh, `path` is the array behind `PATH`: a loop `for path in …` empties the command path ("command
+  not found: node"). Name the variable anything else.
+- Replacing product photos in Shopify: pause the Product assets workflow first, put each new photo in
+  the old one's place (position, variant links, `on_model_image`, `turntable`) and in
+  `asset_pipeline.photos`/`generated`, then `generate.mjs --dry-run` must say 0 products need assets
+  before turning the workflow back on. Otherwise every new photo starts a paid regeneration.
 - A new check must be tried on a known-good and a known-bad target before trusting it: the first
   version of `check-site.mjs` flagged a healthy preview, because Netlify serves one site under several
   names (`<deploy-id>--site`, `deploy-preview-<n>--site`). It now compares the site, not the host.

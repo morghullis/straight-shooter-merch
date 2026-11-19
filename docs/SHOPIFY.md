@@ -54,6 +54,8 @@ The **navigation, footer and home tiles** list every collection published on the
 
 **Collection pages** have a search box, filters and sort, all built from the products: categories are product types, colours and sizes are the products' options (with the swatch of Shopify's category field "Color"), "In stock only" looks at each variant. The search looks at the name, category, show, colours and audience (not tags or descriptions). The default order is Shopify's; the choice stays in the link (`?q=…&type=…&color=…&size=…&stock=1&sort=…`). Filtered by a colour, cards show and open that colour.
 
+**Photos:** cards and the product gallery are square and show every photo whole, so square photos fill them best. A colour that Shopify sells needs its own photo linked to its variants (Shopify > the product > the variant > image); a variant without one keeps the photo already shown.
+
 **Variants** on the product page: picking a colour shows its picture (the variant's image in Shopify) and the price follows the variant (sizes may cost more; a compare-at price above the price shows as a sale). A combination Shopify does not have moves to the closest one in stock; sold-out values are struck through. The link keeps the choice (`?variant=…`), and the cart line shows the chosen colour's picture.
 
 ## 3. Keep the site fresh: webhooks
