@@ -71,3 +71,24 @@ export function useAfterLoad(): boolean {
 
   return ready;
 }
+
+/**
+ * True once the visitor has done anything (scrolled, touched, clicked, pressed a key). Heavy
+ * warm-ups (the showroom's 3D) wait for it, so the first load stays light and fast while anyone
+ * browsing still gets them ready ahead of time.
+ */
+export function useFirstInteraction(): boolean {
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const events = ["scroll", "wheel", "touchstart", "pointerdown", "keydown"] as const;
+    const on = () => setDone(true);
+    for (const e of events) window.addEventListener(e, on, { once: true, passive: true });
+    return () => {
+      for (const e of events) window.removeEventListener(e, on);
+    };
+  }, []);
+
+  return done;
+}
+
