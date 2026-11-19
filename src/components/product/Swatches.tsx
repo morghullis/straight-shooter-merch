@@ -1,18 +1,7 @@
-import type { Product, ProductColor } from "@/lib/catalog";
+import type { ProductColor } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 
-/**
- * The colours a product comes in: its "Color" option values (what can be bought), with the swatch
- * Shopify has for each in the product's category field "Color"; without a Color option, the
- * category field itself. Colours without a swatch are left out of the dots (their names still show
- * in the product details).
- */
-export function productColors(product: Product): ProductColor[] {
-  const known = new Map((product.colors ?? []).map((c) => [c.label.toLowerCase(), c]));
-  const option = product.options.find((o) => ["color", "colour"].includes(o.name.toLowerCase()));
-  if (!option) return product.colors ?? [];
-  return option.values.map((value) => known.get(value.toLowerCase()) ?? { label: value, hex: null });
-}
+export { productColors } from "@/lib/catalog/colors";
 
 const MAX_DOTS = 4;
 

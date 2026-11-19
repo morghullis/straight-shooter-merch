@@ -3,6 +3,7 @@ import Link from "next/link";
 import { copy } from "@/config/copy";
 import type { Product } from "@/lib/catalog";
 import { isWomens } from "@/lib/catalog/order";
+import { numericId } from "@/lib/catalog/variants";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 
@@ -19,6 +20,8 @@ interface ProductCardProps {
   size?: "sm" | "lg";
   /** True when the card is in a phone rail (horizontal scroller): no inner swipe there. */
   rail?: boolean;
+  /** Open the product on this variant (e.g. the colour a list is filtered by). */
+  variantId?: string | null;
   className?: string;
 }
 
@@ -32,8 +35,9 @@ function sizeList(product: Product): string[] {
  * angles (see CardGallery); on a hover-capable device the first slide cross-fades to the
  * on-model shot. Touch devices keep the garment and swipe through the angles.
  */
-export function ProductCard({ product, priority = false, size = "sm", rail = false, className }: ProductCardProps) {
+export function ProductCard({ product, priority = false, size = "sm", rail = false, variantId, className }: ProductCardProps) {
   const lg = size === "lg";
+  const href = `/products/${product.handle}${variantId ? `?variant=${numericId(variantId)}` : ""}`;
   const hover = product.hoverImage;
   // The product's show, and "Women's" for pieces cut for women: Shopify's collection and category fields.
   const label = [product.collectionLabel, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ");
@@ -52,7 +56,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
     <article className={cn("group/card", className)}>
       <CardGallery
         title={product.title}
-        href={`/products/${product.handle}`}
+        href={href}
         images={angles.length ? angles : [{ url: product.featuredImage.url, alt: product.featuredImage.altText || product.title }]}
         hover={hover ? { url: hover.url, alt: hover.altText || copy.product.onModel } : null}
         priority={priority}
@@ -62,7 +66,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
         rail={rail}
       />
 
-      <Link href={`/products/${product.handle}`} className="block focus-visible:outline-offset-4">
+      <Link href={href} className="block focus-visible:outline-offset-4">
         {label && (
           <p
             className={cn(

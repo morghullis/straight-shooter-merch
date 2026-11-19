@@ -3,12 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { CollectionBrowser } from "@/components/collection/CollectionBrowser";
 import { Reveal } from "@/components/motion/Reveal";
 import { RevealText } from "@/components/motion/RevealText";
-import { ProductCard } from "@/components/product/ProductCard";
 import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
-import { getCollection, getCollections, getProducts } from "@/lib/catalog";
+import { getCollection, getCollections, getProducts, type Product } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { isSafeHandle } from "@/lib/format";
 
@@ -54,6 +54,9 @@ function CollectionSkeleton() {
   );
 }
 
+/** What a card (and the search) needs: the product page's long fields stay on the server. */
+const forCards = (p: Product): Product => ({ ...p, descriptionHtml: undefined, details: null });
+
 async function CollectionContent({ params }: Pick<PageProps<"/collections/[handle]">, "params">) {
   const { handle } = await params;
   if (!isSafeHandle(handle)) notFound();
@@ -81,7 +84,7 @@ async function CollectionContent({ params }: Pick<PageProps<"/collections/[handl
       </Container>
 
       <section className="mx-auto max-w-(--container) bg-cream px-(--gutter) pt-5 pb-10 text-black sm:px-6 xl:px-10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div>
           <nav
             aria-label={copy.collection.filter}
             className="scrollbar-none -mx-(--gutter) flex min-w-0 gap-2 overflow-x-auto px-(--gutter) [mask-image:linear-gradient(to_right,#000_calc(100%-1rem),transparent)] sm:mx-0 sm:flex-1 sm:flex-wrap sm:px-0 sm:[mask-image:none]"
@@ -103,22 +106,12 @@ async function CollectionContent({ params }: Pick<PageProps<"/collections/[handl
               );
             })}
           </nav>
-          <p className="order-first text-[0.75rem] text-black/60 sm:order-last" aria-live="polite">
-            {copy.collection.count(products.length)}
-          </p>
         </div>
 
-        {products.length === 0 ? (
-          <p className="py-16 text-center text-black/60">{copy.collection.empty}</p>
-        ) : (
-          <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-            {products.map((product, i) => (
-              <Reveal as="li" key={product.id} delay={(i % 4) * 0.06}>
-                <ProductCard product={product} size="lg" priority={i < 4} />
-              </Reveal>
-            ))}
-          </ul>
-        )}
+        <div className="mt-5">
+          {/* Search, filters and sort run in the browser on the products below (Shopify's order). */}
+          <CollectionBrowser products={products.map(forCards)} />
+        </div>
       </section>
     </>
   );

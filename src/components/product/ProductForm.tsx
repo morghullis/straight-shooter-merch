@@ -7,14 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { MinusIcon, PlusIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
 import { FOOTER_END_ID } from "@/config/site";
-import type { Product, ProductVariant } from "@/lib/catalog/types";
+import { isColorOption, productColors } from "@/lib/catalog/colors";
+import type { Product } from "@/lib/catalog/types";
+import { isAvailable as canPick, onSale } from "@/lib/catalog/variants";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 
-type Selection = Record<string, string>;
-
-const matches = (variant: ProductVariant, selection: Selection) =>
-  variant.selectedOptions.every((o) => selection[o.name] === o.value);
+import { useVariant } from "./VariantContext";
 
 /**
  * Option pickers, quantity stepper and the Add to cart button. On phones a bar pinned to
@@ -28,26 +27,17 @@ export function ProductForm({ product }: { product: Product }) {
     (o) => !(o.name === "Title" && o.values.length === 1 && o.values[0] === "Default Title"),
   );
 
-  const [selection, setSelection] = useState<Selection>(() => {
-    const first = product.variants.find((v) => v.availableForSale) ?? product.variants[0];
-    return Object.fromEntries(first.selectedOptions.map((o) => [o.name, o.value]));
-  });
+  // The chosen variant lives in VariantProvider (shared with the gallery, kept in the link).
+  const { selection, variant, choose } = useVariant();
   const [quantity, setQuantity] = useState(1);
   const [announce, setAnnounce] = useState("");
 
-  const variant = useMemo(() => product.variants.find((v) => matches(v, selection)), [product.variants, selection]);
-
-  const isAvailable = (name: string, value: string) =>
-    product.variants.some(
-      (v) =>
-        v.availableForSale &&
-        v.selectedOptions.some((o) => o.name === name && o.value === value) &&
-        v.selectedOptions.every((o) => o.name === name || selection[o.name] === o.value),
-    );
+  const swatch = useMemo(() => new Map(productColors(product).map((c) => [c.label.toLowerCase(), c.hex])), [product]);
 
   const soldOut = !variant || !variant.availableForSale;
   const price = variant?.price ?? product.price;
   const priceLabel = formatMoney(price.amount, price.currencyCode);
+  const compareAt = variant && onSale(variant.price, variant.compareAtPrice) ? variant.compareAtPrice : null;
 
   // Pin a buy bar to the bottom (phones) while the real button is off screen,
   // and tuck it away when the footer's last row arrives so it never covers it.
@@ -81,8 +71,9 @@ export function ProductForm({ product }: { product: Product }) {
         variantTitle: variant.title,
         price: Number(variant.price.amount),
         currency: variant.price.currencyCode,
-        image: product.featuredImage.url,
-        imageAlt: product.featuredImage.altText || product.title,
+        // The chosen colour's own picture when Shopify has one.
+        image: variant.image?.url ?? product.featuredImage.url,
+        imageAlt: variant.image?.altText || product.featuredImage.altText || product.title,
       },
       quantity,
     );
@@ -94,7 +85,15 @@ export function ProductForm({ product }: { product: Product }) {
 
   return (
     <div>
-      <p className="text-[1.375rem] font-medium">{priceLabel}</p>
+      <p className="flex items-baseline gap-3 text-[1.375rem] font-medium" aria-live="polite">
+        <span>{priceLabel}</span>
+        {compareAt && (
+          <>
+            <s className="text-[1rem] font-normal text-black/45">{formatMoney(compareAt.amount, compareAt.currencyCode)}</s>
+            <span className="bg-black px-2 py-0.5 font-nav text-[0.6875rem] font-semibold tracking-[0.1em] text-gold uppercase">{copy.product.sale}</span>
+          </>
+        )}
+      </p>
 
       <div className="mt-6 space-y-5">
         {options.map((option) => {
@@ -107,19 +106,28 @@ export function ProductForm({ product }: { product: Product }) {
               <div className="mt-2 flex flex-wrap gap-2">
                 {option.values.map((value) => {
                   const selected = selection[option.name] === value;
-                  const available = isAvailable(option.name, value);
+                  const available = canPick(product.variants, selection, option.name, value);
+                  const hex = isColorOption(option.name) ? swatch.get(value.toLowerCase()) : null;
                   return (
                     <button
                       key={value}
                       type="button"
                       aria-pressed={selected}
-                      onClick={() => setSelection((s) => ({ ...s, [option.name]: value }))}
+                      aria-label={available ? undefined : `${value}, ${copy.product.soldOut.toLowerCase()}`}
+                      onClick={() => choose(option.name, value)}
                       className={cn(
-                        "h-11 min-w-12 border px-4 text-[0.875rem] font-medium transition-colors",
+                        "inline-flex h-11 min-w-12 items-center justify-center gap-2 border px-4 text-[0.875rem] font-medium transition-colors",
                         selected ? "border-black bg-black text-white" : "border-black/20 hover:border-black",
-                        !available && "text-black/35 line-through",
+                        !available && (selected ? "text-white/55 line-through" : "text-black/35 line-through"),
                       )}
                     >
+                      {hex && (
+                        <span
+                          aria-hidden="true"
+                          style={{ backgroundColor: hex }}
+                          className={cn("size-3.5 flex-none rounded-full ring-1", selected ? "ring-white/60" : "ring-black/20")}
+                        />
+                      )}
                       {value}
                     </button>
                   );

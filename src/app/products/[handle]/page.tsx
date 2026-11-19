@@ -9,6 +9,7 @@ import { ProductForm } from "@/components/product/ProductForm";
 import { ProductHighlights, ProductInfo, ProductTagline } from "@/components/product/ProductInfo";
 import { ProductMedia } from "@/components/product/ProductMedia";
 import { TrackProductView } from "@/components/product/TrackProductView";
+import { VariantProvider } from "@/components/product/VariantContext";
 import { Carousel } from "@/components/ui/Carousel";
 import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
@@ -126,33 +127,47 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
         </nav>
       </Container>
 
-      <section className="mx-auto max-w-(--container) bg-cream px-(--gutter) py-6 text-black sm:px-6 lg:px-10 lg:py-10">
-        <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
-          <ProductMedia
-            title={product.title}
-            images={product.images.map((i) => ({ url: i.url, alt: i.altText }))}
-            model={modelSpecFor(product)}
-          />
-          <TrackProductView handle={product.handle} />
+      <VariantProvider variants={product.variants}>
+        <section className="mx-auto max-w-(--container) bg-cream px-(--gutter) py-6 text-black sm:px-6 lg:px-10 lg:py-10">
+          {/*
+            Phones: photos, buy box, information. Desktop: the information sits under the photos on
+            the left and the buy box stays in view on the right (on screens tall enough), so an open
+            block never leaves a blank column beside it.
+          */}
+          <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-x-12 lg:gap-y-8">
+            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+              <ProductMedia
+                title={product.title}
+                images={product.images.map((i) => ({ url: i.url, alt: i.altText }))}
+                model={modelSpecFor(product)}
+              />
+            </div>
+            <TrackProductView handle={product.handle} />
 
-          <div>
-            <p className="font-nav text-[0.75rem] font-semibold tracking-[0.12em] text-gold-soft uppercase">
-              {[product.collectionLabel ?? site.shortName, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ")}
-            </p>
-            <h1 className="mt-2 font-display text-[clamp(2.75rem,8vw,3.75rem)] leading-[0.95] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase">
-              {product.title}
-            </h1>
-            <ProductTagline product={product} />
+            <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+              <div className="lg:[@media(min-height:46rem)]:sticky lg:[@media(min-height:46rem)]:top-[calc(var(--header-h)+1.5rem)]">
+                <p className="font-nav text-[0.75rem] font-semibold tracking-[0.12em] text-gold-soft uppercase">
+                  {[product.collectionLabel ?? site.shortName, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ")}
+                </p>
+                <h1 className="mt-2 font-display text-[clamp(2.75rem,8vw,3.75rem)] leading-[0.95] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase">
+                  {product.title}
+                </h1>
+                <ProductTagline product={product} />
 
-            <div className="mt-5">
-              <ProductForm product={product} />
+                <div className="mt-5">
+                  <ProductForm product={product} />
+                </div>
+
+                <ProductHighlights product={product} />
+              </div>
             </div>
 
-            <ProductHighlights product={product} />
-            <ProductInfo product={product} />
+            <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+              <ProductInfo product={product} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </VariantProvider>
 
       {related.length > 0 && (
         <section

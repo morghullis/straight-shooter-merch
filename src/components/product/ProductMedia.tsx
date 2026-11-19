@@ -10,6 +10,11 @@ import type { ModelSpec } from "@/config/models";
 import { useMediaQuery } from "@/lib/browser";
 import { cn } from "@/lib/cn";
 
+import { useOptionalVariant } from "./VariantContext";
+
+/** Same picture, whatever version query Shopify's CDN added. */
+const samePicture = (a: string, b: string) => a.split("?")[0] === b.split("?")[0];
+
 interface MediaImage {
   url: string;
   alt: string;
@@ -38,6 +43,17 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
   const detail = useMediaQuery("(min-width: 1024px) and (pointer: fine)");
 
   const go = (delta: number) => setActive((i) => (i + delta + slides.length) % slides.length);
+
+  // Picking a colour (or any variant with its own picture) in the buy box shows that picture: when
+  // the chosen variant's picture changes, the stage moves to it (adjusted during render). It starts
+  // as the first variant's picture, so the page opens on the merchant's first photo.
+  const variantImage = useOptionalVariant()?.variant?.image?.url ?? null;
+  const [shownVariantImage, setShownVariantImage] = useState<string | null>(variantImage);
+  if (variantImage !== shownVariantImage) {
+    setShownVariantImage(variantImage);
+    const index = variantImage ? images.findIndex((image) => samePicture(image.url, variantImage)) : -1;
+    if (index >= 0) setActive(index);
+  }
 
   // Swipe between photos; the 3D stage keeps horizontal drags for rotating.
   const onDown = (e: PointerEvent) => {

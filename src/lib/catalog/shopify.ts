@@ -91,6 +91,8 @@ const PRODUCT_FIELDS = /* GraphQL */ `
         title
         availableForSale
         price { amount currencyCode }
+        compareAtPrice { amount currencyCode }
+        image { url altText width height }
         selectedOptions { name value }
       }
     }
@@ -259,6 +261,8 @@ interface RawProduct {
       title: string;
       availableForSale: boolean;
       price: Money;
+      compareAtPrice?: Money | null;
+      image?: RawImage | null;
       selectedOptions: { name: string; value: string }[];
     }[];
   };
@@ -402,6 +406,8 @@ function mapProduct(raw: RawProduct): Product {
     title: v.title,
     availableForSale: v.availableForSale,
     price: v.price,
+    compareAtPrice: v.compareAtPrice ?? null,
+    image: v.image ? mapImage(v.image, `${raw.title}, ${v.title}`) : null,
     selectedOptions: v.selectedOptions,
   }));
 

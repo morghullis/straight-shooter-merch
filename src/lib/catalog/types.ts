@@ -20,6 +20,10 @@ export interface ProductVariant {
   title: string;
   availableForSale: boolean;
   price: Money;
+  /** The "was" price in Shopify; a sale when it is higher than `price`. */
+  compareAtPrice?: Money | null;
+  /** The variant's own picture in Shopify (e.g. the white tee for "White"). */
+  image?: CatalogImage | null;
   selectedOptions: SelectedOption[];
 }
 
