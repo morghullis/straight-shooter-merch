@@ -43,11 +43,47 @@ export interface Model3D {
   yaw?: number;
 }
 
+/** A colour the product comes in (Shopify's category field "Color"), with its swatch when Shopify has one. */
+export interface ProductColor {
+  label: string;
+  /** CSS colour, e.g. "#000000"; null when Shopify has none for it. */
+  hex: string | null;
+}
+
+/**
+ * The product page's extra fields (custom fields in Shopify, pinned on every product). Each one is
+ * optional: the page shows a block only when its field is filled in.
+ */
+export interface ProductDetails {
+  /** Short line under the product name (custom field `tagline`). */
+  tagline: string | null;
+  /** Key points, one per entry (`highlights`). */
+  highlights: string[];
+  /** e.g. "100% ring-spun cotton" (`material`). */
+  material: string | null;
+  /** e.g. "Unisex, true to size" (`fit`). */
+  fit: string | null;
+  /** Care instructions, one per line (`care`). */
+  care: string[];
+  /** Size chart picture (`size_chart`). */
+  sizeChart: CatalogImage | null;
+  /** This product's own shipping line, instead of the site's (`shipping_note`). */
+  shippingNote: string | null;
+}
+
 export interface Product {
   id: string;
   handle: string;
   title: string;
   description: string;
+  /** The description as written in Shopify (headings, lists), already cleaned for the page. */
+  descriptionHtml?: string;
+  details?: ProductDetails | null;
+  /** Who it is made for, from Shopify's category field "Target gender": "Unisex", "Women's"... */
+  audience?: string[];
+  colors?: ProductColor[];
+  /** Name of the product's show/collection, for labels ("Stephen A. Smith"). */
+  collectionLabel?: string | null;
   /** The product's category ("Hoodie", "Tee"...): Shopify's product type. */
   productType: string;
   availableForSale: boolean;

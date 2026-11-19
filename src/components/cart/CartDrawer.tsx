@@ -119,7 +119,7 @@ export function CartDrawer() {
                       alt={line.imageAlt}
                       fill
                       sizes="(min-width: 1326px) 6.3vw, 84px"
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </Link>
 

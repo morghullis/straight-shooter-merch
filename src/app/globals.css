@@ -76,7 +76,8 @@
 
   --strip-tile-h: 8.125rem;
   --strip-cols: 288fr 282fr 282fr 288fr;
-  --card-ratio: 173 / 141;
+  /* Square: product photos are 1:1 to 1.2:1, and every one shows whole (object-contain, never cropped). */
+  --card-ratio: 1 / 1;
 }
 
 @media (min-width: 1024px) {
@@ -536,3 +537,75 @@ html[data-motion="off"] .shimmer-gold {
   background: none;
   color: var(--color-gold);
 }
+
+/*
+ * A product description as written in Shopify (cleaned to headings, paragraphs, lists, bold and
+ * links by cleanDescriptionHtml), in the site's type: display caps for headings, gold dashes for
+ * list bullets.
+ */
+.product-prose > * + * {
+  margin-top: 0.875rem;
+}
+.product-prose h3 {
+  margin-top: 1.375rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #000;
+}
+.product-prose h4 {
+  margin-top: 1.25rem;
+  font-family: var(--font-nav);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / 0.55);
+}
+.product-prose > :first-child {
+  margin-top: 0;
+}
+.product-prose h3 + *,
+.product-prose h4 + * {
+  margin-top: 0.5rem;
+}
+.product-prose strong {
+  font-weight: 600;
+  color: #000;
+}
+.product-prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.product-prose a:hover {
+  color: var(--color-gold-soft);
+}
+.product-prose ul,
+.product-prose ol {
+  display: grid;
+  gap: 0.375rem;
+}
+.product-prose ul > li {
+  position: relative;
+  padding-left: 1.375rem;
+}
+.product-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6875rem;
+  width: 0.75rem;
+  height: 0.125rem;
+  background: var(--color-gold-soft);
+}
+.product-prose ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.product-prose li > p {
+  margin: 0;
+}
+

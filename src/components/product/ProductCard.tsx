@@ -2,10 +2,12 @@ import Link from "next/link";
 
 import { copy } from "@/config/copy";
 import type { Product } from "@/lib/catalog";
+import { isWomens } from "@/lib/catalog/order";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 
 import { CardGallery } from "./CardGallery";
+import { productColors, Swatches } from "./Swatches";
 
 /** Angles shown in a card carousel, so a store with many product photos stays light. */
 const MAX_ANGLES = 6;
@@ -33,6 +35,8 @@ function sizeList(product: Product): string[] {
 export function ProductCard({ product, priority = false, size = "sm", rail = false, className }: ProductCardProps) {
   const lg = size === "lg";
   const hover = product.hoverImage;
+  // The product's show, and "Women's" for pieces cut for women: Shopify's collection and category fields.
+  const label = [product.collectionLabel, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ");
   const sizes = lg ? sizeList(product) : [];
   const imageSizes = lg
     ? "(min-width: 1326px) 20.4vw, (min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw"
@@ -59,17 +63,31 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
       />
 
       <Link href={`/products/${product.handle}`} className="block focus-visible:outline-offset-4">
+        {label && (
+          <p
+            className={cn(
+              "truncate px-[0.1875rem] font-nav font-semibold tracking-[0.1em] text-gold-soft uppercase",
+              lg ? "mt-2.5 text-[0.625rem] leading-[0.875rem]" : "mt-[0.375rem] text-[0.5rem] leading-[0.6875rem]",
+            )}
+          >
+            {label}
+          </p>
+        )}
         <h3
           className={cn(
             "px-[0.1875rem] text-black group-hover/card:underline group-hover/card:underline-offset-2",
-            lg ? "mt-2 text-[0.875rem] leading-[1.25rem]" : "mt-[0.3125rem] text-[0.6625rem] leading-[1rem]",
+            label ? (lg ? "mt-0.5" : "mt-px") : lg ? "mt-2" : "mt-[0.3125rem]",
+            lg ? "text-[0.875rem] leading-[1.25rem]" : "text-[0.6625rem] leading-[1rem]",
           )}
         >
           {product.title}
         </h3>
-        <p className={cn("px-[0.1875rem] text-black", lg ? "text-[0.875rem] leading-[1.25rem]" : "text-[0.6625rem] leading-[1rem]")}>
-          {formatMoney(product.price.amount, product.price.currencyCode)}
-        </p>
+        <div className="flex items-center justify-between gap-2 px-[0.1875rem]">
+          <p className={cn("text-black", lg ? "text-[0.875rem] leading-[1.25rem]" : "text-[0.6625rem] leading-[1rem]")}>
+            {formatMoney(product.price.amount, product.price.currencyCode)}
+          </p>
+          <Swatches colors={productColors(product)} size={size} />
+        </div>
 
         {sizes.length > 1 && (
           <p

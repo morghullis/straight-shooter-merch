@@ -95,7 +95,8 @@ function TileArt({ tile, priority }: { tile: StripTile; priority?: boolean }) {
         fill
         priority={priority}
         sizes={SIZES.single}
-        className="scale-[1.04] object-cover transition-transform duration-500 group-hover:scale-[1.08]"
+        // Product photos show whole: contained in the column, never cropped or zoomed.
+        className="object-contain"
       />
     </div>
   );
@@ -177,27 +178,60 @@ function Preload({ tiles }: { tiles: StripTile[] }) {
   );
 }
 
+interface Deck {
+  /** The tile in each slot. */
+  shown: number[];
+  /** Tiles waiting, in the order they will come up: for the lead slots, and for the others. */
+  lead: number[];
+  rest: number[];
+}
+
+/** The first `leadSlots` slots take lead tiles (the first `leadTiles` tiles), the others the rest. */
+function firstDeck(count: number, slotCount: number, leadTiles: number, leadSlots: number): Deck {
+  const lead = Array.from({ length: leadTiles }, (_, i) => i);
+  const rest = Array.from({ length: count - leadTiles }, (_, i) => i + leadTiles);
+  const shown: number[] = [];
+  for (let slot = 0; slot < slotCount; slot++) {
+    const [own, other] = slot < leadSlots ? [lead, rest] : [rest, lead];
+    shown.push((own.length ? own : other).shift()!);
+  }
+  return { shown, lead, rest };
+}
+
+const shuffle = (list: number[]) =>
+  list
+    .map((v) => ({ v, r: Math.random() }))
+    .sort((a, b) => a.r - b.r)
+    .map(({ v }) => v);
+
 /**
  * The strip under the hero: four tiles in the reference design. From time to time a random tile
  * rolls up like a cube and shows another collection or product in the same design, so the strip
- * walks through the whole store. It holds still while the pointer or keyboard focus is on it, while
- * it is off screen, and with reduced motion.
+ * walks through the whole store. The first `leadSlots` slots only ever show lead tiles (the first
+ * `leadTiles` of `tiles`), the others everything else. It holds still while the pointer or keyboard
+ * focus is on it, while it is off screen, and with reduced motion.
  */
-export function RotatingStrip({ tiles, label }: { tiles: StripTile[]; label: string }) {
+export function RotatingStrip({
+  tiles,
+  label,
+  leadTiles = 0,
+  leadSlots = 0,
+}: {
+  tiles: StripTile[];
+  label: string;
+  leadTiles?: number;
+  leadSlots?: number;
+}) {
   const motionOn = useMotionEnabled();
   const slotCount = Math.min(SLOTS.length, tiles.length);
-  // `shown`: the tile in each slot; `queue`: the tiles waiting, in the order they will come up.
-  const [{ shown, queue }, setDeck] = useState(() => ({
-    shown: tiles.slice(0, slotCount).map((_, i) => i),
-    queue: tiles.slice(slotCount).map((_, i) => i + slotCount),
-  }));
+  const [{ shown, lead, rest }, setDeck] = useState(() => firstDeck(tiles.length, slotCount, leadTiles, leadSlots));
   const section = useRef<HTMLElement>(null);
   const held = useRef(false);
   const inView = useRef(false);
   const lastSlot = useRef(-1);
   const shuffled = useRef(false);
   const [warm, setWarm] = useState(false);
-  const canTurn = motionOn && queue.length > 0;
+  const canTurn = motionOn && lead.length + rest.length > 0;
 
   useEffect(() => {
     const el = section.current;
@@ -219,26 +253,32 @@ export function RotatingStrip({ tiles, label }: { tiles: StripTile[]; label: str
     let timer: ReturnType<typeof setTimeout>;
     const turn = () => {
       if (!held.current && inView.current && document.visibilityState === "visible") {
-        // A random slot, never the same one twice in a row.
-        let slot = Math.floor(Math.random() * slotCount);
-        if (slotCount > 1 && slot === lastSlot.current) slot = (slot + 1 + Math.floor(Math.random() * (slotCount - 1))) % slotCount;
-        lastSlot.current = slot;
         // The rest of the store comes up in a different order on every visit (shuffled at the first
         // turn, so the server's first frame and hydration match).
-        const rank = shuffled.current ? null : tiles.map(() => Math.random());
+        const reshuffle = !shuffled.current;
         shuffled.current = true;
-        setDeck(({ shown, queue }) => {
-          const order = rank ? [...queue].sort((a, b) => rank[a] - rank[b]) : queue;
-          const next = [...shown];
-          next[slot] = order[0];
-          return { shown: next, queue: [...order.slice(1), shown[slot]] };
+        setDeck((deck) => {
+          const lead = reshuffle ? shuffle(deck.lead) : deck.lead;
+          const rest = reshuffle ? shuffle(deck.rest) : deck.rest;
+          // A random slot whose own tiles have one waiting, never the same slot twice in a row.
+          const ready = deck.shown.map((_, s) => s).filter((s) => (s < leadSlots ? lead : rest).length > 0);
+          const fresh = ready.filter((s) => s !== lastSlot.current);
+          const pool = fresh.length ? fresh : ready;
+          if (!pool.length) return { ...deck, lead, rest };
+          const slot = pool[Math.floor(Math.random() * pool.length)];
+          lastSlot.current = slot;
+          const queue = slot < leadSlots ? lead : rest;
+          const shown = [...deck.shown];
+          shown[slot] = queue[0];
+          const after = [...queue.slice(1), deck.shown[slot]];
+          return slot < leadSlots ? { shown, lead: after, rest } : { shown, lead, rest: after };
         });
       }
       timer = setTimeout(turn, TURN_EVERY.min + Math.random() * TURN_EVERY.spread);
     };
     timer = setTimeout(turn, TURN_EVERY.min + Math.random() * TURN_EVERY.spread);
     return () => clearTimeout(timer);
-  }, [canTurn, slotCount, tiles]);
+  }, [canTurn, leadSlots]);
 
   if (slotCount === 0) return null;
   const columns = SLOTS.slice(0, slotCount).map((s) => s.width).join(" ");
@@ -284,7 +324,7 @@ export function RotatingStrip({ tiles, label }: { tiles: StripTile[]; label: str
           );
         })}
       </Carousel>
-      {canTurn && warm && <Preload tiles={queue.map((i) => tiles[i])} />}
+      {canTurn && warm && <Preload tiles={[...lead, ...rest].map((i) => tiles[i])} />}
     </section>
   );
 }

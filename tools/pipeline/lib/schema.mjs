@@ -20,6 +20,23 @@ export const PRODUCT_FIELDS = {
     description: 'How the model sits on the stage: {"fit": 2.35, "yaw": 0} (yaw in degrees, 0 = front faces the camera).' },
   pipeline: { key: "asset_pipeline", name: "Asset pipeline", type: "json", storefront: false,
     description: "Written by the asset pipeline: state, attempts, last error. Delete it to make the pipeline run again." },
+
+  // The product page's information (src/components/product/ProductInfo.tsx). Pinned, so every
+  // product's admin page shows them; each block appears on the site only once its field is filled in.
+  tagline: { key: "tagline", name: "Tagline", type: "single_line_text_field", storefront: true, pin: true,
+    description: "Short line under the product name on the site, e.g. That's just BLASPHEMOUS!" },
+  highlights: { key: "highlights", name: "Highlights", type: "list.single_line_text_field", storefront: true, pin: true,
+    description: "Key points shown under the Add to cart button, one per entry." },
+  material: { key: "material", name: "Material", type: "single_line_text_field", storefront: true, pin: true,
+    description: "e.g. 100% ring-spun cotton, 180 gsm. Shown in Details." },
+  fit: { key: "fit", name: "Fit", type: "single_line_text_field", storefront: true, pin: true,
+    description: "How it fits, e.g. Unisex, true to size; size up for a relaxed fit. Shown in Details." },
+  care: { key: "care", name: "Care", type: "multi_line_text_field", storefront: true, pin: true,
+    description: "Care instructions, one per line. Shown in Care." },
+  sizeChart: { key: "size_chart", name: "Size chart", type: "file_reference", validations: images, storefront: true, pin: true,
+    description: "Picture of the size table. Shown in Size guide." },
+  shippingNote: { key: "shipping_note", name: "Shipping note", type: "single_line_text_field", storefront: true, pin: true,
+    description: "This product's own shipping line, e.g. Made to order, ships in 3 to 5 business days. Shown first in Shipping & returns." },
 };
 
 export const COLLECTION_FIELDS = {
