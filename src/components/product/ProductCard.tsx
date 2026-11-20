@@ -82,15 +82,16 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
         >
           {label || " "}
         </p>
+        {/* The name leads: the site's display type (like the tiles and the product page title). */}
         <h3
           className={cn(
-            "line-clamp-2 min-h-[2lh] px-[0.1875rem] text-black group-hover/card:underline group-hover/card:underline-offset-2",
-            lg ? "mt-0.5 text-[0.875rem] leading-[1.25rem]" : "mt-px text-[0.6625rem] leading-[1rem]",
+            "line-clamp-2 min-h-[2lh] px-[0.1875rem] font-display leading-[1.05] font-extrabold tracking-[-0.01em] text-black uppercase [word-spacing:0.05em] group-hover/card:underline group-hover/card:underline-offset-2",
+            lg ? "mt-1 text-[1.25rem] sm:text-[1.5rem]" : "mt-0.5 text-[1.125rem]",
           )}
         >
           {product.title}
         </h3>
-        {/* The price leads: the display type, big, under the name (like the Showroom's tape). */}
+        {/* The price under it, in the same type, smaller (sign and cents raised, like the Showroom's tape). */}
         <div className={cn("flex items-baseline justify-between gap-2 px-[0.1875rem]", lg ? "mt-1.5" : "mt-1")}>
           <p className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-black">
             {from && (
@@ -98,7 +99,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
                 {copy.product.from}
               </span>
             )}
-            <Price amount={price.amount} currency={price.currencyCode} className={lg ? "text-[1.5625rem] sm:text-[1.75rem]" : "text-[0.875rem] [--price-minor:0.6em]"} />
+            <Price amount={price.amount} currency={price.currencyCode} className={lg ? "text-[1.25rem] sm:text-[1.375rem] [--price-minor:0.55em]" : "text-[0.875rem] [--price-minor:0.6em]"} />
             {compareAt && (
               <s className={cn("leading-none text-black/45", lg ? "text-[0.875rem]" : "text-[0.6875rem]")}>
                 {formatMoney(compareAt.amount, compareAt.currencyCode)}

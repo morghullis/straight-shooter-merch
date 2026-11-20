@@ -103,7 +103,7 @@ export function ProductForm({ product }: { product: Product }) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-live="polite">
         <Tape className="-ml-1 -rotate-[1.5deg] py-1.5 [--tape-end:1.1rem] sm:[--tape-end:1.35rem]">
           <p className="font-display leading-none font-extrabold">
-            <PriceRoll amount={amount} currency={price.currencyCode} direction={direction} className="text-[3.75rem] sm:text-[4.5rem] lg:text-[5.25rem]" />
+            <PriceRoll amount={amount} currency={price.currencyCode} direction={direction} className="text-[2.625rem] sm:text-[3.125rem] lg:text-[3.625rem]" />
           </p>
         </Tape>
         {compareAt && (
