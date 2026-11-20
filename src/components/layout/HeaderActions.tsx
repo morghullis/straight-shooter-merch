@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion, useAnimationControls } from "motion/react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/CartProvider";
 import { useMotionEnabled } from "@/components/motion/motion-preference";
@@ -17,6 +17,8 @@ import { cn } from "@/lib/cn";
 import type { NavLink } from "@/lib/navigation";
 import { lockPageScroll } from "@/lib/scroll-lock";
 
+import { SearchPanel } from "./SearchPanel";
+
 const iconButton =
   "grid size-11 place-items-center text-white transition-colors hover:text-gold focus-visible:text-gold";
 
@@ -29,56 +31,6 @@ function useEscape(onClose: () => void) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
-}
-
-function SearchPanel({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const id = useId();
-  useEscape(onClose);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const submit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const q = inputRef.current?.value.trim() ?? "";
-    if (!q) return;
-    onClose();
-    router.push(`/search?q=${encodeURIComponent(q)}`);
-  };
-
-  return (
-    <div className="absolute inset-x-0 top-(--header-h) z-50 border-y border-white/10 bg-[#0a0a0a]">
-      <form
-        onSubmit={submit}
-        role="search"
-        className="mx-auto flex max-w-(--container) items-center gap-3 px-(--gutter) py-3 xl:px-1"
-      >
-        <label htmlFor={id} className="sr-only">
-          {copy.header.searchStore}
-        </label>
-        <ScopeIcon size={20} className="flex-none text-white/60" />
-        <input
-          ref={inputRef}
-          id={id}
-          type="search"
-          name="q"
-          autoComplete="off"
-          enterKeyHint="search"
-          placeholder={copy.header.searchPlaceholder}
-          className="h-12 w-full min-w-0 bg-transparent font-display text-[clamp(1.375rem,5vw,1.75rem)] font-extrabold tracking-[0.01em] text-white uppercase placeholder:text-white/30 focus:outline-none"
-        />
-        <Button type="submit" size="sm" className="hidden sm:inline-flex">
-          {copy.header.search}
-        </Button>
-        <button type="button" onClick={onClose} aria-label={copy.header.closeSearch} className={iconButton}>
-          <CloseIcon size={20} />
-        </button>
-      </form>
-    </div>
-  );
 }
 
 /** Full-screen menu for phones and tablets: big type, numbered, staggered in. */

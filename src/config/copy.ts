@@ -21,6 +21,15 @@ export const copy = {
     searchStore: "Search the store",
     searchPlaceholder: "Search hoodies, hats, tees…",
     closeSearch: "Close search",
+    /** Instant results under the header search. */
+    instant: {
+      label: "Products",
+      viewAll: (n: number) => `View all ${n} ${plural(n, "result", "results")}`,
+      none: (q: string) => `No products for “${q}”`,
+      browse: "Shop all merch",
+      loading: "Loading products…",
+      hint: "↑ ↓ to move · Enter to open",
+    },
     account: "Account",
     openCart: (count: number) => `Open cart, ${count} ${plural(count, "item", "items")}`,
     openMenu: "Open menu",

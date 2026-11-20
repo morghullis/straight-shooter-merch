@@ -5,7 +5,9 @@ import { isSafeHandle, normalizeQuery } from "@/lib/format";
 import { getPopularity } from "@/lib/popularity";
 
 import { allCollection, mockCollections, mockProducts } from "./mock";
+import { searchText } from "./filter";
 import { featuredOrder, inShopifyOrder, showroomPicks } from "./order";
+import { rankSearch, toSearchItem, type SearchItem } from "./search";
 import {
   fetchCollectionProducts,
   fetchCollections,
@@ -52,26 +54,36 @@ export async function getProducts(opts: { collection?: string } = {}): Promise<P
   return getProductsIn(collection);
 }
 
-async function getProductsIn(collection: string): Promise<Product[]> {
+/**
+ * One collection and its products, in one request to Shopify. Everything about a collection (its
+ * page, its products, the site's order) reads from this single cached answer: two cached functions
+ * asking Shopify for the same thing at once would wait on each other (Next refuses a cached
+ * function awaiting a request started by another).
+ */
+async function getCollectionData(handle: string): Promise<{ collection: Collection; products: Product[] } | null> {
   "use cache";
   cacheLife("catalog");
-  cacheTag("products");
+  cacheTag("collections", "products", `collection:${handle}`);
 
-  if (isShopifyConfigured) {
-    if (!collection || collection === "all") {
-      // Shopify's order: the "Shop All" collection as the merchant sorted it, then anything not in it.
-      const [ordered, everything] = await Promise.all([
-        fetchCollectionProducts(catalogOrder.collection).catch(() => null),
-        fetchProducts(),
-      ]);
-      return inShopifyOrder(ordered?.products ?? [], everything);
-    }
-    const result = await fetchCollectionProducts(collection);
-    return result?.products ?? [];
-  }
+  if (isShopifyConfigured) return fetchCollectionProducts(handle).catch(() => null);
+  const collection = mockCollections.find((c) => c.handle === handle);
+  return collection ? { collection, products: mockProducts.filter((p) => p.collections.includes(handle)) } : null;
+}
 
-  if (!collection || collection === "all") return mockProducts;
-  return mockProducts.filter((p) => p.collections.includes(collection));
+/** Every listed product in Shopify's order: the "Shop All" collection as sorted in the admin, then anything not in it. */
+async function getAllProducts(): Promise<Product[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("products", "collections");
+
+  if (!isShopifyConfigured) return mockProducts;
+  const [ordered, everything] = await Promise.all([getCollectionData(catalogOrder.collection), fetchProducts()]);
+  return inShopifyOrder(ordered?.products ?? [], everything);
+}
+
+async function getProductsIn(collection: string): Promise<Product[]> {
+  if (!collection || collection === "all") return getAllProducts();
+  return (await getCollectionData(collection))?.products ?? [];
 }
 
 export async function getFeaturedProducts(limit = 6): Promise<Product[]> {
@@ -157,39 +169,28 @@ export async function getCollection(handle: string): Promise<Collection | null> 
 }
 
 async function getKnownCollection(handle: string): Promise<Collection | null> {
-  "use cache";
-  cacheLife("catalog");
-  cacheTag("collections", `collection:${handle}`);
-
   if (handle === "all") return allCollection;
-
-  if (isShopifyConfigured) {
-    const result = await fetchCollectionProducts(handle);
-    return result?.collection ?? null;
-  }
-  return mockCollections.find((c) => c.handle === handle) ?? null;
+  return (await getCollectionData(handle))?.collection ?? null;
 }
 
+/**
+ * The store search (the /search page): every listed product matching all the words in its name,
+ * category, show, colours or audience, best match first; the header's instant results use the same
+ * ranking (lib/catalog/search.ts), so both always agree.
+ */
 export async function searchProducts(query: string): Promise<Product[]> {
   const q = normalizeQuery(query);
   if (!q) return [];
-  return searchNormalized(q);
+  return rankSearch(await getProducts(), q, (p) => ({ title: p.title, text: searchText(p) }));
 }
 
-async function searchNormalized(q: string): Promise<Product[]> {
+/** Every listed product as a small search entry, for the header's instant results. */
+export async function getSearchIndex(): Promise<SearchItem[]> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag("products");
+  cacheLife("catalog");
+  cacheTag("products", "collections");
 
-  if (isShopifyConfigured) return fetchProducts(q, 24);
-
-  const needle = q;
-  return mockProducts.filter(
-    (p) =>
-      p.title.toLowerCase().includes(needle) ||
-      p.description.toLowerCase().includes(needle) ||
-      p.tags.some((t) => t.toLowerCase().includes(needle)),
-  );
+  return (await getProducts()).map((p) => toSearchItem(p));
 }
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
