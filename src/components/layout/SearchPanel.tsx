@@ -162,7 +162,7 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
                     Typeahead: a result that no longer matches leaves at once (no lingering rows while
                     typing fast); new ones fade in and the ones that stay glide to their new place.
                   */}
-                  <ul id={listId} role="listbox" aria-label={t.label} className="mt-2 grid gap-1 sm:grid-cols-2 sm:gap-x-4">
+                  <ul id={listId} role="listbox" aria-label={t.label} className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-x-4">
                       {shown.map((item, i) => (
                         <motion.li
                           key={item.handle}
@@ -171,6 +171,7 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
                           animate={{ opacity: 1, y: 0, transition: motionOn ? { ...fade, delay: i * 0.03 } : fade }}
                           transition={fade}
                           id={optionId(i)}
+                          className="min-w-0"
                           role="option"
                           aria-selected={i === active}
                         >
