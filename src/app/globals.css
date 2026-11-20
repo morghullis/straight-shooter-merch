@@ -38,9 +38,9 @@
   --gutter: 1rem;
   /* Phones get a compact sticky bar; from lg up it is the 83px bar of the reference. */
   --header-h: 4.5rem;
-  /* Logo: the official logo (2.5 : 1) is --logo-w wide and sits inside the black bar. */
-  --logo-w: 8.25rem;
-  --logo-top: 0.625rem;
+  /* Logo: the silhouette lockup (3.39 : 1) is --logo-w wide, centred in the black bar. */
+  --logo-w: 10rem;
+  --logo-top: 0.75rem;
   --nav-top: 2.75rem;
   --icons-top: 1.6875rem;
   --icons-right: 3.03125rem;
@@ -84,8 +84,8 @@
   :root {
     --hero-photo-fade-t: 1.25rem;
     --header-h: 5.1875rem;
-    --logo-w: 9.5rem;
-    --logo-top: 0.6875rem;
+    --logo-w: 12rem;
+    --logo-top: 0.8125rem;
   }
 }
 

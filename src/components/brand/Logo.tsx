@@ -4,17 +4,19 @@ import { art } from "@/config/art";
 import { cn } from "@/lib/cn";
 
 interface LogoProps {
+  /** "lockup": figure beside the lettering (header). "full": the composition as drawn (footer). */
+  variant?: "lockup" | "full";
   priority?: boolean;
   className?: string;
 }
 
 /**
- * The official Straight Shooter Shop logo (the S over the lettering), cut out of its black
+ * The Straight Shooter Shop logo: the pink silhouette and the orange lettering, on a transparent
  * background so it sits on the black header and footer. The width comes from `--logo-w`, so every
  * placement sets one variable instead of juggling sizes.
  */
-export function Logo({ priority = false, className }: LogoProps) {
-  const { src, width, height } = art.logo;
+export function Logo({ variant = "lockup", priority = false, className }: LogoProps) {
+  const { src, width, height } = variant === "full" ? art.logoFull : art.logo;
   return (
     <span className={cn("block w-(--logo-w)", className)}>
       <Image
