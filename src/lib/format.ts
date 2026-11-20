@@ -1,13 +1,22 @@
 const formatters = new Map<string, Intl.NumberFormat>();
 
-/** "70.00" + "USD" -> "$70.00" */
-export function formatMoney(amount: string | number, currency = "USD"): string {
+function formatter(currency: string): Intl.NumberFormat {
   let f = formatters.get(currency);
   if (!f) {
     f = new Intl.NumberFormat("en-US", { style: "currency", currency });
     formatters.set(currency, f);
   }
-  return f.format(Number(amount));
+  return f;
+}
+
+/** "70.00" + "USD" -> "$70.00" */
+export function formatMoney(amount: string | number, currency = "USD"): string {
+  return formatter(currency).format(Number(amount));
+}
+
+/** The pieces of a formatted price (currency sign, dollars, point, cents), for prices set like a price tag. */
+export function moneyParts(amount: string | number, currency = "USD"): Intl.NumberFormatPart[] {
+  return formatter(currency).formatToParts(Number(amount));
 }
 
 /**

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { copy } from "@/config/copy";
 import type { Product } from "@/lib/catalog";
 import { isWomens } from "@/lib/catalog/order";
-import { numericId } from "@/lib/catalog/variants";
+import { Price } from "@/components/ui/Price";
+import { listPrice, numericId } from "@/lib/catalog/variants";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 
@@ -42,6 +43,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
   // The product's show, and "Women's" for pieces cut for women: Shopify's collection and category fields.
   const label = [product.collectionLabel, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ");
   const sizes = lg ? sizeList(product) : [];
+  const { price, from, compareAt } = listPrice(product);
   const imageSizes = lg
     ? "(min-width: 1326px) 20.4vw, (min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw"
     : "(min-width: 1326px) 13vw, (min-width: 1024px) 173px, (min-width: 640px) 33vw, 50vw";
@@ -67,28 +69,41 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
       />
 
       <Link href={href} className="block focus-visible:outline-offset-4">
-        {label && (
-          <p
-            className={cn(
-              "truncate px-[0.1875rem] font-nav font-semibold tracking-[0.1em] text-gold-soft uppercase",
-              lg ? "mt-2.5 text-[0.625rem] leading-[0.875rem]" : "mt-[0.375rem] text-[0.5rem] leading-[0.6875rem]",
-            )}
-          >
-            {label}
-          </p>
-        )}
+        {/*
+          Every card has the same rows above the price (one for the show, two for the name, kept
+          even when empty or short), so the prices of a row line up at the same height.
+        */}
+        <p
+          aria-hidden={label ? undefined : true}
+          className={cn(
+            "truncate px-[0.1875rem] font-nav font-semibold tracking-[0.1em] text-gold-soft uppercase",
+            lg ? "mt-2.5 text-[0.625rem] leading-[0.875rem]" : "mt-[0.375rem] text-[0.5rem] leading-[0.6875rem]",
+          )}
+        >
+          {label || " "}
+        </p>
         <h3
           className={cn(
-            "px-[0.1875rem] text-black group-hover/card:underline group-hover/card:underline-offset-2",
-            label ? (lg ? "mt-0.5" : "mt-px") : lg ? "mt-2" : "mt-[0.3125rem]",
-            lg ? "text-[0.875rem] leading-[1.25rem]" : "text-[0.6625rem] leading-[1rem]",
+            "line-clamp-2 min-h-[2lh] px-[0.1875rem] text-black group-hover/card:underline group-hover/card:underline-offset-2",
+            lg ? "mt-0.5 text-[0.875rem] leading-[1.25rem]" : "mt-px text-[0.6625rem] leading-[1rem]",
           )}
         >
           {product.title}
         </h3>
-        <div className="flex items-center justify-between gap-2 px-[0.1875rem]">
-          <p className={cn("text-black", lg ? "text-[0.875rem] leading-[1.25rem]" : "text-[0.6625rem] leading-[1rem]")}>
-            {formatMoney(product.price.amount, product.price.currencyCode)}
+        {/* The price leads: the display type, big, under the name (like the Showroom's tape). */}
+        <div className={cn("flex items-baseline justify-between gap-2 px-[0.1875rem]", lg ? "mt-1.5" : "mt-1")}>
+          <p className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-black">
+            {from && (
+              <span className={cn("font-nav leading-none font-semibold tracking-[0.12em] text-black/55 uppercase", lg ? "text-[0.625rem]" : "text-[0.5625rem]")}>
+                {copy.product.from}
+              </span>
+            )}
+            <Price amount={price.amount} currency={price.currencyCode} className={lg ? "text-[2.25rem] sm:text-[2.5rem]" : "text-[2.125rem]"} />
+            {compareAt && (
+              <s className={cn("leading-none text-black/45", lg ? "text-[0.875rem]" : "text-[0.6875rem]")}>
+                {formatMoney(compareAt.amount, compareAt.currencyCode)}
+              </s>
+            )}
           </p>
           <Swatches colors={productColors(product)} size={size} />
         </div>

@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import type { ProductVariant } from "../src/lib/catalog/types";
-import { initialVariant, isAvailable, matches, numericId, onSale, pick, selectionOf } from "../src/lib/catalog/variants";
+import { initialVariant, isAvailable, listPrice, matches, numericId, onSale, pick, selectionOf } from "../src/lib/catalog/variants";
+import { formatMoney, moneyParts } from "../src/lib/format";
 
 const v = (id: number, color: string, size: string, availableForSale = true): ProductVariant => ({
   id: `gid://shopify/ProductVariant/${id}`,
@@ -56,4 +57,32 @@ test("numeric ids and sale prices", () => {
   assert.equal(onSale({ amount: "40" }, { amount: "40" }), false);
   assert.equal(onSale({ amount: "40" }, { amount: "30" }), false);
   assert.equal(onSale({ amount: "40" }, null), false);
+});
+
+test("a list shows the lowest price, 'From' when other options cost more, and its sale price", () => {
+  const usd = (amount: string) => ({ amount, currencyCode: "USD" });
+  const priced = (id: number, size: string, amount: string, compareAt?: string): ProductVariant => ({
+    ...v(id, "Black", size),
+    price: usd(amount),
+    compareAtPrice: compareAt ? usd(compareAt) : null,
+  });
+  const product = (list: ProductVariant[]) => ({ price: usd("1.00"), variants: list });
+
+  // Bigger sizes cost more (the hoodie: 59.99 to 66.99).
+  assert.deepEqual(listPrice(product([priced(1, "S", "59.99"), priced(2, "2XL", "63.99"), priced(3, "4XL", "66.99")])), { price: usd("59.99"), from: true, compareAt: null });
+  // One price for every size: no "From".
+  assert.deepEqual(listPrice(product([priced(1, "S", "34.99"), priced(2, "M", "34.990")])), { price: usd("34.99"), from: false, compareAt: null });
+  // The cheapest option is on sale: its "was" price shows.
+  assert.deepEqual(listPrice(product([priced(1, "S", "29.99", "34.99"), priced(2, "XL", "36.99")])).compareAt, usd("34.99"));
+  // A compare-at that is not higher is no sale.
+  assert.equal(listPrice(product([priced(1, "S", "34.99", "34.99")])).compareAt, null);
+  // No variants: the product's own price.
+  assert.deepEqual(listPrice(product([])), { price: usd("1.00"), from: false, compareAt: null });
+});
+
+test("a price splits into sign, dollars and cents for the price-tag type", () => {
+  const pieces = (amount: string) => moneyParts(amount).map((p) => `${p.type}:${p.value}`);
+  assert.deepEqual(pieces("59.99"), ["currency:$", "integer:59", "decimal:.", "fraction:99"]);
+  assert.deepEqual(pieces("1234.5"), ["currency:$", "integer:1", "group:,", "integer:234", "decimal:.", "fraction:50"]);
+  assert.equal(formatMoney("70"), "$70.00");
 });
