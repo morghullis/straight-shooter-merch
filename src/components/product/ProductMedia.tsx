@@ -1,12 +1,13 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useScroll } from "motion/react";
 import Image from "next/image";
-import { useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { ModelViewer } from "@/components/three/ModelViewer";
 import { Art, textureStyle } from "@/components/ui/Art";
+import { ArrowRightIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
 import type { ModelSpec } from "@/config/models";
 import { useMediaQuery } from "@/lib/browser";
@@ -21,6 +22,8 @@ interface MediaImage {
   url: string;
   alt: string;
 }
+
+type Slide = { kind: "photo"; image: MediaImage } | { kind: "3d" };
 
 interface ProductMediaProps {
   title: string;
@@ -37,7 +40,7 @@ const SWIPE_PX = 44;
  */
 export function ProductMedia({ title, images, model }: ProductMediaProps) {
   // Slides: every photo, then the optional 3D view.
-  const slides = [...images.map((image) => ({ kind: "photo" as const, image })), ...(model ? [{ kind: "3d" as const }] : [])];
+  const slides: Slide[] = [...images.map((image) => ({ kind: "photo" as const, image })), ...(model ? [{ kind: "3d" as const }] : [])];
   const [active, setActive] = useState(0);
   const slide = slides[active];
   const motionOn = useMotionEnabled();
@@ -128,22 +131,82 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
         )}
       </div>
 
-      {slides.length > 1 && (
-        <ul className="scrollbar-none -mx-(--gutter) mt-2 flex gap-2 overflow-x-auto px-(--gutter) lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
+      {slides.length > 1 && <ThumbStrip slides={slides} active={active} onPick={setActive} />}
+    </div>
+  );
+}
+
+const VISIBLE_THUMBS = 4;
+
+const STRIP_ARROW =
+  "absolute top-1/2 z-[2] hidden size-8 -translate-y-1/2 place-items-center rounded-[0.1875rem] bg-white/90 text-black shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-[opacity,background-color] duration-300 hover:bg-white [@media(hover:hover)]:grid";
+
+/**
+ * The thumbnails: one row as wide as the photo, four at a time, the rest a swipe (or an arrow,
+ * with a mouse) away, with the site's gold progress rule under it. The thumbnail of the picture on
+ * the stage always slides into view (after a swipe on the stage or a colour pick).
+ */
+function ThumbStrip({ slides, active, onPick }: { slides: Slide[]; active: number; onPick: (index: number) => void }) {
+  const motionOn = useMotionEnabled();
+  const strip = useRef<HTMLUListElement>(null);
+  const { scrollXProgress } = useScroll({ container: strip });
+  const [edges, setEdges] = useState({ prev: false, next: false });
+
+  const measure = useCallback(() => {
+    const el = strip.current;
+    if (!el) return;
+    const prev = el.scrollLeft > 2;
+    const next = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+    setEdges((e) => (e.prev === prev && e.next === next ? e : { prev, next }));
+  }, []);
+
+  useEffect(() => {
+    const el = strip.current;
+    if (!el) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [measure]);
+
+  // Keep the active thumbnail in view, moving the row only (never the page).
+  useEffect(() => {
+    const el = strip.current;
+    const item = el?.children[active] as HTMLElement | undefined;
+    if (!el || !item) return;
+    const left = item.offsetLeft;
+    const right = left + item.offsetWidth;
+    const behavior = motionOn ? "smooth" : "auto";
+    if (left < el.scrollLeft) el.scrollTo({ left, behavior });
+    else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior });
+  }, [active, motionOn]);
+
+  const page = (direction: 1 | -1) => strip.current?.scrollBy({ left: direction * strip.current.clientWidth, behavior: motionOn ? "smooth" : "auto" });
+  // Always four across, so more than four means a row to scroll (known at render: no late shift).
+  const more = slides.length > VISIBLE_THUMBS;
+
+  return (
+    <div className="mt-2">
+      <div className="relative">
+        <ul
+          ref={strip}
+          onScroll={measure}
+          className="scrollbar-none relative flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain"
+        >
           {slides.map((s, i) => (
-            <li key={s.kind === "photo" ? s.image.url : "3d"} className="w-[4.5rem] flex-none lg:w-auto">
+            // Four across: a quarter of the row less its three 0.5rem gaps.
+            <li key={s.kind === "photo" ? s.image.url : "3d"} className="w-[calc((100%-1.5rem)/4)] flex-none snap-start">
               <button
                 type="button"
                 aria-pressed={i === active}
                 aria-label={s.kind === "3d" ? copy.product.threeD : copy.product.viewImage(i + 1)}
-                onClick={() => setActive(i)}
+                onClick={() => onPick(i)}
                 className={cn(
                   "relative block aspect-square w-full overflow-hidden rounded-[0.25rem] bg-sand outline-2 -outline-offset-2 transition-[outline-color,opacity] duration-300 ease-out",
                   i === active ? "outline-black" : "opacity-70 outline-transparent hover:opacity-100",
                 )}
               >
                 {s.kind === "photo" ? (
-                  <Image src={s.image.url} alt="" fill sizes="(min-width: 1326px) 8.3vw, 110px" className="object-contain" />
+                  <Image src={s.image.url} alt="" fill sizes="(min-width: 1326px) 10vw, (min-width: 1024px) 134px, 25vw" className="object-contain" />
                 ) : (
                   <span className="grid size-full place-items-center bg-black font-display text-[1.625rem] leading-none font-extrabold text-gold">
                     {copy.product.threeD}
@@ -153,6 +216,36 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
             </li>
           ))}
         </ul>
+
+        {more && (
+          <>
+            <button
+              type="button"
+              aria-label={copy.product.previousView}
+              onClick={() => page(-1)}
+              tabIndex={edges.prev ? 0 : -1}
+              className={cn(STRIP_ARROW, "left-1.5", !edges.prev && "pointer-events-none opacity-0")}
+            >
+              <ArrowRightIcon size={15} strokeWidth={1.6} className="rotate-180" />
+            </button>
+            <button
+              type="button"
+              aria-label={copy.product.nextView}
+              onClick={() => page(1)}
+              tabIndex={edges.next ? 0 : -1}
+              className={cn(STRIP_ARROW, "right-1.5", !edges.next && "pointer-events-none opacity-0")}
+            >
+              <ArrowRightIcon size={15} strokeWidth={1.6} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* How far along the row is: the site's carousel rule. */}
+      {more && (
+        <div aria-hidden="true" className="mt-2 h-[0.125rem] w-full bg-black/10">
+          <motion.div style={{ scaleX: scrollXProgress }} className="h-full origin-left bg-gold" />
+        </div>
       )}
     </div>
   );

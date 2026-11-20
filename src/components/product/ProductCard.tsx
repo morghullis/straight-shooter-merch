@@ -69,21 +69,23 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
       />
 
       <Link href={href} className="block focus-visible:outline-offset-4">
-        {label && (
-          <p
-            className={cn(
-              "truncate px-[0.1875rem] font-nav font-semibold tracking-[0.1em] text-gold-soft uppercase",
-              lg ? "mt-2.5 text-[0.625rem] leading-[0.875rem]" : "mt-[0.375rem] text-[0.5rem] leading-[0.6875rem]",
-            )}
-          >
-            {label}
-          </p>
-        )}
+        {/*
+          Every card has the same rows above the price (one for the show, two for the name, kept
+          even when empty or short), so the prices of a row line up at the same height.
+        */}
+        <p
+          aria-hidden={label ? undefined : true}
+          className={cn(
+            "truncate px-[0.1875rem] font-nav font-semibold tracking-[0.1em] text-gold-soft uppercase",
+            lg ? "mt-2.5 text-[0.625rem] leading-[0.875rem]" : "mt-[0.375rem] text-[0.5rem] leading-[0.6875rem]",
+          )}
+        >
+          {label || " "}
+        </p>
         <h3
           className={cn(
-            "px-[0.1875rem] text-black group-hover/card:underline group-hover/card:underline-offset-2",
-            label ? (lg ? "mt-0.5" : "mt-px") : lg ? "mt-2" : "mt-[0.3125rem]",
-            lg ? "text-[0.875rem] leading-[1.25rem]" : "text-[0.6625rem] leading-[1rem]",
+            "line-clamp-2 min-h-[2lh] px-[0.1875rem] text-black group-hover/card:underline group-hover/card:underline-offset-2",
+            lg ? "mt-0.5 text-[0.875rem] leading-[1.25rem]" : "mt-px text-[0.6625rem] leading-[1rem]",
           )}
         >
           {product.title}
