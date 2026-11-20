@@ -10,8 +10,11 @@ export interface ArtAsset {
 }
 
 export const art = {
-  // The official logo, cut out of its black background (source: assets-src/brand).
-  logo: { src: "/images/brand/logo-official.webp", width: 1374, height: 552 },
+  // The logo (pink silhouette + lettering), cut out of its white background by
+  // tools/brand/cutout-logo.py (source: assets-src/brand/2026-11-silhouette). The lockup puts the
+  // figure closer to the lettering so it reads at header size; "full" is the composition as given.
+  logo: { src: "/images/brand/logo-silhouette-lockup.webp", width: 1228, height: 362 },
+  logoFull: { src: "/images/brand/logo-silhouette-full.webp", width: 1412, height: 855 },
   tape: { src: "/images/art/tape-gold.webp", width: 1505, height: 262 },
   stampOnAir: { src: "/images/art/stamp-on-air.webp", width: 700, height: 424 },
   stampBlasphemous: { src: "/images/art/stamp-blasphemous.webp", width: 700, height: 312 },

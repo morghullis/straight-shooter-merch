@@ -61,7 +61,7 @@ Nothing user-facing is hard-coded in components: text, art, models and layout nu
 | `src/config/copy.ts` | **Every UI string** (labels, a11y text, empty states, errors) |
 | `src/config/site.ts` | Brand, the fixed start of the nav (Home, Shop all), hero lines, footer help links |
 | `src/config/fans.ts` | Shows, schedules, catchphrases, quiz questions |
-| `src/config/art.ts` | Brand graphics (and the official logo) with their real dimensions |
+| `src/config/art.ts` | Brand graphics (and the logo: header lockup and full composition) with their real dimensions |
 | `src/config/product-media.ts` | The demo catalog's angle renders and their order |
 | `src/config/showroom.ts` | The showroom's pace: how long a change takes, how long the page takes to settle, gesture thresholds, spin |
 | `src/config/models.ts` | How a product's 3D model sits on a stage (`modelSpecFor`), the showroom stickers, and the demo catalog's GLBs |
@@ -70,7 +70,7 @@ Nothing user-facing is hard-coded in components: text, art, models and layout nu
 | `src/components/motion/*` | `Reveal`, `RevealText`, `ParallaxLayer`, `ScrollHost`, `VelocityMarquee`, `SmoothScroll`, `useProductPager` (one gesture = one product), scroll progress, motion preference |
 | `src/components/home/*` | Hero, strip, featured, showroom, marquee, fan zone, crew band |
 | `src/components/product/*` | `ProductCard` + `CardGallery` (angle carousel, lazy, on-model hover), `ProductMedia` (angles / on-model / 3D), `ProductForm` (sticky buy bar) |
-| `src/components/brand/Logo.tsx` | The official Straight Shooter Shop logo (cut out of its black background, source in `assets-src/brand/`), sized by `--logo-w`; the tab and home-screen icons (`src/app/icon.png`, `apple-icon.png`, `favicon.ico`) are its S |
+| `src/components/brand/Logo.tsx` | The Straight Shooter Shop logo: pink silhouette + orange lettering, cut out of its white background by `tools/brand/cutout-logo.py` (source in `assets-src/brand/2026-11-silhouette/`). The header uses the lockup (figure beside the lettering, readable at header size), the footer the full composition (`variant="full"`); sized by `--logo-w`. The tab and home-screen icons (`src/app/icon.png`, `apple-icon.png`, `favicon.ico`) are still the earlier S |
 | `src/components/three/*` | r3f stages, studio lighting, lazy viewer |
 | `src/components/layout/*` | Header (mobile menu), nav, footer |
 | `src/lib/catalog/*` | Shopify Storefront client (data and the art in the custom fields), mock catalog, cached data access, showroom ranking |
