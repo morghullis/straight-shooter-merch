@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
-import { ArrowRightIcon } from "@/components/ui/Icons";
 import { Carousel } from "@/components/ui/Carousel";
 import { home } from "@/config/site";
 import { getFeaturedProducts } from "@/lib/catalog";
@@ -36,7 +35,6 @@ export async function FeaturedProducts() {
           className="inline-flex min-h-10 items-center gap-[0.3125rem] font-nav text-[0.75rem] font-semibold tracking-[0.06em] uppercase hover:text-gold-soft xl:min-h-0 xl:text-[0.65625rem]"
         >
           {cta.label}
-          <ArrowRightIcon size={11} strokeWidth={2} />
         </Link>
       </Reveal>
 

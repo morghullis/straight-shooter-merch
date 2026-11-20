@@ -190,7 +190,7 @@ export function FanQuiz({ picks }: { picks: Record<LaneId, QuizPick[]> }) {
                 </ul>
 
                 <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-                  <Button href={`/collections/${lane.collection}`} variant="ink" arrow>
+                  <Button href={`/collections/${lane.collection}`} variant="ink">
                     {lane.cta}
                   </Button>
                   <Button

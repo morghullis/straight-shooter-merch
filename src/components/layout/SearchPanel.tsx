@@ -9,7 +9,7 @@ import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type Keybo
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { Button } from "@/components/ui/Button";
 import { ScopeIcon } from "@/components/ui/HeaderIcons";
-import { ArrowRightIcon, CloseIcon } from "@/components/ui/Icons";
+import { CloseIcon } from "@/components/ui/Icons";
 import { Price } from "@/components/ui/Price";
 import { copy } from "@/config/copy";
 import { highlight, rankSearch, type SearchItem } from "@/lib/catalog/search";
@@ -219,7 +219,6 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
                     className="mt-3 inline-flex h-10 items-center gap-2 font-nav text-[0.75rem] font-semibold tracking-[0.08em] text-white uppercase transition-colors hover:text-gold"
                   >
                     {t.viewAll(matches.length)}
-                    <ArrowRightIcon size={14} strokeWidth={1.8} />
                   </button>
                 </>
               )}

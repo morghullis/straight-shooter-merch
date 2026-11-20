@@ -230,7 +230,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
               <TextSwap value={items[index].title} direction={direction} display="block" />
             </h3>
 
-            <Button href={items[index].href} arrow className="mt-5 w-full sm:w-auto lg:mt-11">
+            <Button href={items[index].href} className="mt-5 w-full sm:w-auto lg:mt-11">
               {copy.showroom.shop}
             </Button>
           </div>

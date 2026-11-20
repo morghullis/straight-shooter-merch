@@ -8,7 +8,6 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { Reveal } from "@/components/motion/Reveal";
 import { Carousel } from "@/components/ui/Carousel";
-import { ArrowRightIcon } from "@/components/ui/Icons";
 import type { TileTheme } from "@/lib/catalog/types";
 import { cn } from "@/lib/cn";
 
@@ -149,7 +148,6 @@ function Tile({ tile, theme, first, priority }: { tile: StripTile; theme: TileTh
           )}
         >
           {tile.cta}
-          <ArrowRightIcon size={12} strokeWidth={1.8} className="lg:h-[0.5625rem] lg:w-[0.5625rem]" />
         </Link>
       </div>
     </article>

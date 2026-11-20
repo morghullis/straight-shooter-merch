@@ -4,7 +4,6 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, CSSProperties, ReactNo
 import { art } from "@/config/art";
 import { cn } from "@/lib/cn";
 
-import { ArrowRightIcon } from "./Icons";
 
 export type ButtonVariant = "gold" | "outline" | "ink" | "ghost";
 export type ButtonSize = "none" | "sm" | "md" | "lg";
@@ -37,8 +36,6 @@ const sizes: Record<ButtonSize, string> = {
 interface CommonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  /** Shows the right arrow after the label. */
-  arrow?: boolean;
   className?: string;
   children: ReactNode;
 }
@@ -51,15 +48,10 @@ type AsButton = CommonProps & { href?: undefined } & Omit<ButtonHTMLAttributes<H
  * next/link, absolute URLs open in a new tab), otherwise it is a real <button>.
  */
 export function Button(props: AsLink | AsButton) {
-  const { variant = "gold", size = "md", arrow = false, className, children, style, ...rest } = props;
+  const { variant = "gold", size = "md", className, children, style, ...rest } = props;
   const classes = cn(base, variants[variant], sizes[size], className);
   const tapeStyle = taped.includes(variant) ? ({ "--tape": `url(${art.tape.src})`, ...style } as CSSProperties) : style;
-  const label = (
-    <>
-      {children}
-      {arrow && <ArrowRightIcon size={18} strokeWidth={1.5} className="-mr-0.5 flex-none" />}
-    </>
-  );
+  const label = children;
   // On tape, the label is printed into the tape (see `.tape-print`).
   const content = taped.includes(variant) ? <span className="tape-print inline-flex items-center gap-[inherit]">{label}</span> : label;
 
