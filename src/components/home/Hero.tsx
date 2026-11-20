@@ -102,7 +102,6 @@ export function Hero() {
             <Button
               href={hero.cta.href}
               size="none"
-              arrow
               style={delay(800)}
               className="anim-pop h-12 w-full text-[0.875rem] hover:-translate-y-0.5 sm:w-(--hero-cta-w) lg:h-(--hero-cta-h) lg:text-[0.85625rem] lg:tracking-[0.04em]"
             >

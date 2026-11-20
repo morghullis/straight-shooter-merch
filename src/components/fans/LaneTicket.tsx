@@ -105,7 +105,7 @@ export function LaneTicket({ lane, number }: LaneTicketProps) {
         <p className={cn("text-[0.875rem] leading-relaxed text-[#15120c]/75", lane.where && "mt-2")}>{lane.blurb}</p>
 
         <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-5">
-          <Button href={`/collections/${lane.collection}`} variant="ink" arrow>
+          <Button href={`/collections/${lane.collection}`} variant="ink">
             {lane.cta}
           </Button>
           {lane.link && (

@@ -98,7 +98,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
                 {copy.product.from}
               </span>
             )}
-            <Price amount={price.amount} currency={price.currencyCode} className={lg ? "text-[2.25rem] sm:text-[2.5rem]" : "text-[1.5rem]"} />
+            <Price amount={price.amount} currency={price.currencyCode} className={lg ? "text-[2.25rem] sm:text-[2.5rem]" : "text-[1.25rem]"} />
             {compareAt && (
               <s className={cn("leading-none text-black/45", lg ? "text-[0.875rem]" : "text-[0.6875rem]")}>
                 {formatMoney(compareAt.amount, compareAt.currencyCode)}

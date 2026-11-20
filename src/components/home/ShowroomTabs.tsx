@@ -55,7 +55,7 @@ export function ShowroomTabs({ items }: { items: ShowroomItem[] }) {
           </p>
           <h3 className="mt-2 font-display text-[clamp(2.375rem,6vw,3.5rem)] leading-[0.92] font-extrabold uppercase">{item.title}</h3>
           <p className="mt-2 text-[1.0625rem] text-white/85">{item.price}</p>
-          <Button href={item.href} arrow className="mt-5 self-start">
+          <Button href={item.href} className="mt-5 self-start">
             {copy.showroom.shop}
           </Button>
 
