@@ -70,7 +70,7 @@ export function facetsOf(products: Product[]): Facets {
  * Not tags or descriptions: tags are for running the store (a tee tagged "hoodie" would come up
  * for "hoodie") and descriptions mention other pieces.
  */
-function searchText(p: Product): string {
+export function searchText(p: Product): string {
   return normalize([p.title, p.productType, p.collectionLabel ?? "", ...(p.audience ?? []), ...productColors(p).map((c) => c.label)].join(" "));
 }
 
