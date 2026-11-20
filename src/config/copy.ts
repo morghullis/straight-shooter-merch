@@ -87,6 +87,8 @@ export const copy = {
     shopAll: "Shop all",
     womens: "Women's",
     sale: "Sale",
+    /** Before a list price when bigger sizes or other options cost more. */
+    from: "From",
     /** The product page's information blocks; each shows only when the product has something for it. */
     sections: {
       highlights: "Highlights",

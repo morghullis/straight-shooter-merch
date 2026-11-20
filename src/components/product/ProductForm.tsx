@@ -1,12 +1,13 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/CartProvider";
-import { useMotionEnabled } from "@/components/motion/motion-preference";
+import { PriceRoll } from "@/components/motion/PriceRoll";
 import { Button } from "@/components/ui/Button";
 import { MinusIcon, PlusIcon } from "@/components/ui/Icons";
+import { Price } from "@/components/ui/Price";
+import { Tape } from "@/components/ui/Tape";
 import { copy } from "@/config/copy";
 import { FOOTER_END_ID } from "@/config/site";
 import { isColorOption, productColors } from "@/lib/catalog/colors";
@@ -31,7 +32,6 @@ export function ProductForm({ product }: { product: Product }) {
 
   // The chosen variant lives in VariantProvider (shared with the gallery, kept in the link).
   const { selection, variant, choose } = useVariant();
-  const motionOn = useMotionEnabled();
   const [quantity, setQuantity] = useState(1);
   const [announce, setAnnounce] = useState("");
 
@@ -39,8 +39,16 @@ export function ProductForm({ product }: { product: Product }) {
 
   const soldOut = !variant || !variant.availableForSale;
   const price = variant?.price ?? product.price;
-  const priceLabel = formatMoney(price.amount, price.currencyCode);
+  const amount = Number(price.amount);
   const compareAt = variant && onSale(variant.price, variant.compareAtPrice) ? variant.compareAtPrice : null;
+
+  // Which way the register spins: forward to a higher price, back to a lower one.
+  const [shownAmount, setShownAmount] = useState(amount);
+  const [direction, setDirection] = useState(1);
+  if (amount !== shownAmount) {
+    setShownAmount(amount);
+    setDirection(amount > shownAmount ? 1 : -1);
+  }
 
   // Pin a buy bar to the bottom (phones) while the real button is off screen,
   // and tuck it away when the footer's last row arrives so it never covers it.
@@ -84,32 +92,27 @@ export function ProductForm({ product }: { product: Product }) {
   };
 
   const label = soldOut ? copy.product.soldOut : copy.product.addToCart;
-  const variantLabel = variant && variant.title !== "Default Title" ? `${variant.title} · ` : "";
+  const variantLabel = variant && variant.title !== "Default Title" ? variant.title : "";
 
   return (
     <div>
-      <p className="flex items-baseline gap-3 text-[1.375rem] font-medium" aria-live="polite">
-        {/* A new price (another size) slides in softly over the old one. */}
-        <span className="relative inline-grid overflow-hidden">
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.span
-              key={priceLabel}
-              initial={{ opacity: 0, y: "60%" }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: "-60%" }}
-              transition={motionOn ? { duration: 0.4, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
-            >
-              {priceLabel}
-            </motion.span>
-          </AnimatePresence>
-        </span>
+      {/*
+        The price on a strip of gold tape, like the Showroom's. Another size with another price spins
+        the register's wheels to it (up for a dearer one, down for a cheaper one).
+      */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-live="polite">
+        <Tape className="-ml-1 -rotate-[1.5deg] py-1.5 [--tape-end:1.1rem] sm:[--tape-end:1.35rem]">
+          <p className="font-display leading-none font-extrabold">
+            <PriceRoll amount={amount} currency={price.currencyCode} direction={direction} className="text-[3.75rem] sm:text-[4.5rem] lg:text-[5.25rem]" />
+          </p>
+        </Tape>
         {compareAt && (
-          <>
-            <s className="text-[1rem] font-normal text-black/45">{formatMoney(compareAt.amount, compareAt.currencyCode)}</s>
-            <span className="bg-black px-2 py-0.5 font-nav text-[0.6875rem] font-semibold tracking-[0.1em] text-gold uppercase">{copy.product.sale}</span>
-          </>
+          <span className="flex items-center gap-3">
+            <s className="text-[1.25rem] text-black/45">{formatMoney(compareAt.amount, compareAt.currencyCode)}</s>
+            <span className="bg-black px-2 py-0.5 font-nav text-[0.75rem] font-semibold tracking-[0.1em] text-gold uppercase">{copy.product.sale}</span>
+          </span>
         )}
-      </p>
+      </div>
 
       <div className="mt-6 space-y-5">
         {options.map((option) => {
@@ -197,10 +200,10 @@ export function ProductForm({ product }: { product: Product }) {
       >
         <div className="mx-auto flex max-w-(--container) items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.875rem] font-semibold">{product.title}</p>
-            <p className="truncate text-[0.8125rem] text-black/60">
-              {variantLabel}
-              {priceLabel}
+            <p className="truncate text-[0.8125rem] font-semibold">{product.title}</p>
+            <p className="mt-0.5 flex min-w-0 items-baseline gap-2">
+              <Price amount={price.amount} currency={price.currencyCode} className="flex-none text-[1.625rem]" />
+              {variantLabel && <span className="truncate text-[0.75rem] text-black/55">{variantLabel}</span>}
             </p>
           </div>
           <Button onClick={addToCart} disabled={soldOut} className="flex-none">

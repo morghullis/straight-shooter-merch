@@ -1,6 +1,7 @@
 import { normalize, searchText } from "./filter";
 import { isWomens } from "./order";
 import type { Money, Product } from "./types";
+import { listPrice } from "./variants";
 
 /**
  * The store search (header box and /search page): the same fields as a collection's search box
@@ -15,19 +16,23 @@ export interface SearchItem {
   /** The show, and "Women's" for women's pieces ("Culture Table · Women's"). */
   label: string;
   productType: string;
+  /** The lowest price; `from` when other options cost more. */
   price: Money;
+  from: boolean;
   image: { url: string; alt: string };
   /** Normalised text the query is matched against. */
   text: string;
 }
 
 export function toSearchItem(p: Product, womensLabel = "Women's"): SearchItem {
+  const { price, from } = listPrice(p);
   return {
     handle: p.handle,
     title: p.title,
     label: [p.collectionLabel, isWomens(p) ? womensLabel : null].filter(Boolean).join(" · "),
     productType: p.productType,
-    price: p.price,
+    price,
+    from,
     image: { url: p.featuredImage.url, alt: p.featuredImage.altText || p.title },
     text: searchText(p),
   };

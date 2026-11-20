@@ -10,10 +10,10 @@ import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { Button } from "@/components/ui/Button";
 import { ScopeIcon } from "@/components/ui/HeaderIcons";
 import { ArrowRightIcon, CloseIcon } from "@/components/ui/Icons";
+import { Price } from "@/components/ui/Price";
 import { copy } from "@/config/copy";
 import { highlight, rankSearch, type SearchItem } from "@/lib/catalog/search";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
 
 const t = copy.header.instant;
 const SHOWN = 6;
@@ -119,7 +119,8 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
           placeholder={copy.header.searchPlaceholder}
           className="h-12 w-full min-w-0 bg-transparent font-display text-[clamp(1.375rem,5vw,1.75rem)] font-extrabold tracking-[0.01em] text-white uppercase placeholder:text-white/30 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         />
-        <Button type="submit" size="sm" className="hidden sm:inline-flex">
+        {/* max-sm:hidden, not "hidden": the button's own inline-flex comes later in the CSS and would win. */}
+        <Button type="submit" size="sm" className="max-sm:hidden">
           {copy.header.search}
         </Button>
         <button type="button" onClick={onClose} aria-label={copy.header.closeSearch} className={iconButton}>
@@ -204,7 +205,10 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
                                 )}
                               </span>
                             </span>
-                            <span className="flex-none text-[0.875rem] text-white/75 tabular-nums">{formatMoney(item.price.amount, item.price.currencyCode)}</span>
+                            <span className="flex flex-none flex-col items-end text-white">
+                              {item.from && <span className="font-nav text-[0.5625rem] font-semibold tracking-[0.12em] text-white/50 uppercase">{copy.product.from}</span>}
+                              <Price amount={item.price.amount} currency={item.price.currencyCode} className="text-[1.375rem]" />
+                            </span>
                           </Link>
                         </motion.li>
                       ))}

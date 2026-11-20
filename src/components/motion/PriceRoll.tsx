@@ -4,6 +4,7 @@ import { animate, motion, useMotionValue, useTransform, useVelocity } from "moti
 import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/cn";
+import { formatMoney, moneyParts } from "@/lib/format";
 
 import { useMotionEnabled } from "./motion-preference";
 
@@ -11,16 +12,6 @@ import { useMotionEnabled } from "./motion-preference";
 const SETS = 5;
 const REST = 20;
 const wheel = Array.from({ length: 10 * SETS }, (_, i) => i % 10);
-
-const formatters = new Map<string, Intl.NumberFormat>();
-function partsOf(amount: number, currency: string) {
-  let f = formatters.get(currency);
-  if (!f) {
-    f = new Intl.NumberFormat("en-US", { style: "currency", currency });
-    formatters.set(currency, f);
-  }
-  return { text: f.format(amount), parts: f.formatToParts(amount) };
-}
 
 /**
  * One digit on a cash-register wheel. On a change it spins one full turn plus the way to the new
@@ -88,7 +79,8 @@ export function PriceRoll({
   direction?: number;
   className?: string;
 }) {
-  const { text, parts } = partsOf(amount, currency);
+  const text = formatMoney(amount, currency);
+  const parts = moneyParts(amount, currency);
   const digits = parts.flatMap((p) => (p.type === "integer" || p.type === "fraction" ? [...p.value] : [])).length;
   let digitIndex = 0;
 

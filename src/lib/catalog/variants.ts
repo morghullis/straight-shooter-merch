@@ -1,4 +1,4 @@
-import type { ProductVariant } from "./types";
+import type { Money, Product, ProductVariant } from "./types";
 
 /**
  * Picking a variant from the product's options (Color, Size...). Pure functions, shared by the buy
@@ -51,4 +51,19 @@ export const numericId = (gid: string) => gid.split("/").pop() ?? gid;
 /** A price on sale: the compare-at price only when it is higher than the price. */
 export function onSale(price: { amount: string }, compareAt?: { amount: string } | null): boolean {
   return Boolean(compareAt && Number(compareAt.amount) > Number(price.amount));
+}
+
+/**
+ * The price a list (cards, search) shows for a product: its lowest, "From" when some options cost
+ * more (bigger sizes often do), and the "was" price when that lowest price is on sale in Shopify.
+ */
+export function listPrice(product: Pick<Product, "price" | "variants">): { price: Money; from: boolean; compareAt: Money | null } {
+  const { variants } = product;
+  if (!variants.length) return { price: product.price, from: false, compareAt: null };
+  const cheapest = variants.reduce((low, v) => (Number(v.price.amount) < Number(low.price.amount) ? v : low));
+  return {
+    price: cheapest.price,
+    from: variants.some((v) => Number(v.price.amount) !== Number(cheapest.price.amount)),
+    compareAt: onSale(cheapest.price, cheapest.compareAtPrice) ? (cheapest.compareAtPrice ?? null) : null,
+  };
 }
