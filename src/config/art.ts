@@ -10,11 +10,10 @@ export interface ArtAsset {
 }
 
 export const art = {
-  // The logo (pink silhouette + lettering), cut out of its white background by
-  // tools/brand/cutout-logo.py (source: assets-src/brand/2026-11-silhouette). The lockup puts the
-  // figure closer to the lettering so it reads at header size; "full" is the composition as given.
-  logo: { src: "/images/brand/logo-silhouette-lockup.webp", width: 1228, height: 362 },
-  logoFull: { src: "/images/brand/logo-silhouette-full.webp", width: 1412, height: 855 },
+  // The logo: pink silhouette, "The Stephen A. Smith" in white, "Straight Shooter Shop" in orange,
+  // made for a dark background (source: assets-src/brand/2026-11-silhouette/logo-v2-original.webp,
+  // transparent already; cropped to the artwork).
+  logo: { src: "/images/brand/logo-stephen-a.webp", width: 1824, height: 1068 },
   tape: { src: "/images/art/tape-gold.webp", width: 1505, height: 262 },
   stampOnAir: { src: "/images/art/stamp-on-air.webp", width: 700, height: 424 },
   stampBlasphemous: { src: "/images/art/stamp-blasphemous.webp", width: 700, height: 312 },
