@@ -24,7 +24,7 @@ async function products() {
   const all = [];
   let after = null;
   do {
-    const { products: page } = await gql(`query($after: String) { products(first: 100, after: $after, query: "status:active OR status:unlisted") { nodes { id handle tags } pageInfo { hasNextPage endCursor } } }`, { after });
+    const { products: page } = await gql(`query($after: String) { products(first: 100, after: $after, query: "status:active") { nodes { id handle tags } pageInfo { hasNextPage endCursor } } }`, { after });
     all.push(...page.nodes);
     after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
   } while (after);
@@ -35,7 +35,7 @@ async function eligibleCollection() {
   const { collectionByIdentifier: c } = await gql(`query($h: String!) { collectionByIdentifier(identifier: { handle: $h }) { id ruleSet { appliedDisjunctively rules { column relation condition } } } }`, { h: ELIGIBLE.handle });
   const ruleSet = { appliedDisjunctively: false, rules: ELIGIBLE.rules };
   const key = (rules) => JSON.stringify(rules.map((r) => [r.column, r.relation, r.condition ?? ""]).sort());
-  if (c && key(c.ruleSet?.rules ?? []) === key(ELIGIBLE.rules)) return;
+  if (c && c.ruleSet?.appliedDisjunctively === false && key(c.ruleSet.rules) === key(ELIGIBLE.rules)) return;
   console.log(`${c ? "update" : "create"} the collection ${ELIGIBLE.handle}`);
   if (dryRun) return;
   if (c) check((await gql(`mutation($i: CollectionInput!) { collectionUpdate(input: $i) { userErrors { message } } }`, { i: { id: c.id, ruleSet } })).collectionUpdate, "collection");
@@ -47,10 +47,14 @@ const list = await products();
 let discounted = await discountedNow();
 let changes = tagChanges(list, discounted);
 if (changes.remove.length) {
-  // A discount that seems over: asked again in a while (the site shows usual prices when Shopify stumbles).
-  await sleep(dryRun ? 0 : 150_000);
-  discounted = await discountedNow();
-  changes = tagChanges(list, discounted);
+  // A discount that seems over: the site shows usual prices when Shopify stumbles (kept a minute), so a product
+  // loses its tag only if it is missing from three answers in a row. A wrong one costs nothing for long: Shopify
+  // never adds two product discounts on one item, and the next run tags it again.
+  for (let i = 0; i < 2 && changes.remove.length; i++) {
+    await sleep(dryRun ? 0 : 120_000);
+    discounted = [...new Set([...discounted, ...(await discountedNow())])];
+    changes = tagChanges(list, discounted);
+  }
 }
 for (const [on, group] of [[true, changes.add], [false, changes.remove]]) {
   for (const p of group) {
