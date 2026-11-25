@@ -38,6 +38,7 @@
   --gutter: 1rem;
   /* Phones get a compact sticky bar; from lg up it is the 83px bar of the reference. */
   --header-h: 4.5rem;
+  --announcement-h: 2.125rem;
   /* Logo (1.71 : 1): --logo-w wide, centred in the black bar with room around it (a step per screen size). */
   --logo-w: 5.25rem;
   --logo-top: 0.6875rem;
@@ -73,6 +74,8 @@
   /* The photo shows the whole head now; its top edge still melts into the black of the header. */
   --hero-photo-drop: 0rem;
   --hero-photo-fade-t: 2.5rem;
+  /* A collection's slide: its photo runs from beside the headline to the right edge of the screen. */
+  --hero-slide-left: calc(max(0px, (100% - var(--container)) / 2) + 22.5rem);
 
   --strip-tile-h: 8.125rem;
   --strip-cols: 288fr 282fr 282fr 288fr;
@@ -331,6 +334,40 @@ button.tape-surface:active:not(:disabled)::before {
 }
 .ghost-marquee {
   animation: ghost-marquee 36s linear infinite;
+}
+
+/* The strip above the navigation: an endless loop of two equal halves (its pace is set inline). */
+.announcement-track {
+  animation: ghost-marquee 72s linear infinite;
+}
+.announcement-bar:hover .announcement-track,
+.announcement-bar:focus-within .announcement-track {
+  animation-play-state: paused;
+}
+/* The full-screen menu starts below the strip too. */
+html:not(:has(.announcement-bar)) {
+  --announcement-h: 0rem;
+}
+
+/* A collection's hero slide: its photo melts into the black around it, and moves against its slide. */
+.hero-slide-mask {
+  mask-image: linear-gradient(180deg, transparent 0, #000 0.75rem, #000 52%, transparent 93%);
+}
+@media (min-width: 64rem) {
+  .hero-slide-mask {
+    mask-image:
+      linear-gradient(90deg, transparent 0, #000 var(--hero-photo-fade-l)),
+      linear-gradient(180deg, transparent 0, #000 0.75rem, #000 calc(100% - 1.5rem), transparent 100%);
+    mask-composite: intersect;
+  }
+}
+.hero-slide-photo {
+  transform: translateX(var(--slide-shift, 0));
+  opacity: var(--slide-light, 1);
+}
+/* The headline and the button come in each time their slide does. */
+[data-hero-slide="idle"] :is(.anim-line, .anim-pop) {
+  animation: none;
 }
 
 @utility scrollbar-none {

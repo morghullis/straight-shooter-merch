@@ -15,6 +15,8 @@ site with the site's look, without touching the code.
 | `short_title` | collection | name in the navigation and on the home tile |
 | `tile_title` (one row per line), `tile_image`, `tile_image_secondary`, `tile_theme` (`cream`/`dark`/`sand`) | collection | the collection's home tile |
 | `position` | collection | order in the navigation, footer and home tiles |
+| `announcement` | collection | messages for the bar above the navigation (`{discount}` = its current discount) |
+| `hero_image`, `hero_image_mobile`, `hero_title`, `hero_kicker`, `hero_cta` | collection | its slide in the home hero |
 
 **What the site shows is the product in Shopify:** its images in the order they have in the admin (the first one is the card's picture, **the second one shows on hover**, the first six are its carousel), its title, price, variants and stock. Change, add, remove or reorder the images in Shopify and the site follows at once (the products webhook refreshes it). **A new product is on sale at once:** as soon as it is published on the Headless channel (with stock) it shows with its own photos and can be bought; the pipeline adds its front and back views and its on-model photo in the background, placed first among its images, and the site shows them when they are ready. Reorder or delete them in Shopify like any image.
 

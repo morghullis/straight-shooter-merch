@@ -65,7 +65,7 @@ function MobileMenu({ links, onClose }: { links: NavLink[]; onClose: () => void 
       animate={{ opacity: 1 }}
       exit={motionOn ? { opacity: 0 } : undefined}
       transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-black px-(--gutter) pt-[calc(var(--header-h)+0.75rem)] pb-[calc(1.5rem+env(safe-area-inset-bottom))] lg:hidden"
+      className="fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-black px-(--gutter) pt-[calc(var(--header-h)+var(--announcement-h)+0.75rem)] pb-[calc(1.5rem+env(safe-area-inset-bottom))] lg:hidden"
     >
       <nav aria-label={copy.a11y.mobileNav}>
         <ul>

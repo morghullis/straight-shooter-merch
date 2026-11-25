@@ -39,6 +39,23 @@ interface GraphQLResponse<T> {
   errors?: { message: string }[];
 }
 
+/** Waits before the second and third try when the network or Shopify stumbles. */
+const RETRY_AFTER_MS = [250, 900];
+
+/** The request, tried again when it does not get through (no connection, too busy, a server error). */
+async function post(url: string, init: RequestInit): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const last = attempt >= RETRY_AFTER_MS.length;
+    try {
+      const res = await fetch(url, init);
+      if (last || (res.status !== 429 && res.status < 500)) return res;
+    } catch (error) {
+      if (last) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, RETRY_AFTER_MS[attempt]));
+  }
+}
+
 async function shopifyFetch<T>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -47,7 +64,7 @@ async function shopifyFetch<T>(
     throw new Error("Shopify is not configured");
   }
 
-  const res = await fetch(`https://${domain}/api/${apiVersion}/graphql.json`, {
+  const res = await post(`https://${domain}/api/${apiVersion}/graphql.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -148,6 +165,16 @@ const COLLECTION_FIELDS = /* GraphQL */ `
       reference { ... on MediaImage { image { url altText width height } } }
     }
     tileTheme: metafield(namespace: "custom", key: "tile_theme") { value }
+    announcement: metafield(namespace: "custom", key: "announcement") { value }
+    heroImage: metafield(namespace: "custom", key: "hero_image") {
+      reference { ... on MediaImage { image { url altText width height } } }
+    }
+    heroImageMobile: metafield(namespace: "custom", key: "hero_image_mobile") {
+      reference { ... on MediaImage { image { url altText width height } } }
+    }
+    heroTitle: metafield(namespace: "custom", key: "hero_title") { value }
+    heroKicker: metafield(namespace: "custom", key: "hero_kicker") { value }
+    heroCta: metafield(namespace: "custom", key: "hero_cta") { value }
   }
 `;
 
@@ -332,6 +359,12 @@ interface RawCollection {
   tileImage?: RawImageRef | null;
   tileImageSecondary?: RawImageRef | null;
   tileTheme?: RawValue | null;
+  announcement?: RawValue | null;
+  heroImage?: RawImageRef | null;
+  heroImageMobile?: RawImageRef | null;
+  heroTitle?: RawValue | null;
+  heroKicker?: RawValue | null;
+  heroCta?: RawValue | null;
 }
 
 const PLACEHOLDER: CatalogImage = {
@@ -479,7 +512,10 @@ function mapCollection(raw: RawCollection): Collection {
   const secondary = raw.tileImageSecondary?.reference?.image;
   const theme = TILE_THEMES.find((t) => t === raw.tileTheme?.value) ?? null;
   const position = Number.parseInt(raw.position?.value ?? "", 10);
-  const tileTitle = raw.tileTitle?.value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const tileTitle = lines(raw.tileTitle?.value);
+  const heroImage = raw.heroImage?.reference?.image;
+  const heroImageMobile = raw.heroImageMobile?.reference?.image;
+  const heroTitle = lines(raw.heroTitle?.value).slice(0, 3);
 
   return {
     handle: raw.handle,
@@ -489,11 +525,21 @@ function mapCollection(raw: RawCollection): Collection {
     position: Number.isFinite(position) ? position : null,
     image: raw.image ? mapImage(raw.image, raw.title) : null,
     tile: {
-      title: tileTitle?.length ? tileTitle : balancedRows(raw.title),
+      title: tileTitle.length ? tileTitle : balancedRows(raw.title),
       image: image ? mapImage(image, raw.title) : null,
       secondaryImage: secondary ? mapImage(secondary, raw.title) : null,
       theme,
     },
+    hero: heroImage
+      ? {
+          image: mapImage(heroImage, raw.title),
+          mobileImage: heroImageMobile ? mapImage(heroImageMobile, raw.title) : null,
+          kicker: text(raw.heroKicker),
+          title: heroTitle.length ? heroTitle : balancedRows(raw.title),
+          cta: text(raw.heroCta),
+        }
+      : null,
+    announcements: list(raw.announcement),
   };
 }
 

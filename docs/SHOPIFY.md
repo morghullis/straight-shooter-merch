@@ -37,7 +37,7 @@ With the storefront variables empty the app runs on the demo catalog.
 `node tools/pipeline/define-metafields.mjs` creates them (once). Each field is described in [tools/pipeline/README.md](../tools/pipeline/README.md). In short:
 
 - **Products:** the product's own images are the carousel and gallery, in their admin order (first = card picture, **second = the picture shown on hover**); `on_model_image` (a record of the pipeline's on-model photo), `model_3d` / `model_3d_hd` / `model_3d_showroom` (GLBs), `model_3d_view` (framing). The pipeline fills them for new products; you can also upload your own photos into them in the admin. A product without them still shows, with its own photos.
-- **Collections:** `short_title` (navigation), `tile_title`, `tile_image`, `tile_image_secondary`, `tile_theme` (home tile), `position` (order). A collection without them still shows, named by its title, with its first product as the tile photo.
+- **Collections:** `short_title` (navigation), `tile_title`, `tile_image`, `tile_image_secondary`, `tile_theme` (home tile), `position` (order). A collection without them still shows, named by its title, with its first product as the tile photo. `announcement`, `hero_image`, `hero_image_mobile`, `hero_title`, `hero_kicker`, `hero_cta`: see *The bar and the hero* below.
 - **Product page fields** (pinned on every product's admin page, new ones included): `tagline` (line under the name), `highlights` (key points under Add to cart), `material`, `fit`, `care` (one per line), `size_chart` (picture), `shipping_note` (first line of Shipping & returns). Each block shows on the site only once its field is filled in, already styled; empty fields show nothing. The **description** shows as written in the editor (headings, paragraphs, lists, bold, links; colours, fonts and anything else are cleaned out).
 - **Shopify's category fields** (Products > the product > Category) are used too: *Target gender* gives "Made for" and the "Women's" label (women's pieces go last in Featured), *Color* gives the colour dots on cards and in Details.
 - **Product type** is the category ("Hoodie", "Tee"). The tag **`featured`** puts a product in the home page's featured row (six; with fewer tagged, every product).
@@ -58,6 +58,13 @@ For new products, set the discount to a collection instead of to products: what 
 **Stock:** products track inventory (the store's own have 100-200 per variant, the site's products 100). A product with no stock left shows as sold out and cannot be bought.
 
 The **navigation, footer and home tiles** list every collection published on the Headless channel, by `position`; the strip under the hero then turns through every product too. To hide one from the site, unpublish it from that channel. The **showroom** shows three pieces, in this order: a Hoodie, a Hat and a Tee (product types; `home.showroomTypes` in `src/config/site.ts`). For each, the product tagged `showroom`, otherwise the most viewed one with a 3D model (page views and adds to the cart over the last month, counted by the site in Netlify Blobs). Tag a product `no-showroom` to keep it out.
+
+**The bar and the hero** (Products > Collections > the collection > Metafields):
+
+- **Top bar messages** (`announcement`, one per entry): the strip above the navigation, an endless loop. Each message links to its collection; put store-wide ones on **Shop All**. `{discount}` is replaced by the collection's discount at that moment ("{discount} all HBCU" shows as "10% off all HBCU") and the message hides by itself when the discount ends. A collection with everything on sale and no message of its own announces itself ("10% off all HBCU Life").
+- **Hero slide photo** (`hero_image`): the collection gets a slide in the home hero, after the brand's own, in an endless carousel (swipe, drag, ticks, arrow keys; it moves on every 7 s and waits under the pointer). A wide photo **without text**: the title (`hero_title`, up to three rows, the last one gold), the label (`hero_kicker`), the button (`hero_cta`) and the current discount are live text. `hero_image_mobile` is optional (phones; otherwise the centre of the wide photo). Clear the photo to take the slide off.
+
+**Options** get their look from what Shopify has for them: a value with its own photo (the variant's image) for every value shows the photos (printed quotes, designs); colours show a dot, from Shopify's category field "Color" or from the colour's name; everything else is text.
 
 **Navigation:** Home, then the collections by `position` (Shop All is 0, so it comes first).
 
