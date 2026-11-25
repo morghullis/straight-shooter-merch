@@ -46,7 +46,7 @@ export async function getCouponPopup(): Promise<CouponPopupData | null> {
       const base = cleanCode(code);
       const discount = base ? await fetchCouponDiscount(base) : null;
       if (discount && discount.status !== "EXPIRED") {
-        return { label: discount.label, startsAt: discount.startsAt, endsAt: discount.endsAt, texts: { ...texts, id: publicId(id) } };
+        return { label: discount.label, terms: discount.terms, startsAt: discount.startsAt, endsAt: discount.endsAt, texts: { ...texts, id: publicId(id) } };
       }
     }
   } catch (error) {

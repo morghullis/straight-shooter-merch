@@ -29,23 +29,23 @@ export function HeroSlide({ collection, hero, sale }: { collection: Collection; 
         scale={[1, 1.06]}
         opacity={[1, 0.35]}
         origin="60% 0%"
-        className="hero-slide-mask relative z-0 h-[min(84vw,24.375rem)] w-full overflow-hidden lg:absolute lg:top-0 lg:right-0 lg:left-(--hero-slide-left) lg:h-(--hero-h) lg:w-auto"
+        className="hero-slide-mask relative z-0 h-[min(100vw,27rem)] w-full overflow-hidden sm:h-[24.375rem] lg:absolute lg:top-0 lg:right-0 lg:left-(--hero-slide-left) lg:h-(--hero-h) lg:w-auto"
       >
         <ParallaxLayer depth={6} className="h-full w-full">
           <div className="hero-slide-photo relative h-full w-full">
             {/* Phones: the photo made for them, or the centre of the wide one. */}
             <LatePhoto
               image={photo}
-              sizes={hero.mobileImage ? "100vw" : "(min-width: 640px) 150vw, 245vw"}
-              className={cn("object-cover lg:hidden", !hero.mobileImage && "object-[50%_100%]")}
-              media="(max-width: 1023px)"
+              sizes={hero.mobileImage ? "100vw" : "255vw"}
+              className={cn("object-cover sm:hidden", hero.mobileImage ? "object-top" : "object-[50%_100%]")}
+              media="(max-width: 639px)"
             />
-            <LatePhoto image={hero.image} sizes="(min-width: 1326px) 72vw, 78vw" className="object-cover object-[50%_45%] max-lg:hidden" media="(min-width: 1024px)" />
+            <LatePhoto image={hero.image} sizes="(min-width: 1326px) 72vw, (min-width: 1024px) 78vw, 135vw" className="object-cover object-[50%_100%] max-sm:hidden lg:object-[50%_45%]" media="(min-width: 640px)" />
           </div>
         </ParallaxLayer>
       </ScrollLayer>
 
-      <div className="relative z-[3] mx-auto -mt-7 flex w-full flex-1 flex-col px-(--gutter) pb-10 lg:mt-0 lg:block lg:h-full lg:max-w-(--container) lg:p-0">
+      <div className="relative z-[3] mx-auto -mt-6 flex w-full flex-1 flex-col px-(--gutter) pb-10 lg:mt-0 lg:block lg:h-full lg:max-w-(--container) lg:p-0">
         <ScrollLayer y={[0, -64]} opacity={[1, 0.1]} during={[0, 0.85]} className="lg:absolute lg:top-(--hero-headline-top) lg:left-(--hero-headline-left)">
           <p className="anim-pop mb-2 flex items-center gap-2.5 font-nav text-[0.75rem] leading-none font-semibold tracking-[0.14em] text-gold uppercase lg:absolute lg:bottom-full lg:mb-2 lg:whitespace-nowrap" style={delay(260)}>
             {kicker}
@@ -84,7 +84,7 @@ export function HeroSlide({ collection, hero, sale }: { collection: Collection; 
           </ScrollLayer>
         )}
 
-        <ScrollLayer y={[0, -36]} opacity={[1, 0]} during={[0, 0.6]} className="mt-7 lg:absolute lg:top-(--hero-cta-top) lg:left-(--hero-headline-left) lg:mt-0">
+        <ScrollLayer y={[0, -36]} opacity={[1, 0]} during={[0, 0.6]} className="mt-5 sm:mt-7 lg:absolute lg:top-(--hero-cta-top) lg:left-(--hero-headline-left) lg:mt-0">
           <Button
             href={`/collections/${collection.handle}`}
             size="none"

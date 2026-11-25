@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useScroll } from "motion/react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 
 import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { ModelViewer } from "@/components/three/ModelViewer";
@@ -11,6 +11,7 @@ import { ArrowRightIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
 import type { ModelSpec } from "@/config/models";
 import { useMediaQuery } from "@/lib/browser";
+import { galleryPhotos } from "@/lib/catalog/options";
 import { cn } from "@/lib/cn";
 
 import { useOptionalVariant } from "./VariantContext";
@@ -28,6 +29,8 @@ type Slide = { kind: "photo"; image: MediaImage } | { kind: "3d" };
 interface ProductMediaProps {
   title: string;
   images: MediaImage[];
+  /** Photos that belong to one value of an option shown as photos (see `pickerPhotos`): only the picked one is in the gallery. */
+  inPicker?: string[];
   /** When present, a 3D tile joins the thumbnails. */
   model: ModelSpec | null;
 }
@@ -38,11 +41,13 @@ const SWIPE_PX = 44;
  * Product gallery: one big stage, a row of thumbnails (the turntable angles, the on-model shot,
  * and a 3D tile when there is a model). Swipe the stage on a phone, click the tiles anywhere.
  */
-export function ProductMedia({ title, images, model }: ProductMediaProps) {
+export function ProductMedia({ title, images: allImages, inPicker, model }: ProductMediaProps) {
+  const variantImage = useOptionalVariant()?.variant?.image?.url ?? null;
+  const images = useMemo(() => galleryPhotos(allImages, new Set(inPicker), variantImage), [allImages, inPicker, variantImage]);
   // Slides: every photo, then the optional 3D view.
   const slides: Slide[] = [...images.map((image) => ({ kind: "photo" as const, image })), ...(model ? [{ kind: "3d" as const }] : [])];
   const [active, setActive] = useState(0);
-  const slide = slides[active];
+  const slide = slides[Math.min(active, slides.length - 1)];
   const motionOn = useMotionEnabled();
   const startX = useRef<number | null>(null);
   // The detail model (4K texture) only on a big screen with a mouse; phones keep the light one.
@@ -53,7 +58,6 @@ export function ProductMedia({ title, images, model }: ProductMediaProps) {
   // Picking a colour (or any variant with its own picture) in the buy box shows that picture: when
   // the chosen variant's picture changes, the stage moves to it (adjusted during render). It starts
   // as the first variant's picture, so the page opens on the merchant's first photo.
-  const variantImage = useOptionalVariant()?.variant?.image?.url ?? null;
   const [shownVariantImage, setShownVariantImage] = useState<string | null>(variantImage);
   if (variantImage !== shownVariantImage) {
     setShownVariantImage(variantImage);

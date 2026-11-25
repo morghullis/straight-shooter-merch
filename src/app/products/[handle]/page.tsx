@@ -16,6 +16,7 @@ import { copy } from "@/config/copy";
 import { modelSpecFor } from "@/config/models";
 import { site } from "@/config/site";
 import { getProduct, getProducts, getRelatedProducts } from "@/lib/catalog";
+import { pickerPhotos } from "@/lib/catalog/options";
 import { isWomens } from "@/lib/catalog/order";
 import { isSafeHandle } from "@/lib/format";
 
@@ -61,7 +62,7 @@ function ProductSkeleton() {
         <div className="h-5 w-48 animate-pulse bg-white/10" />
       </Container>
       <section className="mx-auto max-w-(--container) bg-cream px-(--gutter) py-6 sm:px-6 lg:px-10 lg:py-10">
-        <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-12">
           <div className="aspect-(--card-ratio) animate-pulse rounded-[0.375rem] bg-sand" />
           <div className="space-y-4">
             <div className="h-4 w-32 animate-pulse bg-sand" />
@@ -134,11 +135,12 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
             the left and the buy box stays in view on the right (on screens tall enough), so an open
             block never leaves a blank column beside it.
           */}
-          <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-x-12 lg:gap-y-8">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-x-12 lg:gap-y-8">
             <div className="min-w-0 lg:col-start-1 lg:row-start-1">
               <ProductMedia
                 title={product.title}
                 images={product.images.map((i) => ({ url: i.url, alt: i.altText }))}
+                inPicker={[...pickerPhotos(product)]}
                 model={modelSpecFor(product)}
               />
             </div>

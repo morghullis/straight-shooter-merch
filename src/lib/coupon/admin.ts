@@ -2,7 +2,7 @@ import "server-only";
 
 import type { CatalogImage } from "@/lib/catalog/types";
 
-import type { CouponOffer } from "./code";
+import { termsOf, type CouponOffer } from "./code";
 
 /**
  * The store's Admin API, for the coupon popup only. It has its own app, with no more than it needs
@@ -112,7 +112,14 @@ export const DISCOUNT_QUERY = /* GraphQL */ `
       codeDiscount {
         ... on DiscountCodeBasic {
           title status startsAt endsAt
-          customerGets { value { ... on DiscountPercentage { percentage } ... on DiscountAmount { amount { amount currencyCode } } } }
+          customerGets {
+            items { __typename }
+            value { ... on DiscountPercentage { percentage } ... on DiscountAmount { amount { amount currencyCode } } }
+          }
+          minimumRequirement {
+            ... on DiscountMinimumSubtotal { greaterThanOrEqualToSubtotal { amount currencyCode } }
+            ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity }
+          }
         }
         ... on DiscountCodeBxgy { title status startsAt endsAt }
         ... on DiscountCodeFreeShipping { __typename title status startsAt endsAt }
@@ -127,7 +134,8 @@ interface RawDiscount {
   status?: "ACTIVE" | "EXPIRED" | "SCHEDULED";
   startsAt?: string;
   endsAt?: string | null;
-  customerGets?: { value?: { percentage?: number; amount?: { amount: string; currencyCode: string } } };
+  minimumRequirement?: { greaterThanOrEqualToSubtotal?: { amount: string; currencyCode: string }; greaterThanOrEqualToQuantity?: string } | null;
+  customerGets?: { items?: { __typename: string }; value?: { percentage?: number; amount?: { amount: string; currencyCode: string } } };
 }
 
 export interface CouponDiscount extends CouponOffer {
@@ -145,12 +153,22 @@ function labelOf(d: RawDiscount): string {
   return d.__typename === "DiscountCodeFreeShipping" ? "Free shipping" : (d.title ?? "");
 }
 
+/** Only of a plain amount off: the others' rules do not fit in a line (their title or the entry's text says them). */
+function conditionsOf(d: RawDiscount): string | null {
+  if (!d.customerGets) return null;
+  return termsOf({
+    wholeOrder: d.customerGets.items?.__typename === "AllDiscountItems",
+    minAmount: d.minimumRequirement?.greaterThanOrEqualToSubtotal,
+    minQuantity: Number(d.minimumRequirement?.greaterThanOrEqualToQuantity ?? 0) || null,
+  });
+}
+
 /** The discount a code belongs to, as it is in Shopify now; null when there is none. */
 export async function fetchCouponDiscount(code: string): Promise<CouponDiscount | null> {
   const { codeDiscountNodeByCode: node } = await admin<{ codeDiscountNodeByCode: { id: string; codeDiscount: RawDiscount } | null }>(DISCOUNT_QUERY, { code });
   const d = node?.codeDiscount;
   if (!node || !d?.status) return null;
-  return { id: node.id, status: d.status, label: labelOf(d), startsAt: d.startsAt ?? null, endsAt: d.endsAt ?? null };
+  return { id: node.id, status: d.status, label: labelOf(d), terms: conditionsOf(d), startsAt: d.startsAt ?? null, endsAt: d.endsAt ?? null };
 }
 
 export const ADD_CODE = /* GraphQL */ `

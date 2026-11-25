@@ -23,6 +23,8 @@ Why a tag: Shopify Messaging can print a customer's **tags** in an email but not
 
 ## Each campaign
 
+> **With an automatic discount already on** (like HBCU 10): Shopify gives one *product* discount per item, so another one on the same items adds nothing. Use **Amount off order**, and in *Combinations* tick **Product discounts** on the code **and** **Order discounts** on the automatic one: both must allow it, then they add up. The popup reads the minimum and what it covers from the discount and says it.
+
 1. **Discounts > Create discount**, with a **code** (e.g. `WELCOME10`), its start and end dates. *Maximum discount uses*: **limit number of times this discount can be used in total = 1** (it counts per code, so each person's works once) and **limit to one use per customer**. Nobody is shown `WELCOME10` itself.
 2. **Content > Metaobjects > Coupon popup > Add entry**: the code, and, if you like, the texts, a photo and the seconds before it opens. Set it to **Active**.
 

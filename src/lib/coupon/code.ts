@@ -7,6 +7,8 @@
 export interface CouponOffer {
   /** "10% off", "$10 off", "Free shipping" or the discount's own name. */
   label: string;
+  /** Its conditions as set in Shopify ("On orders of $75 or more"); null when there are none to say. */
+  terms: string | null;
   startsAt: string | null;
   endsAt: string | null;
 }
@@ -17,6 +19,32 @@ export const cleanCode = (value: unknown): string | null => {
   const code = typeof value === "string" ? value.trim().toUpperCase() : "";
   return CODE.test(code) ? code : null;
 };
+
+/** What a discount asks for, as read from Shopify. */
+export interface CouponConditions {
+  /** The whole order, or only some products or collections. */
+  wholeOrder: boolean;
+  minAmount?: { amount: string; currencyCode: string } | null;
+  minQuantity?: number | null;
+}
+
+const money = (m: { amount: string; currencyCode: string }) => {
+  const n = Number(m.amount);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: m.currencyCode, minimumFractionDigits: Number.isInteger(n) ? 0 : 2 }).format(n);
+};
+
+/** The conditions in words, so the popup never offers more than checkout gives. */
+export function termsOf({ wholeOrder, minAmount, minQuantity }: CouponConditions): string | null {
+  const min = minAmount && Number(minAmount.amount) > 0 ? money(minAmount) : null;
+  if (wholeOrder) {
+    if (min) return `On orders of ${min} or more`;
+    if (minQuantity) return `When you buy ${minQuantity} or more`;
+    return null;
+  }
+  if (min) return `On selected items, ${min} or more`;
+  if (minQuantity) return `On ${minQuantity} or more selected items`;
+  return "On selected items";
+}
 
 /** No 0/O, 1/I/L: it may be read from a phone and typed on a laptop. */
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";

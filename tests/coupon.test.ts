@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { cleanCode, cleanLead, codeTag, existingCode, isOn, personalCode, timeLeft } from "../src/lib/coupon/code";
+import { cleanCode, cleanLead, codeTag, existingCode, isOn, personalCode, termsOf, timeLeft } from "../src/lib/coupon/code";
 
 const bytes = new Uint8Array([0, 1, 2, 3, 250, 251, 252, 253]);
 
@@ -39,6 +39,16 @@ test("on exactly between its dates", () => {
   assert.equal(isOn(offer, at("2026-11-27T05:00:00Z")), true);
   assert.equal(isOn(offer, at("2026-11-30T05:00:00Z")), false);
   assert.equal(isOn({ startsAt: null, endsAt: null }, 0), true, "no dates: always");
+});
+
+test("the conditions, in words", () => {
+  const usd = (amount: string) => ({ amount, currencyCode: "USD" });
+  assert.equal(termsOf({ wholeOrder: true }), null, "nothing to say");
+  assert.equal(termsOf({ wholeOrder: true, minAmount: usd("75.0") }), "On orders of $75 or more");
+  assert.equal(termsOf({ wholeOrder: true, minQuantity: 2 }), "When you buy 2 or more");
+  assert.equal(termsOf({ wholeOrder: false }), "On selected items");
+  assert.equal(termsOf({ wholeOrder: false, minAmount: usd("49.50") }), "On selected items, $49.50 or more");
+  assert.equal(termsOf({ wholeOrder: true, minAmount: usd("0.0") }), null);
 });
 
 test("the time left", () => {

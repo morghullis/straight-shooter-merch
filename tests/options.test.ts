@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { colorByName, isColorOption, productColors } from "../src/lib/catalog/colors";
-import { optionPhotos, valuePhoto } from "../src/lib/catalog/options";
+import { galleryPhotos, optionPhotos, pickerPhotos, valuePhoto } from "../src/lib/catalog/options";
 import type { Product, ProductVariant } from "../src/lib/catalog/types";
 
 const photo = (name: string) => ({ url: `https://cdn.example/${name}.jpg`, altText: name, width: 1, height: 1 });
@@ -68,4 +68,15 @@ test("a colour Shopify has no swatch for goes by its name", () => {
     { label: "White", hex: "#FFFFFF" },
     { label: "Navy", hex: "#1b2a49" },
   ]);
+});
+
+test("the gallery has the picked value's photo, not all seven", () => {
+  const all = ["campus", "rise", "legacy"].map((n) => ({ url: `${photo(n).url}?v=1` }));
+  const inPicker = pickerPhotos(quotes);
+  const names = (list: { url: string }[]) => list.map((i) => /(\w+)\.jpg/.exec(i.url)?.[1]);
+  assert.deepEqual(names(galleryPhotos(all, inPicker, photo("rise").url)), ["campus", "rise"]);
+  assert.deepEqual(names(galleryPhotos(all, inPicker, photo("legacy").url)), ["campus", "legacy"]);
+  assert.deepEqual(names(galleryPhotos(all.slice(1), inPicker, null)), ["rise"], "never empty");
+  const colours = product({ Color: ["Black", "White"] }, [variant({ Color: "Black" }, "rise"), variant({ Color: "White" }, "legacy")]);
+  assert.deepEqual(names(galleryPhotos(all, pickerPhotos(colours), photo("rise").url)), ["campus", "rise", "legacy"], "colours keep every photo");
 });
