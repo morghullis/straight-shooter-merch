@@ -23,12 +23,19 @@ Why a tag: Shopify Messaging can print a customer's **tags** in an email but not
 
 ## Each campaign
 
-> **With an automatic discount already on** (like HBCU 10): Shopify gives one *product* discount per item, so another one on the same items adds nothing. Use **Amount off order**, and in *Combinations* tick **Product discounts** on the code **and** **Order discounts** on the automatic one: both must allow it, then they add up. The popup reads the minimum and what it covers from the discount and says it.
+1. **Discounts > Create discount > Amount off products**, Method: *Discount code* (e.g. `WELCOME10`).
+   - **Value:** the percentage or amount.
+   - **Applies to:** *Specific collections* > **Coupon eligible** (everything except what is excluded, see below), or the collections or products you want.
+   - **Minimum purchase:** optional (counts only the eligible items).
+   - **Maximum discount uses:** tick both: in total = **1** (it counts per code, so each person's works once) and one use per customer. Nobody is shown `WELCOME10` itself.
+   - **Active dates:** start now; leave *Set end date* unticked for a campaign without end.
+2. **Content > Metaobjects > Coupon popup**: an entry with the same code (and, if you like, the texts, a photo and the seconds before it opens), set to **Active**.
 
-1. **Discounts > Create discount**, with a **code** (e.g. `WELCOME10`), its start and end dates. *Maximum discount uses*: **limit number of times this discount can be used in total = 1** (it counts per code, so each person's works once) and **limit to one use per customer**. Nobody is shown `WELCOME10` itself.
-2. **Content > Metaobjects > Coupon popup > Add entry**: the code, and, if you like, the texts, a photo and the seconds before it opens. Set it to **Active**.
+**To change it:** open the discount and edit the value, what it applies to, or add an end date; the popup follows within a minute or two, and everyone's codes follow the same rules. **To stop it:** deactivate the discount, or set the popup's entry to Draft (the codes already sent keep working). **A new campaign:** a new discount with another code, and that code in the popup's entry.
 
-That is all: it appears at the start date and goes at the end date. To stop it sooner, set the entry to Draft or deactivate the discount. Texts left empty use the site's (`copy.coupon`).
+**To exclude products:** tag them **`no-coupon`** (Products > the product > Tags). *Coupon eligible* is an automatic collection, "Tag is not equal to no-coupon", so they leave it at once; remove the tag and they are back. A whole collection: Products > filter by collection > select all > Bulk edit > *Add tags*. It is not published on any channel: keep it so, or it would show in the site's navigation.
+
+> **With an automatic discount already on** (like HBCU 10) Shopify gives one *product* discount per item, the best for the customer: this code adds nothing to items that already have 10% off. To add up on top, use **Amount off order** instead (in *Combinations* tick **Product discounts** on it, and **Order discounts** on the automatic one), but an order discount cannot exclude products.
 
 ## The email template
 
