@@ -14,6 +14,7 @@ import { Price } from "@/components/ui/Price";
 import { copy } from "@/config/copy";
 import { highlight, rankSearch, type SearchItem } from "@/lib/catalog/search";
 import { cn } from "@/lib/cn";
+import { formatMoney } from "@/lib/format";
 
 const t = copy.header.instant;
 const SHOWN = 6;
@@ -208,6 +209,12 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
                             <span className="flex flex-none flex-col items-end text-white">
                               {item.from && <span className="font-nav text-[0.5625rem] font-semibold tracking-[0.12em] text-white/50 uppercase">{copy.product.from}</span>}
                               <Price amount={item.price.amount} currency={item.price.currencyCode} className="text-[1.375rem]" />
+                              {item.compareAt && (
+                                <s className="mt-0.5 text-[0.6875rem] leading-none text-white/50">
+                                  <span className="sr-only">{copy.product.regularPrice} </span>
+                                  {formatMoney(item.compareAt.amount, item.compareAt.currencyCode)}
+                                </s>
+                              )}
                             </span>
                           </Link>
                         </motion.li>

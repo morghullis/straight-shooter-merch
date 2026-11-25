@@ -3,6 +3,7 @@ import "server-only";
 import { balancedRows } from "@/lib/format";
 
 import { cleanDescriptionHtml } from "./description";
+import { toConfirm, unitDiscount, type Discounts, type PricedLine } from "./discounts";
 import type {
   CatalogImage,
   Collection,
@@ -26,7 +27,8 @@ import type {
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN;
 const token = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
-const apiVersion = process.env.SHOPIFY_API_VERSION ?? "2026-07";
+// `||`, not `??`: an empty SHOPIFY_API_VERSION (as in .env.example) would make Shopify serve its oldest version.
+const apiVersion = process.env.SHOPIFY_API_VERSION || "2026-07";
 // A private token from the Headless channel (shpat_…) goes in its own header; a public token in the classic one.
 const tokenHeader = token?.startsWith("shpat_") ? "Shopify-Storefront-Private-Token" : "X-Shopify-Storefront-Access-Token";
 
@@ -204,6 +206,41 @@ const VARIANTS_QUERY = /* GraphQL */ `
         product { handle title featuredImage { url altText } }
       }
     }
+  }
+`;
+
+const SELLABLE_VARIANTS_QUERY = /* GraphQL */ `
+  query SellableVariants($after: String) {
+    products(first: 100, after: $after) {
+      nodes { variants(first: 100) { nodes { id availableForSale } } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const PRICE_CART_MUTATION = /* GraphQL */ `
+  mutation PriceCart($lines: [CartLineInput!]!) {
+    cartCreate(input: { lines: $lines }) {
+      cart {
+        lines(first: 250) {
+          nodes {
+            quantity
+            merchandise { ... on ProductVariant { id } }
+            cost { subtotalAmount { amount currencyCode } }
+            own: discountAllocations(lineLevelOnly: true) { ...Allocation }
+            all: discountAllocations(lineLevelOnly: false) { ...Allocation }
+          }
+        }
+      }
+    }
+  }
+  fragment Allocation on CartDiscountAllocation {
+    discountedAmount { amount }
+    targetType
+    sourceDiscountApplication { allocationMethod }
+    ... on CartAutomaticDiscountAllocation { title }
+    ... on CartCustomDiscountAllocation { title }
+    ... on CartCodeDiscountAllocation { code }
   }
 `;
 
@@ -561,6 +598,106 @@ export async function fetchPrimaryDomainUrl(): Promise<string> {
     /* GraphQL */ `query PrimaryDomain { shop { primaryDomain { url } } }`,
   );
   return data.shop.primaryDomain.url;
+}
+
+interface RawAllocation {
+  discountedAmount: { amount: string };
+  targetType: string;
+  sourceDiscountApplication: { allocationMethod: string } | null;
+  title?: string | null;
+  code?: string | null;
+}
+
+interface RawPricedCart {
+  lines: {
+    nodes: {
+      quantity: number;
+      merchandise: { id?: string };
+      cost: { subtotalAmount: Money };
+      own: RawAllocation[];
+      all: RawAllocation[];
+    }[];
+  };
+}
+
+function mapPricedCart(raw: RawPricedCart | null | undefined): PricedLine[] {
+  return (raw?.lines.nodes ?? []).flatMap((line) => {
+    if (!line.merchandise.id) return [];
+    const discount = (a: RawAllocation, lineLevel: boolean) => ({
+      title: a.title ?? a.code ?? "",
+      amount: Number(a.discountedAmount.amount),
+      each: a.sourceDiscountApplication?.allocationMethod === "EACH",
+      lineLevel,
+    });
+    const onGoods = (a: RawAllocation) => a.targetType === "LINE_ITEM";
+    const own = line.own.filter(onGoods).map((a) => discount(a, true));
+    // `all` also holds the line's share of whole-order discounts: what is left after its own.
+    const rest = line.all.filter(onGoods).map((a) => discount(a, false));
+    for (const d of own) {
+      const at = rest.findIndex((r) => r.title === d.title && r.amount === d.amount);
+      if (at >= 0) rest.splice(at, 1);
+    }
+    return [{
+      variantId: line.merchandise.id,
+      quantity: line.quantity,
+      subtotal: Number(line.cost.subtotalAmount.amount),
+      currencyCode: line.cost.subtotalAmount.currencyCode,
+      discounts: [...own, ...rest],
+    }];
+  });
+}
+
+/** These lines priced by Shopify in a cart of their own (nothing is bought: the cart is only read, and expires). */
+export async function priceCart(lines: { merchandiseId: string; quantity: number }[]): Promise<PricedLine[]> {
+  const data = await shopifyFetch<{ cartCreate: { cart: RawPricedCart | null } | null }>(PRICE_CART_MUTATION, { lines });
+  return mapPricedCart(data.cartCreate?.cart);
+}
+
+/** Several carts, asked for side by side: Shopify runs the mutations of one request one after another. */
+async function priceCarts(groups: { merchandiseId: string; quantity: number }[][], atOnce = 20): Promise<PricedLine[][]> {
+  const priced: PricedLine[][] = [];
+  for (let i = 0; i < groups.length; i += atOnce) {
+    priced.push(...(await Promise.all(groups.slice(i, i + atOnce).map(priceCart))));
+  }
+  return priced;
+}
+
+/** The variants on sale in every listed product, one list per product. */
+export async function fetchSellableVariants(maxPages = 10): Promise<string[][]> {
+  const products: string[][] = [];
+  let after: string | null = null;
+  for (let page = 0; page < maxPages; page++) {
+    const data: {
+      products: {
+        nodes: { variants: { nodes: { id: string; availableForSale: boolean }[] } }[];
+        pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      };
+    } = await shopifyFetch(SELLABLE_VARIANTS_QUERY, { after });
+    products.push(...data.products.nodes.map((p) => p.variants.nodes.filter((v) => v.availableForSale).map((v) => v.id)));
+    if (!data.products.pageInfo.hasNextPage) break;
+    after = data.products.pageInfo.endCursor;
+  }
+  return products;
+}
+
+/**
+ * What one unit of each variant costs with Shopify's automatic discounts, for the variants that have
+ * one (admin > Discounts; Shopify only works them out in a cart). Each product's variants are priced
+ * together first (most products have no discount, and one cart settles it), then one variant of each
+ * price with a discount is priced alone, so a discount that needs more than one unit, or a bigger
+ * order, never shows as the price of one.
+ */
+export async function fetchDiscounts(products: string[][]): Promise<Discounts> {
+  const one = (id: string) => ({ merchandiseId: id, quantity: 1 });
+  const together = await priceCarts(products.filter((ids) => ids.length).map((ids) => ids.map(one)));
+  const confirm = together.flatMap(toConfirm);
+  const alone = await priceCarts(confirm.map(({ variantId }) => [one(variantId)]));
+  const discounts: Discounts = {};
+  confirm.forEach(({ sameAs }, i) => {
+    const found = alone[i]?.[0] && unitDiscount(alone[i][0]);
+    if (found) for (const id of sameAs) discounts[id] = found;
+  });
+  return discounts;
 }
 
 /**

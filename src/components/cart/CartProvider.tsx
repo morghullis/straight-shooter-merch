@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { refreshCart, type LiveLine } from "@/app/actions";
+import { estimateOf, type CartQuote } from "@/lib/catalog/discounts";
 import { trackInteraction } from "@/lib/track";
 
 export interface CartLine {
@@ -19,7 +20,11 @@ export interface CartLine {
   handle: string;
   title: string;
   variantTitle: string;
+  /** Per unit, with its automatic discount. */
   price: number;
+  /** Per unit without that discount, and the discount's name in Shopify, when it has one. */
+  regular?: number | null;
+  discount?: string | null;
   currency: string;
   image: string;
   imageAlt: string;
@@ -82,6 +87,8 @@ function isCartLine(value: unknown): value is CartLine {
     typeof v.title === "string" &&
     typeof v.variantTitle === "string" &&
     typeof v.price === "number" &&
+    (v.regular == null || typeof v.regular === "number") &&
+    (v.discount == null || typeof v.discount === "string") &&
     typeof v.currency === "string" &&
     typeof v.image === "string" &&
     typeof v.imageAlt === "string" &&
@@ -164,8 +171,10 @@ const getServerSnapshot = () => EMPTY;
 interface CartContextValue {
   lines: CartLine[];
   count: number;
-  subtotal: number;
-  currency: string;
+  /** The cart's amounts: Shopify's once it answers, the catalog's until then. */
+  quote: CartQuote;
+  /** True while Shopify is totalling the cart. */
+  quoting: boolean;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -195,28 +204,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const remove = useCallback((variantId: string) => dispatch({ type: "remove", variantId }), []);
   const clear = useCallback(() => dispatch({ type: "clear" }), []);
 
-  // Keep the stored cart in step with the store: on arrival and whenever the cart is opened,
-  // prices, names and pictures are refreshed and items the store no longer has are dropped.
-  const ids = lines.map((l) => l.variantId).join(",");
+  // Keep the stored cart in step with the store: on arrival and whenever the cart is opened or
+  // changed, prices, names and pictures are refreshed and items the store no longer has are dropped.
+  // While it is open Shopify also totals it, so every discount shows before checkout (a short pause
+  // first: several taps on + ask once).
+  const key = lines.length ? JSON.stringify(lines.map(({ variantId, quantity }) => ({ variantId, quantity }))) : "";
+  const [priced, setPriced] = useState<{ key: string; quote: CartQuote | null } | null>(null);
   useEffect(() => {
-    if (!ids) return;
+    if (!key) return;
     let cancelled = false;
-    void refreshCart(ids.split(",")).then((live) => {
-      if (!cancelled && live) dispatch({ type: "sync", live });
-    });
+    const timer = setTimeout(() => {
+      void refreshCart(JSON.parse(key), isOpen)
+        .catch(() => null)
+        .then((live) => {
+          if (cancelled) return;
+          if (isOpen) setPriced({ key, quote: live?.quote ?? null });
+          if (live) dispatch({ type: "sync", live: live.lines });
+        });
+    }, isOpen ? 200 : 0);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [ids, isOpen]);
+  }, [key, isOpen]);
 
   const value = useMemo<CartContextValue>(() => {
     const count = lines.reduce((n, l) => n + l.quantity, 0);
-    const subtotal = lines.reduce((n, l) => n + l.price * l.quantity, 0);
+    const answered = priced?.key === key;
     return {
       lines,
       count,
-      subtotal,
-      currency: lines[0]?.currency ?? "USD",
+      quote: (answered && priced.quote) || estimateOf(lines),
+      quoting: isOpen && Boolean(key) && !answered,
       isOpen,
       open,
       close,
@@ -225,7 +244,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       remove,
       clear,
     };
-  }, [lines, isOpen, open, close, add, setQuantity, remove, clear]);
+  }, [lines, key, priced, isOpen, open, close, add, setQuantity, remove, clear]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

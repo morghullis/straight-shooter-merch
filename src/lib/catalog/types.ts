@@ -20,8 +20,10 @@ export interface ProductVariant {
   title: string;
   availableForSale: boolean;
   price: Money;
-  /** The "was" price in Shopify; a sale when it is higher than `price`. */
+  /** The "was" price: Shopify's compare-at price, or the usual price when a discount is in `price`. A sale when it is higher than `price`. */
   compareAtPrice?: Money | null;
+  /** The automatic discount already taken off `price`: its name in Shopify ("HBCU 10") and the price without it. */
+  discount?: { title: string; regular: Money } | null;
   /** The variant's own picture in Shopify (e.g. the white tee for "White"). */
   image?: CatalogImage | null;
   selectedOptions: SelectedOption[];

@@ -17,6 +17,7 @@ import { showroomMotion as motionCfg } from "@/config/showroom";
 import { useAfterLoad, useFirstInteraction, useMediaQuery } from "@/lib/browser";
 import { cn } from "@/lib/cn";
 
+import { ShowroomSale } from "./ShowroomSale";
 import type { ShowroomItem } from "./showroom-types";
 
 // Three.js downloads once the page has loaded, or earlier if the visitor is already close to the showroom.
@@ -215,17 +216,20 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
           {/* The frame (tape, rules, button) stays put; only the product's text rolls to the next one. */}
           <div ref={copyRef} aria-live="polite" className="w-full">
             {/* The price, on a strip of tape, spins to the next one like a cash register */}
-            <Tape className="-rotate-[2deg] py-1.5 [--tape-end:1.1rem] lg:[--tape-end:1.5rem]">
-              <p className="font-display leading-none font-extrabold">
-                <PriceRoll
-                  amount={items[index].priceAmount}
-                  currency={items[index].currencyCode}
-                  turn={items[index].handle}
-                  direction={direction}
-                  className="text-[3.5rem] lg:text-[min(7rem,13svh)]"
-                />
-              </p>
-            </Tape>
+            <div className="flex items-center gap-4">
+              <Tape className="-rotate-[2deg] py-1.5 [--tape-end:1.1rem] lg:[--tape-end:1.5rem]">
+                <p className="font-display leading-none font-extrabold">
+                  <PriceRoll
+                    amount={items[index].priceAmount}
+                    currency={items[index].currencyCode}
+                    turn={items[index].handle}
+                    direction={direction}
+                    className="text-[3.5rem] lg:text-[min(7rem,13svh)]"
+                  />
+                </p>
+              </Tape>
+              <ShowroomSale was={items[index].was} sale={items[index].sale} />
+            </div>
             <h3 className="mt-3 font-display text-[clamp(2.75rem,10.5vw,4.75rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-8">
               <TextSwap value={items[index].title} direction={direction} display="block" />
             </h3>

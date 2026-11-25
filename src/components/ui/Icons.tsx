@@ -87,6 +87,13 @@ export const MinusIcon = (p: IconProps) => (
   </IconBase>
 );
 
+export const TagIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z" />
+    <circle cx="7.5" cy="7.5" r="0.5" fill="currentColor" />
+  </IconBase>
+);
+
 export const StarIcon = ({ size = 10, ...rest }: IconProps) => (
   <svg
     width={size}

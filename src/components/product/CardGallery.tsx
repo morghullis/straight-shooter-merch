@@ -28,6 +28,8 @@ interface CardGalleryProps {
   /** Roomier collection card: bigger arrows and the "On model" tag. */
   lg?: boolean;
   soldOut?: boolean;
+  /** The sale label ("10% off"); a sold-out product shows that instead. */
+  sale?: string;
   /**
    * The card sits in a horizontally scrolling rail on phones. A second swipe area would fight the
    * rail, so below md the card keeps its first picture and the rail owns the gesture.
@@ -40,7 +42,7 @@ interface CardGalleryProps {
  * phone, arrows on hover on a desktop. Only the first picture is loaded up front; the rest
  * load once the visitor touches the card or has had it on screen for a moment, and fade in.
  */
-export function CardGallery({ title, href, images, hover, priority = false, sizes, lg = false, soldOut = false, rail = false }: CardGalleryProps) {
+export function CardGallery({ title, href, images, hover, priority = false, sizes, lg = false, soldOut = false, sale, rail = false }: CardGalleryProps) {
   const frame = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const motionOn = useMotionEnabled();
@@ -197,9 +199,15 @@ export function CardGallery({ title, href, images, hover, priority = false, size
         </span>
       )}
 
-      {soldOut && (
-        <span className="absolute top-2 left-2 z-[3] bg-black px-2 py-1 font-nav text-[0.6875rem] font-semibold tracking-[0.1em] text-white uppercase">
-          {copy.product.soldOut}
+      {(soldOut || sale) && (
+        <span
+          className={cn(
+            "pointer-events-none absolute top-1.5 left-1.5 z-[3] bg-black px-1.5 py-[0.1875rem] font-nav text-[0.5625rem] font-semibold tracking-[0.1em] uppercase",
+            lg && "sm:top-2 sm:left-2 sm:px-2 sm:py-1 sm:text-[0.6875rem]",
+            soldOut ? "text-white" : "text-gold",
+          )}
+        >
+          {soldOut ? copy.product.soldOut : sale}
         </span>
       )}
     </div>

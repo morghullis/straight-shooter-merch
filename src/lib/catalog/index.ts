@@ -4,6 +4,7 @@ import { catalogOrder, home } from "@/config/site";
 import { isSafeHandle, normalizeQuery } from "@/lib/format";
 import { getPopularity } from "@/lib/popularity";
 
+import { withDiscounts, type Discounts } from "./discounts";
 import { allCollection, mockCollections, mockProducts } from "./mock";
 import { searchText } from "./filter";
 import { featuredOrder, inShopifyOrder, showroomPicks } from "./order";
@@ -11,9 +12,11 @@ import { rankSearch, toSearchItem, type SearchItem } from "./search";
 import {
   fetchCollectionProducts,
   fetchCollections,
+  fetchDiscounts,
   fetchProduct,
   fetchProductHandles,
   fetchProducts,
+  fetchSellableVariants,
   isShopifyConfigured,
 } from "./shopify";
 import type { Collection, Product } from "./types";
@@ -44,6 +47,24 @@ export async function isKnownProduct(handle: string): Promise<boolean> {
   return isSafeHandle(handle) && (await getProductHandles()).includes(handle);
 }
 
+/**
+ * What each discounted variant costs today with Shopify's automatic discounts. When Shopify cannot
+ * say, the usual prices show (never less than what checkout would charge).
+ */
+export async function getDiscounts(): Promise<Discounts> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("discounts", "products");
+
+  if (!isShopifyConfigured) return {};
+  try {
+    return await fetchDiscounts(await fetchSellableVariants());
+  } catch (error) {
+    console.warn(`[discounts] usual prices shown: ${error instanceof Error ? error.message : error}`);
+    return {};
+  }
+}
+
 async function isKnownCollection(handle: string): Promise<boolean> {
   return isSafeHandle(handle) && (await getCollections()).some((c) => c.handle === handle);
 }
@@ -63,9 +84,12 @@ export async function getProducts(opts: { collection?: string } = {}): Promise<P
 async function getCollectionData(handle: string): Promise<{ collection: Collection; products: Product[] } | null> {
   "use cache";
   cacheLife("catalog");
-  cacheTag("collections", "products", `collection:${handle}`);
+  cacheTag("collections", "products", "discounts", `collection:${handle}`);
 
-  if (isShopifyConfigured) return fetchCollectionProducts(handle).catch(() => null);
+  if (isShopifyConfigured) {
+    const [data, discounts] = await Promise.all([fetchCollectionProducts(handle).catch(() => null), getDiscounts()]);
+    return data && { ...data, products: data.products.map((p) => withDiscounts(p, discounts)) };
+  }
   const collection = mockCollections.find((c) => c.handle === handle);
   return collection ? { collection, products: mockProducts.filter((p) => p.collections.includes(handle)) } : null;
 }
@@ -74,11 +98,11 @@ async function getCollectionData(handle: string): Promise<{ collection: Collecti
 async function getAllProducts(): Promise<Product[]> {
   "use cache";
   cacheLife("catalog");
-  cacheTag("products", "collections");
+  cacheTag("products", "collections", "discounts");
 
   if (!isShopifyConfigured) return mockProducts;
-  const [ordered, everything] = await Promise.all([getCollectionData(catalogOrder.collection), fetchProducts()]);
-  return inShopifyOrder(ordered?.products ?? [], everything);
+  const [ordered, everything, discounts] = await Promise.all([getCollectionData(catalogOrder.collection), fetchProducts(), getDiscounts()]);
+  return inShopifyOrder(ordered?.products ?? [], everything.map((p) => withDiscounts(p, discounts)));
 }
 
 async function getProductsIn(collection: string): Promise<Product[]> {
@@ -137,17 +161,24 @@ export async function getProduct(handle: string): Promise<Product | null> {
 async function getUnlistedProduct(handle: string): Promise<Product | null> {
   "use cache";
   cacheLife("minutes");
-  cacheTag("products", `product:${handle}`);
+  cacheTag("products", "discounts", `product:${handle}`);
 
-  return fetchProduct(handle);
+  const product = await fetchProduct(handle);
+  if (!product) return null;
+  // An unlisted product is not in the store's listings, so its discounts are asked for here.
+  const sellable = product.variants.filter((v) => v.availableForSale).map((v) => v.id);
+  return withDiscounts(product, await fetchDiscounts([sellable]).catch(() => ({})));
 }
 
 async function getKnownProduct(handle: string): Promise<Product | null> {
   "use cache";
   cacheLife("catalog");
-  cacheTag("products", `product:${handle}`);
+  cacheTag("products", "discounts", `product:${handle}`);
 
-  if (isShopifyConfigured) return fetchProduct(handle);
+  if (isShopifyConfigured) {
+    const [product, discounts] = await Promise.all([fetchProduct(handle), getDiscounts()]);
+    return product && withDiscounts(product, discounts);
+  }
   return mockProducts.find((p) => p.handle === handle) ?? null;
 }
 

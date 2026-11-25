@@ -16,6 +16,8 @@ export interface QuizPick {
   handle: string;
   title: string;
   price: string;
+  /** The usual price when it is on sale. */
+  was?: string;
   image: string;
   alt: string;
 }
@@ -183,7 +185,15 @@ export function FanQuiz({ picks }: { picks: Record<LaneId, QuizPick[]> }) {
                           />
                         </div>
                         <p className="mt-1.5 text-[0.75rem] leading-tight group-hover:underline">{p.title}</p>
-                        <p className="text-[0.75rem] text-[#15120c]/60">{p.price}</p>
+                        <p className="text-[0.75rem] text-[#15120c]/60">
+                          {p.price}
+                          {p.was && (
+                            <s className="ml-1.5 text-[#15120c]/40">
+                              <span className="sr-only">{copy.product.regularPrice} </span>
+                              {p.was}
+                            </s>
+                          )}
+                        </p>
                       </Link>
                     </li>
                   ))}

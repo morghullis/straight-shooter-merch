@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { copy } from "@/config/copy";
 import type { Product } from "@/lib/catalog";
+import { saleOf } from "@/lib/catalog/discounts";
 import { isWomens } from "@/lib/catalog/order";
 import { Price } from "@/components/ui/Price";
 import { listPrice, numericId } from "@/lib/catalog/variants";
@@ -44,6 +45,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
   const label = [product.collectionLabel, isWomens(product) ? copy.product.womens : null].filter(Boolean).join(" · ");
   const sizes = lg ? sizeList(product) : [];
   const { price, from, compareAt } = listPrice(product);
+  const sale = saleOf(product);
   const imageSizes = lg
     ? "(min-width: 1326px) 20.4vw, (min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw"
     : "(min-width: 1326px) 13vw, (min-width: 1024px) 173px, (min-width: 640px) 33vw, 50vw";
@@ -65,6 +67,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
         sizes={imageSizes}
         lg={lg}
         soldOut={!product.availableForSale}
+        sale={sale ? copy.product.percentOff(sale.percent, sale.upTo) : undefined}
         rail={rail}
       />
 
@@ -101,7 +104,8 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
             )}
             <Price amount={price.amount} currency={price.currencyCode} className={lg ? "text-[1.25rem] sm:text-[1.375rem] [--price-minor:0.55em]" : "text-[0.875rem] [--price-minor:0.6em]"} />
             {compareAt && (
-              <s className={cn("leading-none text-black/45", lg ? "text-[0.875rem]" : "text-[0.6875rem]")}>
+              <s className={cn("leading-none text-black/45", lg ? "text-[0.75rem] sm:text-[0.8125rem]" : "text-[0.625rem]")}>
+                <span className="sr-only">{copy.product.regularPrice} </span>
                 {formatMoney(compareAt.amount, compareAt.currencyCode)}
               </s>
             )}

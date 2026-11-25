@@ -6,7 +6,7 @@ import path from "node:path";
 
 import { need, sleep } from "./env.mjs";
 
-const apiVersion = () => process.env.SHOPIFY_API_VERSION ?? "2026-07";
+const apiVersion = () => process.env.SHOPIFY_API_VERSION || "2026-07";
 const domain = () => need("SHOPIFY_STORE_DOMAIN");
 
 let cached = null;
