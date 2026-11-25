@@ -24,12 +24,12 @@ const full = product("100");
 const texts = (list: { text: string }[]) => list.map((m) => m.text);
 
 test("a list's discount: the same on everything, or up to the biggest", () => {
-  assert.deepEqual(listSale([off10, off10]), { percent: 10, upTo: false, all: true });
-  assert.deepEqual(listSale([off10, off20]), { percent: 20, upTo: true, all: true });
-  assert.deepEqual(listSale([off10, full]), { percent: 10, upTo: true, all: false });
+  assert.deepEqual(listSale([off10, off10]), { percent: 10, upTo: false, sticker: null, all: true });
+  assert.deepEqual(listSale([off10, off20]), { percent: 20, upTo: true, sticker: null, all: true });
+  assert.deepEqual(listSale([off10, full]), { percent: 10, upTo: true, sticker: null, all: false });
   assert.equal(listSale([full]), null);
   assert.equal(listSale([]), null);
-  assert.deepEqual(listSale([off10, product("100", undefined, false)]), { percent: 10, upTo: false, all: true }, "sold-out products do not count");
+  assert.deepEqual(listSale([off10, product("100", undefined, false)]), { percent: 10, upTo: false, sticker: null, all: true }, "sold-out products do not count");
 });
 
 test("a collection's own messages link to it", () => {

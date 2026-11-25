@@ -5,21 +5,23 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { createCheckout } from "@/app/actions";
+import { SaleTag } from "@/components/product/SaleTag";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon, MinusIcon, PlusIcon, TagIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
-import type { CartQuote } from "@/lib/catalog/discounts";
+import { percentOff, type CartQuote } from "@/lib/catalog/discounts";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { lockPageScroll } from "@/lib/scroll-lock";
 
 import { useCart } from "./CartProvider";
+import { CouponField } from "./CouponField";
 
 const stepper =
   "grid h-full w-11 place-items-center text-white/80 transition-colors hover:text-gold sm:w-8";
 
 export function CartDrawer() {
-  const { lines, count, quote, quoting, isOpen, close, setQuantity, remove } = useCart();
+  const { lines, count, quote, quoting, code, isOpen, close, setQuantity, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -49,6 +51,7 @@ export function CartDrawer() {
     startTransition(async () => {
       const result = await createCheckout(
         lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
+        code,
       );
       if ("url" in result) {
         window.location.assign(result.url);
@@ -141,8 +144,8 @@ export function CartDrawer() {
                             <p className="mt-0.5 text-xs text-white/55">{line.variantTitle}</p>
                           )}
                           {reduced && (
-                            <p className="mt-1.5 flex items-center gap-1.5 font-nav text-[0.6875rem] leading-none font-semibold tracking-[0.08em] text-gold uppercase">
-                              <TagIcon size={12} strokeWidth={2} className="flex-none" />
+                            <p className="mt-2 flex items-center gap-2 font-nav text-[0.6875rem] leading-none font-semibold tracking-[0.08em] text-gold uppercase">
+                              <SaleTag className="flex-none text-[0.875rem]">{copy.product.percentOff(percentOff({ amount: String(amounts.total) }, { amount: String(amounts.subtotal) }))}</SaleTag>
                               <span className="truncate">{amounts.discounts.join(" + ") || copy.cart.discount}</span>
                             </p>
                           )}
@@ -195,6 +198,7 @@ export function CartDrawer() {
             </ul>
 
             <footer className="border-t border-white/10 px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+              <CouponField />
               <Totals quote={quote} pending={quoting} />
               <p className="mt-1 text-xs text-white/45">{copy.cart.note}</p>
 

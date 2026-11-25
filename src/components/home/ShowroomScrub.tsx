@@ -228,7 +228,7 @@ export function ShowroomScrub({ items }: { items: ShowroomItem[] }) {
                   />
                 </p>
               </Tape>
-              <ShowroomSale was={items[index].was} sale={items[index].sale} />
+              <ShowroomSale was={items[index].was} sale={items[index].sale} sticker={items[index].sticker} />
             </div>
             <h3 className="mt-3 font-display text-[clamp(2.75rem,10.5vw,4.75rem)] leading-[0.92] font-extrabold tracking-[-0.01em] [word-spacing:0.05em] uppercase lg:mt-8">
               <TextSwap value={items[index].title} direction={direction} display="block" />

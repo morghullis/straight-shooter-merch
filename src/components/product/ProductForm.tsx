@@ -19,6 +19,7 @@ import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 
 import { SaleSticker } from "./SaleSticker";
+import { SaleTag } from "./SaleTag";
 import { useVariant } from "./VariantContext";
 
 /**
@@ -110,7 +111,7 @@ export function ProductForm({ product }: { product: Product }) {
           <PriceRoll amount={amount} currency={price.currencyCode} direction={direction} className="text-[2.75rem] sm:text-[3rem] lg:text-[3.25rem]" />
         </p>
         {compareAt && variant?.discount?.sticker && (
-          <SaleSticker src={variant.discount.sticker} percent={percentOff(price, compareAt)} className="-my-2 -rotate-[8deg] text-[0.9375rem]" />
+          <SaleSticker src={variant.discount.sticker} percent={percentOff(price, compareAt)} className="-my-2 -rotate-[8deg] text-[1.0625rem] sm:text-[1.1875rem]" />
         )}
         {compareAt && (
           <span className="flex flex-col gap-1.5">
@@ -120,13 +121,11 @@ export function ProductForm({ product }: { product: Product }) {
                 {formatMoney(compareAt.amount, compareAt.currencyCode)}
               </s>
               {!variant?.discount?.sticker && (
-                <span className="bg-black px-2 py-1 font-nav text-[0.75rem] leading-none font-semibold tracking-[0.1em] text-gold uppercase">
-                  {copy.product.percentOff(percentOff(price, compareAt))}
-                </span>
+                <SaleTag className="-rotate-2 text-[1.375rem]">{copy.product.percentOff(percentOff(price, compareAt))}</SaleTag>
               )}
             </span>
             {/* The saving, and the discount's name in Shopify. */}
-            <span className="flex items-center gap-1.5 text-[0.8125rem] leading-none text-black/60">
+            <span className="flex items-center gap-1.5 text-[0.875rem] leading-none font-semibold text-[#8a5a00]">
               <TagIcon size={13} strokeWidth={2} className="flex-none" />
               {[copy.product.youSave(formatMoney(Number(compareAt.amount) - amount, compareAt.currencyCode)), variant?.discount?.title].filter(Boolean).join(" · ")}
             </span>

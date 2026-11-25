@@ -11,6 +11,7 @@ export interface ShowroomItem {
   /** On sale: the usual price, formatted, and the label ("10% off"). */
   was?: string;
   sale?: string;
+  sticker?: { src: string; percent: number };
   href: string;
   image: string;
   imageAlt: string;

@@ -1,3 +1,4 @@
+import { percentOff } from "./discounts";
 import { normalize, searchText } from "./filter";
 import { isWomens } from "./order";
 import type { Money, Product } from "./types";
@@ -21,6 +22,8 @@ export interface SearchItem {
   from: boolean;
   /** The "was" price when it is on sale. */
   compareAt: Money | null;
+  /** What is off, as a percentage (0 = nothing). */
+  off: number;
   image: { url: string; alt: string };
   /** Normalised text the query is matched against. */
   text: string;
@@ -36,6 +39,7 @@ export function toSearchItem(p: Product, womensLabel = "Women's"): SearchItem {
     price,
     from,
     compareAt,
+    off: compareAt ? percentOff(price, compareAt) : 0,
     image: { url: p.featuredImage.url, alt: p.featuredImage.altText || p.title },
     text: searchText(p),
   };

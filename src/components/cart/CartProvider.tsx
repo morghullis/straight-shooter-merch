@@ -13,6 +13,7 @@ import {
 
 import { refreshCart, type LiveLine } from "@/app/actions";
 import { estimateOf, type CartQuote } from "@/lib/catalog/discounts";
+import { cleanCode } from "@/lib/coupon/code";
 import { trackInteraction } from "@/lib/track";
 
 export interface CartLine {
@@ -175,6 +176,10 @@ interface CartContextValue {
   quote: CartQuote;
   /** True while Shopify is totalling the cart. */
   quoting: boolean;
+  /** The shopper's discount code, and whether Shopify takes it for this cart (null = not known yet). */
+  code: string | null;
+  codeApplies: boolean | null;
+  setCode: (code: string | null) => void;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -184,10 +189,44 @@ interface CartContextValue {
   clear: () => void;
 }
 
+/** The discount code, kept in the browser like the cart (so the email's link works on a later visit too). */
+const CODE_KEY = "ssm-coupon";
+const codeListeners = new Set<() => void>();
+let memoryCode: string | null = null;
+const readCode = () => {
+  try {
+    return cleanCode(window.localStorage.getItem(CODE_KEY));
+  } catch {
+    return memoryCode;
+  }
+};
+const writeCode = (code: string | null) => {
+  memoryCode = code;
+  try {
+    if (code) window.localStorage.setItem(CODE_KEY, code);
+    else window.localStorage.removeItem(CODE_KEY);
+  } catch {
+    /* blocked storage: kept in memory */
+  }
+  codeListeners.forEach((l) => l());
+};
+function subscribeCode(callback: () => void) {
+  codeListeners.add(callback);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === CODE_KEY || e.key === null) callback();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    codeListeners.delete(callback);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const lines = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const code = useSyncExternalStore(subscribeCode, readCode, () => null);
   const [isOpen, setIsOpen] = useState(false);
 
   const open = useCallback(() => setIsOpen(true), []);
@@ -203,22 +242,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
   const remove = useCallback((variantId: string) => dispatch({ type: "remove", variantId }), []);
   const clear = useCallback(() => dispatch({ type: "clear" }), []);
+  const setCode = useCallback((next: string | null) => writeCode(cleanCode(next)), []);
+
+  // The email's link brings the code: /?coupon=CODE. It is kept, and leaves the address bar.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const given = cleanCode(url.searchParams.get("coupon"));
+    if (!url.searchParams.has("coupon")) return;
+    if (given) writeCode(given);
+    url.searchParams.delete("coupon");
+    window.history.replaceState(window.history.state, "", url);
+  }, []);
 
   // Keep the stored cart in step with the store: on arrival and whenever the cart is opened or
   // changed, prices, names and pictures are refreshed and items the store no longer has are dropped.
   // While it is open Shopify also totals it, so every discount shows before checkout (a short pause
   // first: several taps on + ask once).
   const key = lines.length ? JSON.stringify(lines.map(({ variantId, quantity }) => ({ variantId, quantity }))) : "";
-  const [priced, setPriced] = useState<{ key: string; quote: CartQuote | null } | null>(null);
+  const [priced, setPriced] = useState<{ key: string; quote: CartQuote | null; codeApplies: boolean | null } | null>(null);
+  const pricedFor = `${code ?? ""}|${key}`;
   useEffect(() => {
     if (!key) return;
     let cancelled = false;
     const timer = setTimeout(() => {
-      void refreshCart(JSON.parse(key), isOpen)
+      void refreshCart(JSON.parse(key), isOpen, code)
         .catch(() => null)
         .then((live) => {
           if (cancelled) return;
-          if (isOpen) setPriced({ key, quote: live?.quote ?? null });
+          if (isOpen) setPriced({ key: `${code ?? ""}|${key}`, quote: live?.quote ?? null, codeApplies: live?.codeApplies ?? null });
           if (live) dispatch({ type: "sync", live: live.lines });
         });
     }, isOpen ? 200 : 0);
@@ -226,16 +277,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [key, isOpen]);
+  }, [key, isOpen, code]);
 
   const value = useMemo<CartContextValue>(() => {
     const count = lines.reduce((n, l) => n + l.quantity, 0);
-    const answered = priced?.key === key;
+    const answered = priced?.key === pricedFor;
     return {
       lines,
       count,
       quote: (answered && priced.quote) || estimateOf(lines),
       quoting: isOpen && Boolean(key) && !answered,
+      code,
+      codeApplies: answered ? priced.codeApplies : null,
+      setCode,
       isOpen,
       open,
       close,
@@ -244,7 +298,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       remove,
       clear,
     };
-  }, [lines, key, priced, isOpen, open, close, add, setQuantity, remove, clear]);
+  }, [lines, key, pricedFor, priced, code, setCode, isOpen, open, close, add, setQuantity, remove, clear]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

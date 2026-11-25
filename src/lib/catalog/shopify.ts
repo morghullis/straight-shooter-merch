@@ -257,9 +257,10 @@ const SELLABLE_VARIANTS_QUERY = /* GraphQL */ `
 `;
 
 const PRICE_CART_MUTATION = /* GraphQL */ `
-  mutation PriceCart($lines: [CartLineInput!]!) {
-    cartCreate(input: { lines: $lines }) {
+  mutation PriceCart($lines: [CartLineInput!]!, $discountCodes: [String!]) {
+    cartCreate(input: { lines: $lines, discountCodes: $discountCodes }) {
       cart {
+        discountCodes { code applicable }
         lines(first: 250) {
           nodes {
             quantity
@@ -283,8 +284,8 @@ const PRICE_CART_MUTATION = /* GraphQL */ `
 `;
 
 const CART_CREATE_MUTATION = /* GraphQL */ `
-  mutation CartCreate($lines: [CartLineInput!]!, $buyerIdentity: CartBuyerIdentityInput) {
-    cartCreate(input: { lines: $lines, buyerIdentity: $buyerIdentity }) {
+  mutation CartCreate($lines: [CartLineInput!]!, $buyerIdentity: CartBuyerIdentityInput, $discountCodes: [String!]) {
+    cartCreate(input: { lines: $lines, buyerIdentity: $buyerIdentity, discountCodes: $discountCodes }) {
       cart { checkoutUrl }
       userErrors { message }
     }
@@ -666,6 +667,7 @@ interface RawAllocation {
 }
 
 interface RawPricedCart {
+  discountCodes?: { code: string; applicable: boolean }[];
   lines: {
     nodes: {
       quantity: number;
@@ -706,8 +708,18 @@ function mapPricedCart(raw: RawPricedCart | null | undefined): PricedLine[] {
 
 /** These lines priced by Shopify in a cart of their own (nothing is bought: the cart is only read, and expires). */
 export async function priceCart(lines: { merchandiseId: string; quantity: number }[], retry = false): Promise<PricedLine[]> {
-  const data = await shopifyFetch<{ cartCreate: { cart: RawPricedCart | null } | null }>(PRICE_CART_MUTATION, { lines }, { retry });
-  return mapPricedCart(data.cartCreate?.cart);
+  return (await priceCartWithCode(lines, null, retry)).lines;
+}
+
+/** The same with a shopper's discount code in; `applicable` is Shopify's word on it for this cart. */
+export async function priceCartWithCode(
+  lines: { merchandiseId: string; quantity: number }[],
+  code: string | null,
+  retry = false,
+): Promise<{ lines: PricedLine[]; applicable: boolean }> {
+  const data = await shopifyFetch<{ cartCreate: { cart: RawPricedCart | null } | null }>(PRICE_CART_MUTATION, { lines, discountCodes: code ? [code] : [] }, { retry });
+  const cart = data.cartCreate?.cart;
+  return { lines: mapPricedCart(cart), applicable: Boolean(code && cart?.discountCodes?.some((d) => d.applicable && d.code.toUpperCase() === code)) };
 }
 
 /** Several carts, asked for side by side: Shopify runs the mutations of one request one after another. */
@@ -728,6 +740,66 @@ export async function fetchDiscountStickers(): Promise<Record<string, string>> {
   return Object.fromEntries(
     entries.flatMap(([title, entry]) => (typeof entry?.url === "string" && entry.url.startsWith("https://cdn.shopify.com/") ? [[title, entry.url]] : [])),
   );
+}
+
+/** One "Coupon popup" entry (metaobject `coupon_popup`), as typed in Shopify. Drafts are not served. */
+export interface CouponPopupEntry {
+  id: string;
+  /** The code of the discount it offers. Server only. */
+  code: string | null;
+  kicker: string | null;
+  title: string | null;
+  text: string | null;
+  button: string | null;
+  successTitle: string | null;
+  successText: string | null;
+  image: CatalogImage | null;
+  delay: number;
+}
+
+const COUPON_POPUPS_QUERY = /* GraphQL */ `
+  query CouponPopups {
+    metaobjects(type: "coupon_popup", first: 10) {
+      nodes {
+        id
+        code: field(key: "discount_code") { value }
+        kicker: field(key: "kicker") { value }
+        title: field(key: "title") { value }
+        text: field(key: "text") { value }
+        button: field(key: "button") { value }
+        successTitle: field(key: "success_title") { value }
+        successText: field(key: "success_text") { value }
+        delay: field(key: "delay_seconds") { value }
+        image: field(key: "image") { reference { ... on MediaImage { image { url altText width height } } } }
+      }
+    }
+  }
+`;
+
+export async function fetchCouponPopups(): Promise<CouponPopupEntry[]> {
+  type Field = { value: string | null } | null;
+  const data = await shopifyFetch<{
+    metaobjects: {
+      nodes: ({ id: string; image: RawImageRef | null } & Record<"code" | "kicker" | "title" | "text" | "button" | "successTitle" | "successText" | "delay", Field>)[];
+    };
+  }>(COUPON_POPUPS_QUERY);
+  const value = (f: Field) => f?.value?.trim() || null;
+  return data.metaobjects.nodes.map((n) => {
+    const image = n.image?.reference?.image;
+    const delay = Number.parseInt(n.delay?.value ?? "", 10);
+    return {
+      id: n.id,
+      code: value(n.code),
+      kicker: value(n.kicker),
+      title: value(n.title),
+      text: value(n.text),
+      button: value(n.button),
+      successTitle: value(n.successTitle),
+      successText: value(n.successText),
+      image: image ? mapImage(image, "") : null,
+      delay: Number.isFinite(delay) ? Math.min(120, Math.max(2, delay)) : 8,
+    };
+  });
 }
 
 /** The variants on sale in every listed product, one list per product. */
@@ -776,14 +848,16 @@ export async function fetchDiscounts(products: string[][]): Promise<Discounts> {
 export async function createShopifyCart(
   lines: { merchandiseId: string; quantity: number }[],
   customerAccessToken?: string | null,
+  discountCode?: string | null,
 ): Promise<string> {
+  const discountCodes = discountCode ? [discountCode] : [];
   const create = async (buyerIdentity: { customerAccessToken: string } | null) => {
     const data = await shopifyFetch<{
       cartCreate: {
         cart: { checkoutUrl: string } | null;
         userErrors: { message: string }[];
       };
-    }>(CART_CREATE_MUTATION, { lines, buyerIdentity });
+    }>(CART_CREATE_MUTATION, { lines, buyerIdentity, discountCodes });
     const { cart, userErrors } = data.cartCreate;
     if (!cart || userErrors.length) {
       throw new Error(userErrors.map((e) => e.message).join("; ") || "Could not create cart");

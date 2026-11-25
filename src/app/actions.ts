@@ -2,7 +2,8 @@
 
 import { getDiscounts } from "@/lib/catalog";
 import { quoteOf, type CartQuote } from "@/lib/catalog/discounts";
-import { createShopifyCart, fetchVariants, isShopifyConfigured, priceCart } from "@/lib/catalog/shopify";
+import { createShopifyCart, fetchVariants, isShopifyConfigured, priceCartWithCode } from "@/lib/catalog/shopify";
+import { cleanCode } from "@/lib/coupon/code";
 import { isFresh, readSession } from "@/lib/customer-account";
 
 export type CheckoutResult = { url: string } | { error: string; removed?: string[] };
@@ -27,6 +28,8 @@ export interface LiveLine {
 export interface LiveCart {
   lines: LiveLine[];
   quote: CartQuote | null;
+  /** The shopper's discount code: whether Shopify takes it for this cart (null = no code, or not asked). */
+  codeApplies: boolean | null;
 }
 
 const VARIANT_GID = /^gid:\/\/shopify\/ProductVariant\/\d+$/;
@@ -54,17 +57,23 @@ function cleanLines(lines: unknown): { merchandiseId: string; quantity: number }
  * total the cart, discounts on quantity or on the whole order included. Null = nothing to change (demo
  * mode, or the store could not be reached).
  */
-export async function refreshCart(lines: { variantId: string; quantity: number }[], withQuote = false): Promise<LiveCart | null> {
+export async function refreshCart(
+  lines: { variantId: string; quantity: number }[],
+  withQuote = false,
+  discountCode: string | null = null,
+): Promise<LiveCart | null> {
   const clean = cleanLines(lines);
+  const code = cleanCode(discountCode);
   if (!isShopifyConfigured || !clean) return null;
   try {
     const [live, discounts, quote] = await Promise.all([
       fetchVariants(clean.map((l) => l.merchandiseId)),
       getDiscounts(),
-      withQuote ? quoteCart(clean) : null,
+      withQuote ? quoteCart(clean, code) : null,
     ]);
     return {
-      quote,
+      quote: quote?.quote ?? null,
+      codeApplies: quote && code ? quote.applies : null,
       lines: [...live.values()].map((v) => {
         const found = discounts[v.id];
         const discount = found && Number(found.price.amount) < Number(v.price.amount) ? found : null;
@@ -88,9 +97,9 @@ export async function refreshCart(lines: { variantId: string; quantity: number }
 }
 
 /** Shopify's total of these lines; null when it cannot price all of them. */
-async function quoteCart(lines: { merchandiseId: string; quantity: number }[]): Promise<CartQuote | null> {
-  const priced = await priceCart(lines).catch(() => null);
-  return priced && lines.every((l) => priced.some((p) => p.variantId === l.merchandiseId)) ? quoteOf(priced) : null;
+async function quoteCart(lines: { merchandiseId: string; quantity: number }[], code: string | null): Promise<{ quote: CartQuote; applies: boolean } | null> {
+  const priced = await priceCartWithCode(lines, code).catch(() => null);
+  return priced && lines.every((l) => priced.lines.some((p) => p.variantId === l.merchandiseId)) ? { quote: quoteOf(priced.lines), applies: priced.applicable } : null;
 }
 
 /**
@@ -101,6 +110,7 @@ async function quoteCart(lines: { merchandiseId: string; quantity: number }[]): 
  */
 export async function createCheckout(
   lines: { variantId: string; quantity: number }[],
+  discountCode: string | null = null,
 ): Promise<CheckoutResult> {
   if (!Array.isArray(lines) || lines.length === 0) return { error: "Your cart is empty." };
 
@@ -127,7 +137,7 @@ export async function createCheckout(
     }
     // A signed-in shopper reaches checkout signed in.
     const session = await readSession();
-    return { url: await createShopifyCart(clean, session && isFresh(session) ? session.accessToken : null) };
+    return { url: await createShopifyCart(clean, session && isFresh(session) ? session.accessToken : null, cleanCode(discountCode)) };
   } catch {
     return { error: "We couldn't start checkout. Please try again in a moment." };
   }

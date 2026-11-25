@@ -12,6 +12,7 @@ import { useMediaQuery } from "@/lib/browser";
 import { cn } from "@/lib/cn";
 
 import { SaleSticker } from "./SaleSticker";
+import { SaleTag } from "./SaleTag";
 
 export interface GalleryImage {
   url: string;
@@ -208,16 +209,21 @@ export function CardGallery({ title, href, images, hover, priority = false, size
           upTo={sale.upTo}
           className={cn("pointer-events-none !absolute top-1 left-1 z-[3] -rotate-[8deg]", lg ? "text-[0.625rem] sm:top-1.5 sm:left-1.5 sm:text-[0.8125rem]" : "text-[0.5625rem]")}
         />
-      ) : (soldOut || sale) && (
+      ) : soldOut ? (
         <span
           className={cn(
-            "pointer-events-none absolute top-1.5 left-1.5 z-[3] bg-black px-1.5 py-[0.1875rem] font-nav text-[0.5625rem] font-semibold tracking-[0.1em] uppercase",
+            "pointer-events-none absolute top-1.5 left-1.5 z-[3] bg-black px-1.5 py-[0.1875rem] font-nav text-[0.5625rem] font-semibold tracking-[0.1em] text-white uppercase",
             lg && "sm:top-2 sm:left-2 sm:px-2 sm:py-1 sm:text-[0.6875rem]",
-            soldOut ? "text-white" : "text-gold",
           )}
         >
-          {soldOut ? copy.product.soldOut : sale && copy.product.percentOff(sale.percent, sale.upTo)}
+          {copy.product.soldOut}
         </span>
+      ) : (
+        sale && (
+          <span className="pointer-events-none absolute top-1.5 left-1.5 z-[3] -rotate-3 drop-shadow-[0_0.125rem_0.25rem_rgba(0,0,0,0.45)] sm:top-2 sm:left-2">
+            <SaleTag className={lg ? "text-[1.125rem] sm:text-[1.375rem]" : "text-[1rem]"}>{copy.product.percentOff(sale.percent, sale.upTo)}</SaleTag>
+          </span>
+        )
       )}
     </div>
   );

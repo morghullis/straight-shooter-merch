@@ -10,6 +10,7 @@ import { useMotionEnabled } from "@/components/motion/motion-preference";
 import { Button } from "@/components/ui/Button";
 import { ScopeIcon } from "@/components/ui/HeaderIcons";
 import { CloseIcon } from "@/components/ui/Icons";
+import { SaleTag } from "@/components/product/SaleTag";
 import { Price } from "@/components/ui/Price";
 import { copy } from "@/config/copy";
 import { highlight, rankSearch, type SearchItem } from "@/lib/catalog/search";
@@ -210,10 +211,13 @@ export function SearchPanel({ onClose }: { onClose: () => void }) {
                               {item.from && <span className="font-nav text-[0.5625rem] font-semibold tracking-[0.12em] text-white/50 uppercase">{copy.product.from}</span>}
                               <Price amount={item.price.amount} currency={item.price.currencyCode} className="text-[1.375rem]" />
                               {item.compareAt && (
-                                <s className="mt-0.5 text-[0.6875rem] leading-none text-white/50">
-                                  <span className="sr-only">{copy.product.regularPrice} </span>
-                                  {formatMoney(item.compareAt.amount, item.compareAt.currencyCode)}
-                                </s>
+                                <span className="mt-1 flex items-center gap-1.5">
+                                  <s className="text-[0.6875rem] leading-none text-white/50">
+                                    <span className="sr-only">{copy.product.regularPrice} </span>
+                                    {formatMoney(item.compareAt.amount, item.compareAt.currencyCode)}
+                                  </s>
+                                  {item.off > 0 && <SaleTag className="text-[0.8125rem]">{copy.product.percentOff(item.off)}</SaleTag>}
+                                </span>
                               )}
                             </span>
                           </Link>

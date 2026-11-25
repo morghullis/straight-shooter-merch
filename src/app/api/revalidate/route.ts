@@ -56,6 +56,7 @@ export async function POST(request: Request) {
     tags.add("discounts");
     tags.add("products");
     tags.add("collections");
+    tags.add("coupon-popup");
   } else {
     return Response.json({ revalidated: false, reason: `Ignored topic "${topic}"` }, { status: 202 });
   }
