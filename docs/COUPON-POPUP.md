@@ -17,7 +17,7 @@ Why a tag: Shopify Messaging can print a customer's **tags** in an email but not
 ## Set it up (once)
 
 1. **App.** dev.shopify.com > Apps > Create app, named *Coupon popup*. Version scopes: `read_discounts`, `write_discounts`, `read_customers`, `write_customers`, `read_metaobjects`, and nothing else. In its API access, request **protected customer data** (name and email; reason: marketing). Release the version and install it on the store. A separate app, so the website never holds the keys to products or orders.
-2. **Keys.** On Netlify (Site configuration > Environment variables) add the app's `SHOPIFY_COUPON_CLIENT_ID` and `SHOPIFY_COUPON_CLIENT_SECRET` (mark the secret as secret), then deploy again. Without them the popup is off and nothing is saved.
+2. **Keys.** Run `node scripts/set-coupon-keys.mjs` and paste the app's Client ID and Client secret (dev.shopify.com > Apps > Coupon popup > Settings): it checks them with Shopify, keeps them on Netlify (`SHOPIFY_COUPON_CLIENT_ID`, `SHOPIFY_COUPON_CLIENT_SECRET`, production only) and publishes the site again. Without them the popup is off and nothing is saved.
 3. **Email.** Shopify > Messaging > Templates: **Welcome code (WELCOME10)** (made with *Code your own*; its code is below). The look of every Messaging email (logo, black, gold buttons) is in Messaging > Settings > Branding.
 4. **Flow.** Shopify Flow > Create workflow: trigger *Customer tags added*; conditions *any added tag starts with* `coupon:` and, for a first-order coupon, *customer number of orders* = 0 (a past customer's code would be refused at checkout); action *Send marketing email* (that template). Turn it on and test it with your own address before anything else.
 
