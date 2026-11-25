@@ -24,7 +24,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([tabindex="-1"]):n
  * and "No thanks" close it.
  */
 export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData; onClose: () => void; onDone: () => void }) {
-  const { texts, label, endsAt } = popup;
+  const { texts, label, terms, endsAt } = popup;
   const t = copy.coupon;
   const motionOn = useMotionEnabled();
   const titleId = useId();
@@ -155,8 +155,9 @@ export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData
                 </span>
               </Tape>
             </div>
+            {terms && <p className="relative mt-3 font-nav text-[0.8125rem] leading-snug font-semibold tracking-[0.06em] text-white">{terms}</p>}
             {left && (
-              <p className="relative mt-4 flex items-center gap-2 font-nav text-[0.75rem] font-semibold tracking-[0.12em] uppercase" aria-live="off">
+              <p className="relative mt-3 flex items-center gap-2 font-nav text-[0.75rem] font-semibold tracking-[0.12em] uppercase" aria-live="off">
                 <span aria-hidden="true" className="size-2 flex-none animate-pulse rounded-full bg-gold" />
                 {t.endsIn(left)}
               </p>
