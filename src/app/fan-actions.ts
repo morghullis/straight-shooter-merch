@@ -13,8 +13,8 @@ const EMAIL = /^[^\s@]{1,64}@[^\s@.]+(\.[^\s@.]+)+$/;
  * demo mode instead of pretending to save anything.
  */
 export async function joinCrew(_prev: JoinState, formData: FormData): Promise<JoinState> {
-  // Honeypot: real people never see or fill this field.
-  if (String(formData.get("company") ?? "").length > 0) {
+  // Honeypot: real people never see this box.
+  if (formData.has("extra")) {
     return { status: "ok", message: "You're in. Watch your inbox for the next drop." };
   }
 

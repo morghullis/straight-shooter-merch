@@ -84,7 +84,7 @@ export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData
         name: String(data.get("name") ?? ""),
         email: String(data.get("email") ?? ""),
         consent: data.get("consent") === "on",
-        company: String(data.get("company") ?? ""),
+        trap: data.has("extra"),
       }).catch(() => ({ ok: false as const, field: undefined, message: t.errors.failed }));
       if (result.ok) {
         onDone();
@@ -201,11 +201,11 @@ export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData
                   </label>
                   <input id="coupon-email" name="email" type="email" inputMode="email" autoComplete="email" required maxLength={254} placeholder={t.emailPlaceholder} aria-invalid={error?.field === "email"} aria-describedby="coupon-msg" className={field} />
 
-                  {/* Honeypot: people never see or fill it. */}
+                  {/* Honeypot, a box nobody sees. Not a text field: browsers fill those in by themselves, and a real person would be taken for a robot. */}
                   <div aria-hidden="true" className="absolute -left-[625rem] size-0 overflow-hidden">
                     <label>
-                      {t.company}
-                      <input type="text" name="company" tabIndex={-1} autoComplete="off" />
+                      {t.trap}
+                      <input type="checkbox" name="extra" tabIndex={-1} autoComplete="off" />
                     </label>
                   </div>
 
