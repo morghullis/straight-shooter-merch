@@ -90,6 +90,7 @@ credentials come from `PIPELINE_ENV_FILE` (default `./.env`, ignored by git): `S
 | `node generate.mjs <handle> --from-glb file.glb --local out/` | Optimises and renders a GLB into `out/` without Meshy or Shopify: a free test. |
 | `node generate.mjs <handle> --from-glb file.glb` | Redoes a product's art from a GLB you made or fixed by hand (no credits). |
 | `node stickers.mjs [--check]` | Makes the stickers of the discounts that have none (`--check` only counts them). |
+| `node coupon-sync.mjs [--dry-run]` | Keeps what is on offer out of the coupon codes (tag `auto-discounted`, collection Coupon eligible). No credits. |
 | `node import-site-assets.mjs site-assets.json` | Moved the site's existing art into Shopify (done once; `site-assets.json` is what it imported). |
 | `node register-webhooks.mjs https://your-site` | Points the store's product and collection webhooks at the site. `--list` shows them. |
 

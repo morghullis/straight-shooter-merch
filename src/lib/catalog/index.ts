@@ -213,19 +213,22 @@ async function getKnownCollection(handle: string): Promise<Collection | null> {
   return (await getCollectionData(handle))?.collection ?? null;
 }
 
-/** The discounts on now, each with a photo of a product it covers (the asset pipeline makes their stickers from it). */
-export async function getActiveDiscounts(): Promise<{ title: string; image: string }[]> {
+/** The discounts on now: the products each covers, and a photo of one (the asset pipeline makes their stickers from it, and keeps those products out of the coupons). */
+export async function getActiveDiscounts(): Promise<{ title: string; image: string; products: string[] }[]> {
   "use cache";
   cacheLife("catalog");
   cacheTag("products", "discounts");
 
-  const found = new Map<string, string>();
+  const found = new Map<string, { image: string; products: Set<string> }>();
   for (const p of await getProducts()) {
     for (const v of p.variants) {
-      if (v.discount?.title && !found.has(v.discount.title)) found.set(v.discount.title, (v.image ?? p.featuredImage).url);
+      if (!v.discount?.title) continue;
+      const entry = found.get(v.discount.title) ?? { image: (v.image ?? p.featuredImage).url, products: new Set<string>() };
+      entry.products.add(p.handle);
+      found.set(v.discount.title, entry);
     }
   }
-  return [...found].map(([title, image]) => ({ title, image }));
+  return [...found].map(([title, { image, products }]) => ({ title, image, products: [...products] }));
 }
 
 /** The messages of the bar above the navigation, from Shopify (see announcements.ts). */
