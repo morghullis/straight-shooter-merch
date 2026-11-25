@@ -32,7 +32,7 @@ export function Hero() {
           scale={[1, 1.08]}
           opacity={[1, 0.35]}
           origin="60% 0%"
-          className="hero-photo-mask relative z-0 h-[min(84vw,24.375rem)] w-full lg:absolute lg:top-0 lg:left-(--hero-photo-left) lg:h-(--hero-h) lg:w-(--hero-photo-w)"
+          className="hero-photo-mask relative z-0 h-[min(96vw,26rem)] w-full sm:h-[24.375rem] lg:absolute lg:top-0 lg:left-(--hero-photo-left) lg:h-(--hero-h) lg:w-(--hero-photo-w)"
         >
           <ParallaxLayer depth={6} className="h-full w-full">
             <div className="h-full w-full translate-y-(--hero-photo-drop)">
@@ -43,7 +43,7 @@ export function Hero() {
                   fill
                   priority
                   sizes="(min-width: 1326px) 47.4vw, (min-width: 1024px) 628px, 100vw"
-                  className="object-cover object-[64%_28%] lg:object-center"
+                  className="object-cover object-[57%_28%] sm:object-[64%_28%] lg:object-center"
                 />
               </div>
             </div>

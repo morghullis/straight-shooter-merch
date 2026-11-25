@@ -120,6 +120,8 @@ html {
 body {
   background: #000;
   color: #fff;
+  /* Nothing may make the page move sideways. `clip`, not `hidden`: sticky parts keep working. */
+  overflow-x: clip;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -378,7 +380,7 @@ html:not(:has(.announcement-bar)) {
 
 /* A collection's hero slide: its photo melts into the black around it, and moves against its slide. */
 .hero-slide-mask {
-  mask-image: linear-gradient(180deg, transparent 0, #000 0.75rem, #000 52%, transparent 93%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 0.75rem, #000 80%, transparent 99%);
 }
 @media (min-width: 64rem) {
   .hero-slide-mask {

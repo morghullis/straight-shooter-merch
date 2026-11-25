@@ -235,7 +235,7 @@ export function ProductForm({ product }: { product: Product }) {
           </button>
         </div>
 
-        <Button onClick={addToCart} disabled={soldOut} size="lg" className="flex-1">
+        <Button onClick={addToCart} disabled={soldOut} size="lg" className="min-w-0 flex-1 max-[22.5rem]:px-3">
           {label}
         </Button>
       </div>
