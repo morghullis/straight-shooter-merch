@@ -121,6 +121,17 @@ export interface CollectionTile {
   theme?: TileTheme | null;
 }
 
+/** A collection's slide in the home hero (custom fields `hero_*`): only the ones with a photo have one. */
+export interface CollectionHero {
+  image: CatalogImage;
+  /** Photo for phones; without it the wide one is cropped to its centre. */
+  mobileImage: CatalogImage | null;
+  kicker: string | null;
+  /** One entry per row of the big title; the last one is gold. */
+  title: string[];
+  cta: string | null;
+}
+
 export interface Collection {
   handle: string;
   title: string;
@@ -132,4 +143,7 @@ export interface Collection {
   /** The collection's own image in Shopify. */
   image?: CatalogImage | null;
   tile?: CollectionTile | null;
+  hero?: CollectionHero | null;
+  /** Messages for the bar above the navigation (custom field `announcement`), as typed in Shopify. */
+  announcements?: string[];
 }

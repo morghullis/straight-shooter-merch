@@ -53,4 +53,18 @@ export const COLLECTION_FIELDS = {
     description: "cream, dark or sand." },
   position: { key: "position", name: "Position", type: "number_integer", storefront: true,
     description: "Order in the navigation and on the home page (lowest first)." },
+
+  // The bar above the navigation and the home hero. Pinned: they show on every collection's admin page.
+  announcement: { key: "announcement", name: "Top bar messages", type: "list.single_line_text_field", storefront: true, pin: true,
+    description: "Messages for the bar above the navigation, linking to this collection. {discount} becomes its current discount (10% off); without one that message hides." },
+  heroImage: { key: "hero_image", name: "Hero slide photo", type: "file_reference", validations: images, storefront: true, pin: true,
+    description: "Wide photo without text (2:1 or wider). The collection gets its own slide in the home hero when this is filled in." },
+  heroImageMobile: { key: "hero_image_mobile", name: "Hero slide photo (phones)", type: "file_reference", validations: images, storefront: true, pin: true,
+    description: "Optional square or tall photo for phones. Without it the wide photo is cropped to its centre." },
+  heroTitle: { key: "hero_title", name: "Hero slide title", type: "multi_line_text_field", storefront: true, pin: true,
+    description: "Title of the slide, one line per row (up to 3); the last one is gold. Defaults to the collection's title." },
+  heroKicker: { key: "hero_kicker", name: "Hero slide label", type: "single_line_text_field", storefront: true, pin: true,
+    description: "Small line above the title. Defaults to the short title." },
+  heroCta: { key: "hero_cta", name: "Hero slide button", type: "single_line_text_field", storefront: true, pin: true,
+    description: "Text of the slide's button. Defaults to Shop the collection." },
 };

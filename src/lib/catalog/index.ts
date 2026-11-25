@@ -4,6 +4,7 @@ import { catalogOrder, home } from "@/config/site";
 import { isSafeHandle, normalizeQuery } from "@/lib/format";
 import { getPopularity } from "@/lib/popularity";
 
+import { announcementsOf, listSale, type Announcement, type Sale } from "./announcements";
 import { withDiscounts, type Discounts } from "./discounts";
 import { allCollection, mockCollections, mockProducts } from "./mock";
 import { searchText } from "./filter";
@@ -53,14 +54,20 @@ export async function isKnownProduct(handle: string): Promise<boolean> {
  */
 export async function getDiscounts(): Promise<Discounts> {
   "use cache";
-  cacheLife("catalog");
   cacheTag("discounts", "products");
 
-  if (!isShopifyConfigured) return {};
+  if (!isShopifyConfigured) {
+    cacheLife("catalog");
+    return {};
+  }
   try {
-    return await fetchDiscounts(await fetchSellableVariants());
+    const discounts = await fetchDiscounts(await fetchSellableVariants());
+    cacheLife("catalog");
+    return discounts;
   } catch (error) {
-    console.warn(`[discounts] usual prices shown: ${error instanceof Error ? error.message : error}`);
+    // Asked again soon: this answer is only a stand-in.
+    cacheLife({ stale: 30, revalidate: 10, expire: 86400 });
+    console.warn(`[discounts] usual prices shown: ${error instanceof Error ? `${error.message} (${String(error.cause ?? "no cause")})` : error}`);
     return {};
   }
 }
@@ -202,6 +209,27 @@ export async function getCollection(handle: string): Promise<Collection | null> 
 async function getKnownCollection(handle: string): Promise<Collection | null> {
   if (handle === "all") return allCollection;
   return (await getCollectionData(handle))?.collection ?? null;
+}
+
+/** The messages of the bar above the navigation, from Shopify (see announcements.ts). */
+export async function getAnnouncements(): Promise<Announcement[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("collections", "products", "discounts");
+
+  const collections = (await getCollections()).filter((c) => c.handle !== "all");
+  const list = await Promise.all(collections.map(async (collection) => ({ collection, products: await getProductsIn(collection.handle) })));
+  return announcementsOf(list, catalogOrder.collection);
+}
+
+/** The collections with a slide in the home hero, in their order, with the discount they have now. */
+export async function getHeroSlides(): Promise<{ collection: Collection; sale: Sale | null }[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("collections", "products", "discounts");
+
+  const collections = (await getCollections()).filter((c) => c.hero);
+  return Promise.all(collections.map(async (collection) => ({ collection, sale: listSale(await getProductsIn(collection.handle)) })));
 }
 
 /**

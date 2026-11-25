@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/CartProvider";
@@ -7,11 +8,11 @@ import { PriceRoll } from "@/components/motion/PriceRoll";
 import { Button } from "@/components/ui/Button";
 import { MinusIcon, PlusIcon, TagIcon } from "@/components/ui/Icons";
 import { Price } from "@/components/ui/Price";
-import { Tape } from "@/components/ui/Tape";
 import { copy } from "@/config/copy";
 import { FOOTER_END_ID } from "@/config/site";
 import { isColorOption, productColors } from "@/lib/catalog/colors";
 import { percentOff } from "@/lib/catalog/discounts";
+import { optionPhotos, valuePhoto } from "@/lib/catalog/options";
 import type { Product } from "@/lib/catalog/types";
 import { isAvailable as canPick, onSale } from "@/lib/catalog/variants";
 import { cn } from "@/lib/cn";
@@ -100,15 +101,13 @@ export function ProductForm({ product }: { product: Product }) {
   return (
     <div>
       {/*
-        The price on a strip of gold tape, like the Showroom's. Another size with another price spins
-        the register's wheels to it (up for a dearer one, down for a cheaper one).
+        The price in the display type. Another size with another price spins the register's wheels to
+        it (up for a dearer one, down for a cheaper one).
       */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-live="polite">
-        <Tape className="-ml-1 -rotate-[1.5deg] py-1.5 [--tape-end:1.1rem] sm:[--tape-end:1.35rem]">
-          <p className="font-display leading-none font-extrabold">
-            <PriceRoll amount={amount} currency={price.currencyCode} direction={direction} className="px-[0.2em] py-[0.13em] text-[2.125rem] sm:text-[2.5rem] lg:text-[2.875rem]" />
-          </p>
-        </Tape>
+        <p className="font-display leading-none font-extrabold text-black">
+          <PriceRoll amount={amount} currency={price.currencyCode} direction={direction} className="text-[2.75rem] sm:text-[3rem] lg:text-[3.25rem]" />
+        </p>
         {compareAt && (
           <span className="flex flex-col gap-1.5">
             <span className="flex items-center gap-3">
@@ -132,16 +131,47 @@ export function ProductForm({ product }: { product: Product }) {
       <div className="mt-6 space-y-5">
         {options.map((option) => {
           const labelId = `opt-${option.id}`;
+          const photos = optionPhotos(product, selection, option.name);
           return (
             <div key={option.id} role="group" aria-labelledby={labelId}>
               <p id={labelId} className="font-nav text-[0.8125rem] font-semibold tracking-[0.1em] uppercase">
                 {option.name}: <span className="font-normal text-black/60">{selection[option.name]}</span>
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className={photos ? "mt-3 grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2.5" : "mt-2 flex flex-wrap gap-2"}>
                 {option.values.map((value) => {
                   const selected = selection[option.name] === value;
                   const available = canPick(product.variants, selection, option.name, value);
-                  const hex = isColorOption(option.name) ? swatch.get(value.toLowerCase()) : null;
+                  const photo = photos?.get(value);
+                  if (photo) {
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        title={value}
+                        aria-pressed={selected}
+                        aria-label={available ? value : `${value}, ${copy.product.soldOut.toLowerCase()}`}
+                        onClick={() => choose(option.name, value)}
+                        className={cn(
+                          "group/value relative aspect-square overflow-hidden rounded-[0.25rem] bg-sand after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-black/10 after:ring-inset outline-2 outline-offset-2 transition-[outline-color,opacity] duration-300 focus-visible:outline-gold",
+                          selected ? "outline-black" : "outline-transparent hover:outline-black/35",
+                          !available && "opacity-40",
+                        )}
+                      >
+                        {/* Close on the print: it is what tells the values apart. */}
+                        <Image
+                          src={photo.url}
+                          alt=""
+                          fill
+                          sizes="(min-width: 1326px) 15vw, 200px"
+                          className="origin-[50%_46%] scale-[1.75] object-cover transition-transform duration-500 ease-out group-hover/value:scale-[1.9]"
+                        />
+                      </button>
+                    );
+                  }
+                  const isColor = isColorOption(option.name);
+                  const hex = isColor ? swatch.get(value.toLowerCase()) : null;
+                  // A colour without a known swatch shows its own photo in the dot.
+                  const dot = isColor && !hex ? valuePhoto(product.variants, selection, option.name, value) : null;
                   return (
                     <button
                       key={value}
@@ -161,6 +191,11 @@ export function ProductForm({ product }: { product: Product }) {
                           style={{ backgroundColor: hex }}
                           className={cn("size-3.5 flex-none rounded-full ring-1", selected ? "ring-white/60" : "ring-black/20")}
                         />
+                      )}
+                      {dot && (
+                        <span aria-hidden="true" className={cn("relative size-5 flex-none overflow-hidden rounded-full ring-1", selected ? "ring-white/60" : "ring-black/20")}>
+                          <Image src={dot.url} alt="" fill sizes="20px" className="scale-150 object-cover" />
+                        </span>
                       )}
                       {value}
                     </button>

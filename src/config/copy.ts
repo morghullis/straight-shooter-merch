@@ -38,6 +38,20 @@ export const copy = {
     menuFootnote: "Official merch. Straight talk, real fans.",
   },
 
+  announcements: {
+    label: "Announcements",
+    /** Made from Shopify's discounts when a collection has no message of its own. */
+    collection: (discount: string, name: string) => `${discount} all ${name}`,
+    everything: (discount: string) => `${discount} everything`,
+  },
+
+  hero: {
+    label: "Featured",
+    slide: (n: number, total: number, title: string) => `${n} of ${total}: ${title}`,
+    goTo: (title: string) => `Show ${title}`,
+    cta: "Shop the collection",
+  },
+
   cart: {
     dialog: "Shopping cart",
     title: "Your Cart",
