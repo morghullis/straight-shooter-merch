@@ -79,7 +79,7 @@ export function HeroSlide({ collection, hero, sale }: { collection: Collection; 
             className="pointer-events-none absolute top-[2.25rem] right-(--gutter) lg:top-[6.9rem] lg:right-auto lg:left-[12.4rem]"
           >
             <span className="anim-pop block" style={delay(620)}>
-              <SaleSticker src={sale.sticker} percent={sale.percent} upTo={sale.upTo} className="rotate-[9deg] text-[clamp(1.25rem,6.2vw,1.875rem)] lg:text-[1.3125rem]" />
+              <SaleSticker src={sale.sticker} percent={sale.percent} upTo={sale.upTo} eager className="rotate-[9deg] text-[clamp(1.25rem,6.2vw,1.875rem)] lg:text-[1.3125rem]" />
             </span>
           </ScrollLayer>
         )}
