@@ -14,6 +14,7 @@ import {
   fetchCollectionProducts,
   fetchCollections,
   fetchDiscounts,
+  fetchDiscountStickers,
   fetchProduct,
   fetchProductHandles,
   fetchProducts,
@@ -61,7 +62,8 @@ export async function getDiscounts(): Promise<Discounts> {
     return {};
   }
   try {
-    const discounts = await fetchDiscounts(await fetchSellableVariants());
+    const [discounts, stickers] = await Promise.all([fetchSellableVariants().then(fetchDiscounts), fetchDiscountStickers().catch(() => ({}) as Record<string, string>)]);
+    for (const d of Object.values(discounts)) d.sticker = stickers[d.title] ?? null;
     cacheLife("catalog");
     return discounts;
   } catch (error) {
@@ -209,6 +211,21 @@ export async function getCollection(handle: string): Promise<Collection | null> 
 async function getKnownCollection(handle: string): Promise<Collection | null> {
   if (handle === "all") return allCollection;
   return (await getCollectionData(handle))?.collection ?? null;
+}
+
+/** The discounts on now, each with a photo of a product it covers (the asset pipeline makes their stickers from it). */
+export async function getActiveDiscounts(): Promise<{ title: string; image: string }[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("products", "discounts");
+
+  const found = new Map<string, string>();
+  for (const p of await getProducts()) {
+    for (const v of p.variants) {
+      if (v.discount?.title && !found.has(v.discount.title)) found.set(v.discount.title, (v.image ?? p.featuredImage).url);
+    }
+  }
+  return [...found].map(([title, image]) => ({ title, image }));
 }
 
 /** The messages of the bar above the navigation, from Shopify (see announcements.ts). */

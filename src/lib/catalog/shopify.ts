@@ -719,6 +719,17 @@ async function priceCarts(groups: { merchandiseId: string; quantity: number }[][
   return priced;
 }
 
+/** The stickers the asset pipeline made, by discount name (the store's field `discount_stickers`). */
+export async function fetchDiscountStickers(): Promise<Record<string, string>> {
+  const data = await shopifyFetch<{ shop: { metafield: RawValue | null } }>(
+    /* GraphQL */ `query DiscountStickers { shop { metafield(namespace: "custom", key: "discount_stickers") { value } } }`,
+  );
+  const entries = Object.entries(JSON.parse(data.shop.metafield?.value ?? "{}") as Record<string, { url?: unknown } | null>);
+  return Object.fromEntries(
+    entries.flatMap(([title, entry]) => (typeof entry?.url === "string" && entry.url.startsWith("https://cdn.shopify.com/") ? [[title, entry.url]] : [])),
+  );
+}
+
 /** The variants on sale in every listed product, one list per product. */
 export async function fetchSellableVariants(maxPages = 10): Promise<string[][]> {
   const products: string[][] = [];

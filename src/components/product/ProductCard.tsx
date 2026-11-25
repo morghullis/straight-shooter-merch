@@ -67,7 +67,7 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
         sizes={imageSizes}
         lg={lg}
         soldOut={!product.availableForSale}
-        sale={sale ? copy.product.percentOff(sale.percent, sale.upTo) : undefined}
+        sale={sale ?? undefined}
         rail={rail}
       />
 

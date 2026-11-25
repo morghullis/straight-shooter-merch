@@ -68,9 +68,17 @@ test("the product gets the discounted prices, its usual ones as the 'was' price"
   });
   assert.deepEqual(p.price, usd("54.00"));
   assert.deepEqual(p.variants[0].compareAtPrice, usd("59.99"));
-  assert.deepEqual(p.variants[0].discount, { title: "HBCU 10", regular: usd("59.99") });
+  assert.deepEqual(p.variants[0].discount, { title: "HBCU 10", regular: usd("59.99"), sticker: null });
   assert.deepEqual(listPrice(p), { price: usd("54.00"), from: true, compareAt: usd("59.99") });
-  assert.deepEqual(saleOf(p), { percent: 10, upTo: false });
+  assert.deepEqual(saleOf(p), { percent: 10, upTo: false, sticker: null });
+});
+
+test("the discount's sticker goes with it, to the label of the biggest discount", () => {
+  const p = withDiscounts(product([variant("s", "40.00"), variant("m", "40.00")]), {
+    s: { price: usd("36.00"), title: "Ten", sticker: "https://cdn.shopify.com/ten.webp" },
+    m: { price: usd("30.00"), title: "Quarter", sticker: "https://cdn.shopify.com/quarter.webp" },
+  });
+  assert.deepEqual(saleOf(p), { percent: 25, upTo: true, sticker: "https://cdn.shopify.com/quarter.webp" });
 });
 
 test("applying the discounts twice changes nothing more", () => {
@@ -88,7 +96,7 @@ test("a product without discounts stays as it is", () => {
 
 test("only some variants discounted: the label says up to", () => {
   const p = withDiscounts(product([variant("s", "40.00"), variant("m", "40.00")]), { m: { price: usd("30.00"), title: "Size M" } });
-  assert.deepEqual(saleOf(p), { percent: 25, upTo: true });
+  assert.deepEqual(saleOf(p), { percent: 25, upTo: true, sticker: null });
   assert.deepEqual(listPrice(p), { price: usd("30.00"), from: true, compareAt: usd("40.00") });
 });
 
@@ -96,11 +104,11 @@ test("a compare-at price and a discount add up: the 'was' price is Shopify's com
   const p = withDiscounts(product([variant("s", "40.00", { compareAtPrice: usd("50.00") })]), { s: { price: usd("36.00"), title: "Extra 10" } });
   assert.deepEqual(p.variants[0].compareAtPrice, usd("50.00"));
   assert.deepEqual(p.variants[0].discount?.regular, usd("40.00"), "the cart's subtotal is the price without the discount, not the compare-at");
-  assert.deepEqual(saleOf(p), { percent: 28, upTo: false });
+  assert.deepEqual(saleOf(p), { percent: 28, upTo: false, sticker: null });
 });
 
 test("a compare-at price alone is a sale too", () => {
-  assert.deepEqual(saleOf(product([variant("s", "40.00", { compareAtPrice: usd("50.00") })])), { percent: 20, upTo: false });
+  assert.deepEqual(saleOf(product([variant("s", "40.00", { compareAtPrice: usd("50.00") })])), { percent: 20, upTo: false, sticker: null });
   assert.equal(saleOf(product([variant("s", "40.00", { compareAtPrice: usd("40.00") })])), null);
   assert.equal(percentOff(usd("10"), usd("0")), 0);
 });

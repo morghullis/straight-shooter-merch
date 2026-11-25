@@ -11,6 +11,8 @@ import { copy } from "@/config/copy";
 import { useMediaQuery } from "@/lib/browser";
 import { cn } from "@/lib/cn";
 
+import { SaleSticker } from "./SaleSticker";
+
 export interface GalleryImage {
   url: string;
   alt: string;
@@ -28,8 +30,8 @@ interface CardGalleryProps {
   /** Roomier collection card: bigger arrows and the "On model" tag. */
   lg?: boolean;
   soldOut?: boolean;
-  /** The sale label ("10% off"); a sold-out product shows that instead. */
-  sale?: string;
+  /** What is off: the discount's sticker, or a label when it has none. A sold-out product shows that instead. */
+  sale?: { percent: number; upTo: boolean; sticker: string | null };
   /**
    * The card sits in a horizontally scrolling rail on phones. A second swipe area would fight the
    * rail, so below md the card keeps its first picture and the rail owns the gesture.
@@ -199,7 +201,14 @@ export function CardGallery({ title, href, images, hover, priority = false, size
         </span>
       )}
 
-      {(soldOut || sale) && (
+      {sale?.sticker && !soldOut ? (
+        <SaleSticker
+          src={sale.sticker}
+          percent={sale.percent}
+          upTo={sale.upTo}
+          className={cn("pointer-events-none !absolute top-1 left-1 z-[3] -rotate-[8deg]", lg ? "text-[0.625rem] sm:top-1.5 sm:left-1.5 sm:text-[0.8125rem]" : "text-[0.5625rem]")}
+        />
+      ) : (soldOut || sale) && (
         <span
           className={cn(
             "pointer-events-none absolute top-1.5 left-1.5 z-[3] bg-black px-1.5 py-[0.1875rem] font-nav text-[0.5625rem] font-semibold tracking-[0.1em] uppercase",
@@ -207,7 +216,7 @@ export function CardGallery({ title, href, images, hover, priority = false, size
             soldOut ? "text-white" : "text-gold",
           )}
         >
-          {soldOut ? copy.product.soldOut : sale}
+          {soldOut ? copy.product.soldOut : sale && copy.product.percentOff(sale.percent, sale.upTo)}
         </span>
       )}
     </div>

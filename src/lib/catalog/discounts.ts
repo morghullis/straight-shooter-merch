@@ -33,6 +33,8 @@ export interface PricedLine {
 export interface VariantDiscount {
   price: Money;
   title: string;
+  /** The discount's sticker (made by the asset pipeline), without text. */
+  sticker?: string | null;
 }
 
 /** By variant id: only the variants that have a discount. */
@@ -80,7 +82,7 @@ export function withDiscounts(product: Product, discounts: Discounts): Product {
       ...v,
       price: discount.price,
       compareAtPrice: onSale(v.price, v.compareAtPrice) ? v.compareAtPrice : v.price,
-      discount: { title: discount.title, regular: v.price },
+      discount: { title: discount.title, regular: v.price, sticker: discount.sticker ?? null },
     };
   });
   if (!changed) return product;
@@ -95,10 +97,12 @@ export function percentOff(price: { amount: string }, was: { amount: string }): 
 }
 
 /** The product's sale label: how much comes off, "up to" when some variants have less (or nothing) off. */
-export function saleOf(product: Pick<Product, "variants">): { percent: number; upTo: boolean } | null {
+export function saleOf(product: Pick<Product, "variants">): { percent: number; upTo: boolean; sticker: string | null } | null {
   const percents = product.variants.map((v) => (v.compareAtPrice && onSale(v.price, v.compareAtPrice) ? percentOff(v.price, v.compareAtPrice) : 0));
   const percent = Math.max(0, ...percents);
-  return percent >= 1 ? { percent, upTo: percents.some((p) => p !== percent) } : null;
+  if (percent < 1) return null;
+  const sticker = product.variants[percents.indexOf(percent)].discount?.sticker ?? null;
+  return { percent, upTo: percents.some((p) => p !== percent), sticker };
 }
 
 /** A cart's amounts, for the cart drawer. */

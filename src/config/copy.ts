@@ -106,6 +106,9 @@ export const copy = {
     womens: "Women's",
     /** The sale label: how much comes off ("up to" when not every option has the same discount). */
     percentOff: (percent: number, upTo = false) => `${upTo ? "Up to " : ""}${percent}% off`,
+    /** The same, in the two or three rows of a sticker. */
+    upTo: "Up to",
+    off: "Off",
     youSave: (amount: string) => `You save ${amount}`,
     regularPrice: "Regular price",
     /** Before a list price when bigger sizes or other options cost more. */

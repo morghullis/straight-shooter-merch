@@ -51,6 +51,8 @@ With the storefront variables empty the app runs on the demo catalog.
 - *Discount codes*: at checkout, where the shopper types them. For a price everyone sees, use Method: *Automatic discount*.
 - A **compare-at price** on the variant (Products > the product > Pricing) shows as a sale too, with no discount needed.
 
+Each discount gets its own **sticker** automatically (Meshy, 9 credits; the percentage is live text on it): see [tools/pipeline/README.md](../tools/pipeline/README.md#discount-stickers-automatic). Until it is ready, and if it cannot be made, the plain label shows.
+
 For new products, set the discount to a collection instead of to products: what joins the collection gets it.
 
 **Order: Shopify decides.** The order you give the **Shop All** collection (Products > Collections > Shop All > Sort: Manually, drag) is the order of every list on the site; a listed product not in Shop All comes after. Featured Products takes the `featured` products in that order, grouped by category (each category where its first product sits), women's categories last. The strip under the hero: its first three tiles only turn between the products of **The Stephen A. Smith Show** collection (its own manual order); the fourth turns between the collections and everything else (`home.stripLead` in `src/config/site.ts`).
