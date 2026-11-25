@@ -18,6 +18,8 @@ export interface Sale {
   percent: number;
   /** Not the same on everything. */
   upTo: boolean;
+  /** The sticker of the biggest discount, when it has one. */
+  sticker: string | null;
 }
 
 /** Where a message says how much is off. */
@@ -32,7 +34,8 @@ export function listSale(products: ForSale[]): (Sale & { all: boolean }) | null 
   if (!found.length) return null;
   const percent = Math.max(...found.map((s) => s.percent));
   const all = found.length === sales.length;
-  return { percent, upTo: !all || found.some((s) => s.upTo || s.percent !== percent), all };
+  const sticker = found.find((s) => s.percent === percent)?.sticker ?? null;
+  return { percent, upTo: !all || found.some((s) => s.upTo || s.percent !== percent), sticker, all };
 }
 
 const discountText = (sale: Sale) => copy.product.percentOff(sale.percent, sale.upTo);

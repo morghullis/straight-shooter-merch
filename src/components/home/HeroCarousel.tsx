@@ -75,8 +75,11 @@ export function HeroCarousel({ slides }: { slides: HeroSlideContent[] }) {
     stay.set(next);
     if (next < 1) return;
     const coming = frame.current?.querySelectorAll<HTMLElement>("[data-hero-slide]")[mod(target.current + 1, n)];
-    const photos = coming ? [...coming.querySelectorAll("img")] : [];
-    if (photos.length && photos.every((img) => img.complete)) goTo(target.current + 1);
+    // Its photo, not whatever else it holds: something that only loads once seen would never be ready. The
+    // brand's own slide has none to wait for (it was there first).
+    const photos = coming ? [...coming.querySelectorAll<HTMLImageElement>("img[data-hero-photo]")] : [];
+    const waitsForPhoto = mod(target.current + 1, n) !== 0;
+    if (photos.length ? photos.every((img) => img.complete) : !waitsForPhoto) goTo(target.current + 1);
   });
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {

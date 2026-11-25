@@ -39,6 +39,27 @@ export const PRODUCT_FIELDS = {
     description: "This product's own shipping line, e.g. Made to order, ships in 3 to 5 business days. Shown first in Shipping & returns." },
 };
 
+/** Content > Metaobjects in the admin. */
+export const METAOBJECTS = {
+  couponPopup: {
+    // Never readable from the storefront: it names the discount's code.
+    type: "coupon_popup", storefront: false, name: "Coupon popup", displayNameKey: "discount_code",
+    description: "The popup that asks for an email and sends a discount code. It shows while its discount is active in Shopify.",
+    fields: [
+      { key: "discount_code", name: "Discount code", type: "single_line_text_field", required: true,
+        description: "The code of the discount it offers (Discounts > the discount). Shoppers never see this one: each gets a code of their own inside that discount." },
+      { key: "kicker", name: "Small line", type: "single_line_text_field", description: "Above the offer. Empty = the site's own text." },
+      { key: "title", name: "Title", type: "multi_line_text_field", description: "One line per row, up to 3. Empty = Get 10% off (from the discount)." },
+      { key: "text", name: "Text", type: "multi_line_text_field", description: "Under the title." },
+      { key: "button", name: "Button", type: "single_line_text_field" },
+      { key: "image", name: "Photo", type: "file_reference", validations: images, description: "Optional, behind the offer." },
+      { key: "delay_seconds", name: "Seconds before it opens", type: "number_integer", description: "2 to 120. Empty = 8." },
+      { key: "success_title", name: "After sending: title", type: "single_line_text_field" },
+      { key: "success_text", name: "After sending: text", type: "multi_line_text_field" },
+    ],
+  },
+};
+
 /** Store-wide (owner: the shop). */
 export const SHOP_FIELDS = {
   discountStickers: { key: "discount_stickers", name: "Discount stickers", type: "json", storefront: true,

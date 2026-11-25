@@ -21,6 +21,7 @@ export function LatePhoto({ image, sizes, className, media }: { image: CatalogIm
       src={image.url}
       alt={image.altText}
       fill
+      data-hero-photo
       loading="eager"
       fetchPriority="low"
       sizes={sizes}

@@ -1,6 +1,8 @@
 import { LatePhoto } from "@/components/home/LatePhoto";
 import { ParallaxLayer } from "@/components/motion/ParallaxLayer";
 import { ScrollHost, ScrollLayer } from "@/components/motion/ScrollHost";
+import { SaleSticker } from "@/components/product/SaleSticker";
+import { SaleTag } from "@/components/product/SaleTag";
 import { Button } from "@/components/ui/Button";
 import { copy } from "@/config/copy";
 import type { Collection } from "@/lib/catalog";
@@ -47,10 +49,8 @@ export function HeroSlide({ collection, hero, sale }: { collection: Collection; 
         <ScrollLayer y={[0, -64]} opacity={[1, 0.1]} during={[0, 0.85]} className="lg:absolute lg:top-(--hero-headline-top) lg:left-(--hero-headline-left)">
           <p className="anim-pop mb-2 flex items-center gap-2.5 font-nav text-[0.75rem] leading-none font-semibold tracking-[0.14em] text-gold uppercase lg:absolute lg:bottom-full lg:mb-2 lg:whitespace-nowrap" style={delay(260)}>
             {kicker}
-            {sale && (
-              <span className="bg-gold px-1.5 py-[0.1875rem] text-[0.6875rem] leading-none tracking-[0.08em] text-[#14110a]">
-                {copy.product.percentOff(sale.percent, sale.upTo)}
-              </span>
+            {sale && !sale.sticker && (
+              <SaleTag className="-rotate-2 text-[1.125rem] lg:text-[1.0625rem]">{copy.product.percentOff(sale.percent, sale.upTo)}</SaleTag>
             )}
           </p>
           <h2
@@ -69,6 +69,20 @@ export function HeroSlide({ collection, hero, sale }: { collection: Collection; 
             ))}
           </h2>
         </ScrollLayer>
+
+        {/* The discount's sticker, stuck beside the headline. */}
+        {sale?.sticker && (
+          <ScrollLayer
+            y={[0, -80]}
+            opacity={[1, 0]}
+            during={[0, 0.7]}
+            className="pointer-events-none absolute top-[2.25rem] right-(--gutter) lg:top-[6.9rem] lg:right-auto lg:left-[12.4rem]"
+          >
+            <span className="anim-pop block" style={delay(620)}>
+              <SaleSticker src={sale.sticker} percent={sale.percent} upTo={sale.upTo} eager className="rotate-[9deg] text-[clamp(1.25rem,6.2vw,1.875rem)] lg:text-[1.3125rem]" />
+            </span>
+          </ScrollLayer>
+        )}
 
         <ScrollLayer y={[0, -36]} opacity={[1, 0]} during={[0, 0.6]} className="mt-7 lg:absolute lg:top-(--hero-cta-top) lg:left-(--hero-headline-left) lg:mt-0">
           <Button

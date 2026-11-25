@@ -3,7 +3,7 @@
 //   node define-metafields.mjs
 import { loadEnvFile } from "./lib/env.mjs";
 import { check, gql } from "./lib/shopify.mjs";
-import { COLLECTION_FIELDS, NAMESPACE, PRODUCT_FIELDS, SHOP_FIELDS } from "./lib/schema.mjs";
+import { COLLECTION_FIELDS, METAOBJECTS, NAMESPACE, PRODUCT_FIELDS, SHOP_FIELDS } from "./lib/schema.mjs";
 
 loadEnvFile();
 
@@ -58,3 +58,28 @@ async function define(ownerType, fields) {
 await define("PRODUCT", PRODUCT_FIELDS);
 await define("COLLECTION", COLLECTION_FIELDS);
 await define("SHOP", SHOP_FIELDS);
+
+for (const m of Object.values(METAOBJECTS)) {
+  const { metaobjectDefinitionByType: current } = await gql(`query($t: String!) { metaobjectDefinitionByType(type: $t) { id access { storefront } } }`, { t: m.type });
+  if (current) {
+    const storefront = m.storefront ? "PUBLIC_READ" : "NONE";
+    if (current.access.storefront !== storefront) {
+      const data = await gql(`mutation($id: ID!, $d: MetaobjectDefinitionUpdateInput!) { metaobjectDefinitionUpdate(id: $id, definition: $d) { userErrors { field message } } }`, { id: current.id, d: { access: { storefront } } });
+      check(data.metaobjectDefinitionUpdate, `update metaobject ${m.type}`);
+      console.log(`updated  metaobject ${m.type}: storefront ${storefront}`);
+    } else console.log(`ok       metaobject ${m.type}`);
+    continue;
+  }
+  const data = await gql(
+    `mutation($d: MetaobjectDefinitionCreateInput!) { metaobjectDefinitionCreate(definition: $d) { metaobjectDefinition { id } userErrors { field message } } }`,
+    {
+      d: {
+        type: m.type, name: m.name, description: m.description, displayNameKey: m.displayNameKey,
+        access: { storefront: m.storefront ? "PUBLIC_READ" : "NONE" }, capabilities: { publishable: { enabled: true } },
+        fieldDefinitions: m.fields.map((f) => ({ required: false, ...f })),
+      },
+    },
+  );
+  check(data.metaobjectDefinitionCreate, `define metaobject ${m.type}`);
+  console.log(`created  metaobject ${m.type}`);
+}

@@ -10,6 +10,7 @@ import {
 
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { CouponPopupGate } from "@/components/coupon/CouponPopupGate";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -108,6 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Footer />
           <CartDrawer />
+          <CouponPopupGate />
         </CartProvider>
       </body>
     </html>

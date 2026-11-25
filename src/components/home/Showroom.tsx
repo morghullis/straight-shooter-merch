@@ -1,7 +1,7 @@
 import { copy } from "@/config/copy";
 import { defaultShowroomArt, modelSpecFor, showroomArt } from "@/config/models";
 import { getShowroomProducts } from "@/lib/catalog";
-import { percentOff } from "@/lib/catalog/discounts";
+import { percentOff, saleOf } from "@/lib/catalog/discounts";
 import { listPrice } from "@/lib/catalog/variants";
 import { formatMoney } from "@/lib/format";
 
@@ -24,6 +24,7 @@ export async function Showroom() {
     if (!spec) return [];
     const model = { ...spec, label: labelOf(i) };
     const { price, compareAt } = listPrice(p);
+    const sticker = compareAt ? saleOf(p)?.sticker : null;
     return [
       {
         handle: p.handle,
@@ -33,6 +34,7 @@ export async function Showroom() {
         currencyCode: price.currencyCode,
         was: compareAt ? formatMoney(compareAt.amount, compareAt.currencyCode) : undefined,
         sale: compareAt ? copy.product.percentOff(percentOff(price, compareAt)) : undefined,
+        sticker: compareAt && sticker ? { src: sticker, percent: percentOff(price, compareAt) } : undefined,
         href: `/products/${p.handle}`,
         image: p.featuredImage.url,
         imageAlt: p.featuredImage.altText || p.title,

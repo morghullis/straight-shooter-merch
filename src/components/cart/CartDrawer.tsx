@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { createCheckout } from "@/app/actions";
+import { SaleTag } from "@/components/product/SaleTag";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon, MinusIcon, PlusIcon, TagIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
-import type { CartQuote } from "@/lib/catalog/discounts";
+import { percentOff, type CartQuote } from "@/lib/catalog/discounts";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
 import { lockPageScroll } from "@/lib/scroll-lock";
@@ -141,8 +142,8 @@ export function CartDrawer() {
                             <p className="mt-0.5 text-xs text-white/55">{line.variantTitle}</p>
                           )}
                           {reduced && (
-                            <p className="mt-1.5 flex items-center gap-1.5 font-nav text-[0.6875rem] leading-none font-semibold tracking-[0.08em] text-gold uppercase">
-                              <TagIcon size={12} strokeWidth={2} className="flex-none" />
+                            <p className="mt-2 flex items-center gap-2 font-nav text-[0.6875rem] leading-none font-semibold tracking-[0.08em] text-gold uppercase">
+                              <SaleTag className="flex-none text-[0.875rem]">{copy.product.percentOff(percentOff({ amount: String(amounts.total) }, { amount: String(amounts.subtotal) }))}</SaleTag>
                               <span className="truncate">{amounts.discounts.join(" + ") || copy.cart.discount}</span>
                             </p>
                           )}

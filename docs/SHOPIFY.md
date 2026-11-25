@@ -48,7 +48,7 @@ With the storefront variables empty the app runs on the demo catalog.
 
 - *Amount off products*, automatic: on the product everywhere, and in the cart.
 - *Buy X get Y*, a minimum quantity or amount, *Amount off order*: in the cart, as soon as it applies (a single unit does not have that price).
-- *Discount codes*: at checkout, where the shopper types them. For a price everyone sees, use Method: *Automatic discount*.
+- *Discount codes*: at checkout, where the shopper types them. The popup that emails each person their own: [COUPON-POPUP.md](COUPON-POPUP.md). For a price everyone sees, use Method: *Automatic discount*.
 - A **compare-at price** on the variant (Products > the product > Pricing) shows as a sale too, with no discount needed.
 
 Each discount gets its own **sticker** automatically (Meshy, 9 credits; the percentage is live text on it): see [tools/pipeline/README.md](../tools/pipeline/README.md#discount-stickers-automatic). Until it is ready, and if it cannot be made, the plain label shows.
