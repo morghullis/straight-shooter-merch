@@ -14,6 +14,8 @@ const clientId = process.env.SHOPIFY_COUPON_CLIENT_ID;
 const clientSecret = process.env.SHOPIFY_COUPON_CLIENT_SECRET;
 const apiVersion = process.env.SHOPIFY_API_VERSION || "2026-07";
 const TIMEOUT_MS = 8000;
+/** Seconds before the popup opens when its entry does not say. */
+const DELAY_S = 2.5;
 
 export const isCouponConfigured = Boolean(domain && clientId && clientSecret);
 
@@ -89,7 +91,7 @@ export async function fetchCouponPopups(): Promise<CouponPopupEntry[]> {
       const field = (key: string) => n.fields.find((f) => f.key === key);
       const text = (key: string) => field(key)?.value?.trim() || null;
       const photo = field("image")?.reference;
-      const delay = Number.parseInt(text("delay_seconds") ?? "", 10);
+      const delay = Number.parseFloat(text("open_after_seconds") ?? "");
       return {
         id: n.id,
         code: text("discount_code"),
@@ -100,7 +102,7 @@ export async function fetchCouponPopups(): Promise<CouponPopupEntry[]> {
         successTitle: text("success_title"),
         successText: text("success_text"),
         image: photo?.image ? { url: photo.image.url, altText: photo.alt ?? "", width: photo.image.width ?? 1200, height: photo.image.height ?? 900 } : null,
-        delay: Number.isFinite(delay) ? Math.min(120, Math.max(2, delay)) : 8,
+        delay: Number.isFinite(delay) ? Math.min(120, Math.max(1, delay)) : DELAY_S,
       };
     });
 }
