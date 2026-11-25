@@ -41,24 +41,35 @@ interface GraphQLResponse<T> {
 
 /** Waits before the second and third try when the network or Shopify stumbles. */
 const RETRY_AFTER_MS = [250, 900];
+/** The longest a "try again later" from Shopify is followed; each try is given up after `TRY_MS`. */
+const MAX_WAIT_MS = 2000;
+const TRY_MS = 10_000;
 
-/** The request, tried again when it does not get through (no connection, too busy, a server error). */
-async function post(url: string, init: RequestInit): Promise<Response> {
+/**
+ * The request, tried again (`retry`) when it does not get through: no connection, too busy, a server
+ * error. Only for requests that change nothing and that no visitor's click can repeat.
+ */
+async function post(url: string, init: RequestInit, retry: boolean): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
-    const last = attempt >= RETRY_AFTER_MS.length;
+    const last = !retry || attempt >= RETRY_AFTER_MS.length;
+    let wait = RETRY_AFTER_MS[attempt] ?? 0;
     try {
-      const res = await fetch(url, init);
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(TRY_MS) });
       if (last || (res.status !== 429 && res.status < 500)) return res;
+      const asked = Number(res.headers.get("retry-after")) * 1000;
+      if (asked > 0) wait = Math.min(Math.max(wait, asked), MAX_WAIT_MS);
+      await res.body?.cancel();
     } catch (error) {
       if (last) throw error;
     }
-    await new Promise((resolve) => setTimeout(resolve, RETRY_AFTER_MS[attempt]));
+    await new Promise((resolve) => setTimeout(resolve, wait));
   }
 }
 
 async function shopifyFetch<T>(
   query: string,
   variables: Record<string, unknown> = {},
+  { retry = !query.trimStart().startsWith("mutation") } = {},
 ): Promise<T> {
   if (!domain || !token) {
     throw new Error("Shopify is not configured");
@@ -71,7 +82,7 @@ async function shopifyFetch<T>(
       [tokenHeader]: token,
     },
     body: JSON.stringify({ query, variables }),
-  });
+  }, retry);
 
   if (!res.ok) {
     throw new Error(`Shopify request failed with ${res.status}`);
@@ -694,8 +705,8 @@ function mapPricedCart(raw: RawPricedCart | null | undefined): PricedLine[] {
 }
 
 /** These lines priced by Shopify in a cart of their own (nothing is bought: the cart is only read, and expires). */
-export async function priceCart(lines: { merchandiseId: string; quantity: number }[]): Promise<PricedLine[]> {
-  const data = await shopifyFetch<{ cartCreate: { cart: RawPricedCart | null } | null }>(PRICE_CART_MUTATION, { lines });
+export async function priceCart(lines: { merchandiseId: string; quantity: number }[], retry = false): Promise<PricedLine[]> {
+  const data = await shopifyFetch<{ cartCreate: { cart: RawPricedCart | null } | null }>(PRICE_CART_MUTATION, { lines }, { retry });
   return mapPricedCart(data.cartCreate?.cart);
 }
 
@@ -703,7 +714,7 @@ export async function priceCart(lines: { merchandiseId: string; quantity: number
 async function priceCarts(groups: { merchandiseId: string; quantity: number }[][], atOnce = 20): Promise<PricedLine[][]> {
   const priced: PricedLine[][] = [];
   for (let i = 0; i < groups.length; i += atOnce) {
-    priced.push(...(await Promise.all(groups.slice(i, i + atOnce).map(priceCart))));
+    priced.push(...(await Promise.all(groups.slice(i, i + atOnce).map((lines) => priceCart(lines, true)))));
   }
   return priced;
 }
