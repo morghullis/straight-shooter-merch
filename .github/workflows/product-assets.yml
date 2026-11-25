@@ -84,6 +84,14 @@ jobs:
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
         run: node tools/pipeline/stickers.mjs --check
 
+      # What is already on offer stays out of the coupon codes (tags only, no credits).
+      - name: Coupon scope
+        continue-on-error: true
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: node tools/pipeline/coupon-sync.mjs
+
       # three.js comes from the storefront's dependencies; the 3D tools have their own.
       - if: steps.check.outputs.pending != '0'
         run: npm ci --ignore-scripts
