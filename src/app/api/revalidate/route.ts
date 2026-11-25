@@ -8,8 +8,8 @@ import { isSafeHandle } from "@/lib/format";
 /**
  * Shopify webhook receiver. Point these topics at `https://<your-domain>/api/revalidate`:
  * products/create, products/update, products/delete, collections/create,
- * collections/update, collections/delete, inventory_levels/update
- * (tools/pipeline/register-webhooks.mjs does it).
+ * collections/update, collections/delete, inventory_levels/update, discounts/create,
+ * discounts/update, discounts/delete (tools/pipeline/register-webhooks.mjs does it).
  *
  * Every request is verified against `x-shopify-hmac-sha256` using SHOPIFY_WEBHOOK_SECRET (for
  * webhooks registered by the app, the app's client secret).
@@ -51,6 +51,11 @@ export async function POST(request: Request) {
   } else if (topic.startsWith("collections/")) {
     tags.add("collections");
     tags.add("products");
+  } else if (topic.startsWith("discounts/")) {
+    // A discount changes the price of the products it covers, on every page they are on.
+    tags.add("discounts");
+    tags.add("products");
+    tags.add("collections");
   } else {
     return Response.json({ revalidated: false, reason: `Ignored topic "${topic}"` }, { status: 202 });
   }

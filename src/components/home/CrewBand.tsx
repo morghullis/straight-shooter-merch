@@ -4,6 +4,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Container } from "@/components/ui/Container";
 import { lanes, type LaneId } from "@/config/fans";
 import { getProducts } from "@/lib/catalog";
+import { listPrice } from "@/lib/catalog/variants";
 import { formatMoney } from "@/lib/format";
 
 /** Ballot (recommends real products per lane) next to the season-pass sign-up. */
@@ -11,13 +12,17 @@ export async function CrewBand() {
   const entries = await Promise.all(
     lanes.map(async (lane) => {
       const products = await getProducts({ collection: lane.collection });
-      const picks: QuizPick[] = products.slice(0, 3).map((p) => ({
-        handle: p.handle,
-        title: p.title,
-        price: formatMoney(p.price.amount, p.price.currencyCode),
-        image: p.featuredImage.url,
-        alt: p.featuredImage.altText || p.title,
-      }));
+      const picks: QuizPick[] = products.slice(0, 3).map((p) => {
+        const { price, compareAt } = listPrice(p);
+        return {
+          handle: p.handle,
+          title: p.title,
+          price: formatMoney(price.amount, price.currencyCode),
+          was: compareAt ? formatMoney(compareAt.amount, compareAt.currencyCode) : undefined,
+          image: p.featuredImage.url,
+          alt: p.featuredImage.altText || p.title,
+        };
+      });
       return [lane.id, picks] as const;
     }),
   );

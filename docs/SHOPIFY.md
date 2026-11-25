@@ -42,7 +42,16 @@ With the storefront variables empty the app runs on the demo catalog.
 - **Shopify's category fields** (Products > the product > Category) are used too: *Target gender* gives "Made for" and the "Women's" label (women's pieces go last in Featured), *Color* gives the colour dots on cards and in Details.
 - **Product type** is the category ("Hoodie", "Tee"). The tag **`featured`** puts a product in the home page's featured row (six; with fewer tagged, every product).
 
-**How fast changes show:** a product saved in the admin shows on the site within seconds (webhook). Anything Shopify sends no webhook for (a field filled by an app, a collection's manual order) shows within about 5 minutes (the `catalog` cache profile in `next.config.ts`).
+**How fast changes show:** a product saved in the admin shows on the site within seconds (webhook). Anything Shopify sends no webhook for (a discount that starts or ends by date, a field filled by an app, a collection's manual order) shows within a minute or two of visits (the `catalog` cache profile in `next.config.ts`).
+
+**Discounts:** an **automatic discount** (Discounts > Create discount > *Amount off products*, Method: *Automatic discount*) shows everywhere by itself: the discounted price, the usual one struck through and a "10% off" label on the cards, the product page, the search, the Showroom and the cart. Shopify works out every amount: automatic discounts are not part of a product's price, so the site asks a Shopify cart what each variant costs (`fetchDiscounts` in `src/lib/catalog/shopify.ts`, `src/lib/catalog/discounts.ts`) and calculates nothing itself. What shows where:
+
+- *Amount off products*, automatic: on the product everywhere, and in the cart.
+- *Buy X get Y*, a minimum quantity or amount, *Amount off order*: in the cart, as soon as it applies (a single unit does not have that price).
+- *Discount codes*: at checkout, where the shopper types them. For a price everyone sees, use Method: *Automatic discount*.
+- A **compare-at price** on the variant (Products > the product > Pricing) shows as a sale too, with no discount needed.
+
+For new products, set the discount to a collection instead of to products: what joins the collection gets it.
 
 **Order: Shopify decides.** The order you give the **Shop All** collection (Products > Collections > Shop All > Sort: Manually, drag) is the order of every list on the site; a listed product not in Shop All comes after. Featured Products takes the `featured` products in that order, grouped by category (each category where its first product sits), women's categories last. The strip under the hero: its first three tiles only turn between the products of **The Stephen A. Smith Show** collection (its own manual order); the fourth turns between the collections and everything else (`home.stripLead` in `src/config/site.ts`).
 
@@ -60,9 +69,9 @@ The **navigation, footer and home tiles** list every collection published on the
 
 ## 3. Keep the site fresh: webhooks
 
-Catalog reads are cached for an hour; webhooks make changes show at once and start the pipeline for new products.
+Catalog reads are cached and refresh by themselves within a minute or two; webhooks make changes show at once and start the pipeline for new products.
 
-1. `node tools/pipeline/register-webhooks.mjs https://<your-domain>` registers `products/*`, `collections/*` and `inventory_levels/update` to `https://<your-domain>/api/revalidate` (once the site is deployed).
+1. `node tools/pipeline/register-webhooks.mjs https://<your-domain>` registers `products/*`, `collections/*` and `inventory_levels/update` to `https://<your-domain>/api/revalidate` (once the site is deployed), and `discounts/*` when the app has the `read_discounts` scope (dev.shopify.com > the app > a new version with the scope > Release, then approve it on the store; without it a discount shows within a minute or two instead of at once).
 2. Set `SHOPIFY_WEBHOOK_SECRET` on the site to the app's client secret (Shopify signs app webhooks with it).
 
 [`src/app/api/revalidate/route.ts`](../src/app/api/revalidate/route.ts) verifies the HMAC signature (constant-time compare), revalidates the matching cache tags with stale-while-revalidate, and on `products/create` asks GitHub to run the asset pipeline for that product (`GITHUB_DISPATCH_TOKEN`, `GITHUB_DISPATCH_REPO`).
@@ -76,7 +85,7 @@ Catalog reads are cached for an hour; webhooks make changes show at once and sta
 
 ## 5. How the cart works
 
-The cart lives in the browser. **Checkout** runs a server action that creates a Shopify cart (`cartCreate`) and redirects to its `checkoutUrl`. Payment, tax, shipping rates, discounts and order emails are all Shopify's. A signed-in shopper's cart carries their Customer Account API token (`buyerIdentity.customerAccessToken`), so checkout opens signed in; if Shopify refuses the token, the cart is made without it.
+The cart lives in the browser. **Checkout** runs a server action that creates a Shopify cart (`cartCreate`) and redirects to its `checkoutUrl`. While the drawer is open, Shopify totals the cart too (`refreshCart` in `src/app/actions.ts`), so every automatic discount shows on its line and in the total before checkout; until it answers, the drawer shows the catalog's own discounted prices. Payment, tax, shipping rates, discounts and order emails are all Shopify's. A signed-in shopper's cart carries their Customer Account API token (`buyerIdentity.customerAccessToken`), so checkout opens signed in; if Shopify refuses the token, the cart is made without it.
 
 ## 6. Customer accounts
 

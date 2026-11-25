@@ -49,6 +49,10 @@ export const copy = {
     decrease: (title: string) => `Decrease quantity of ${title}`,
     increase: (title: string) => `Increase quantity of ${title}`,
     subtotal: "Subtotal",
+    total: "Total",
+    /** A discount Shopify gives no name to. */
+    discount: "Discount",
+    regularPrice: "Regular price",
     note: "Shipping and taxes are calculated at checkout.",
     checkout: "Checkout",
     checkingOut: "Starting checkout…",
@@ -86,7 +90,10 @@ export const copy = {
     home: "Home",
     shopAll: "Shop all",
     womens: "Women's",
-    sale: "Sale",
+    /** The sale label: how much comes off ("up to" when not every option has the same discount). */
+    percentOff: (percent: number, upTo = false) => `${upTo ? "Up to " : ""}${percent}% off`,
+    youSave: (amount: string) => `You save ${amount}`,
+    regularPrice: "Regular price",
     /** Before a list price when bigger sizes or other options cost more. */
     from: "From",
     /** The product page's information blocks; each shows only when the product has something for it. */

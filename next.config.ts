@@ -5,11 +5,11 @@ const nextConfig: NextConfig = {
   cacheLife: {
     // Everything read from Shopify (products, collections, their fields and order). A product saved
     // in the admin refreshes at once through the webhook (/api/revalidate); this is the safety net for
-    // changes Shopify sends no webhook for (a field set by an app, a collection's manual order): the
-    // next visit after 5 minutes refreshes it in the background.
+    // changes Shopify sends no webhook for (a discount that starts or ends by date, a field set by an
+    // app, a collection's manual order): the next visit after 1 minute refreshes it in the background.
     catalog: {
       stale: 30,
-      revalidate: 300,
+      revalidate: 60,
       expire: 86400,
     },
   },

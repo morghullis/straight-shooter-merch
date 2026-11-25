@@ -5,12 +5,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { PriceRoll } from "@/components/motion/PriceRoll";
 import { Button } from "@/components/ui/Button";
-import { MinusIcon, PlusIcon } from "@/components/ui/Icons";
+import { MinusIcon, PlusIcon, TagIcon } from "@/components/ui/Icons";
 import { Price } from "@/components/ui/Price";
 import { Tape } from "@/components/ui/Tape";
 import { copy } from "@/config/copy";
 import { FOOTER_END_ID } from "@/config/site";
 import { isColorOption, productColors } from "@/lib/catalog/colors";
+import { percentOff } from "@/lib/catalog/discounts";
 import type { Product } from "@/lib/catalog/types";
 import { isAvailable as canPick, onSale } from "@/lib/catalog/variants";
 import { cn } from "@/lib/cn";
@@ -81,6 +82,8 @@ export function ProductForm({ product }: { product: Product }) {
         title: product.title,
         variantTitle: variant.title,
         price: Number(variant.price.amount),
+        regular: variant.discount ? Number(variant.discount.regular.amount) : null,
+        discount: variant.discount?.title || null,
         currency: variant.price.currencyCode,
         // The chosen colour's own picture when Shopify has one.
         image: variant.image?.url ?? product.featuredImage.url,
@@ -107,9 +110,21 @@ export function ProductForm({ product }: { product: Product }) {
           </p>
         </Tape>
         {compareAt && (
-          <span className="flex items-center gap-3">
-            <s className="text-[1.25rem] text-black/45">{formatMoney(compareAt.amount, compareAt.currencyCode)}</s>
-            <span className="bg-black px-2 py-0.5 font-nav text-[0.75rem] font-semibold tracking-[0.1em] text-gold uppercase">{copy.product.sale}</span>
+          <span className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-3">
+              <s className="text-[1.25rem] leading-none text-black/45">
+                <span className="sr-only">{copy.product.regularPrice} </span>
+                {formatMoney(compareAt.amount, compareAt.currencyCode)}
+              </s>
+              <span className="bg-black px-2 py-1 font-nav text-[0.75rem] leading-none font-semibold tracking-[0.1em] text-gold uppercase">
+                {copy.product.percentOff(percentOff(price, compareAt))}
+              </span>
+            </span>
+            {/* The saving, and the discount's name in Shopify. */}
+            <span className="flex items-center gap-1.5 text-[0.8125rem] leading-none text-black/60">
+              <TagIcon size={13} strokeWidth={2} className="flex-none" />
+              {[copy.product.youSave(formatMoney(Number(compareAt.amount) - amount, compareAt.currencyCode)), variant?.discount?.title].filter(Boolean).join(" · ")}
+            </span>
           </span>
         )}
       </div>
@@ -203,6 +218,12 @@ export function ProductForm({ product }: { product: Product }) {
             <p className="truncate text-[0.8125rem] font-semibold">{product.title}</p>
             <p className="mt-0.5 flex min-w-0 items-baseline gap-2">
               <Price amount={price.amount} currency={price.currencyCode} className="flex-none text-[1.625rem]" />
+              {compareAt && (
+                <s className="flex-none text-[0.8125rem] text-black/45">
+                  <span className="sr-only">{copy.product.regularPrice} </span>
+                  {formatMoney(compareAt.amount, compareAt.currencyCode)}
+                </s>
+              )}
               {variantLabel && <span className="truncate text-[0.75rem] text-black/55">{variantLabel}</span>}
             </p>
           </div>

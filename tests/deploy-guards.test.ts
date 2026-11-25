@@ -65,5 +65,6 @@ test("Shopify data refreshes within minutes even without a webhook (fields set b
   const lifetimes = [...catalog.matchAll(/cacheLife\("([^"]+)"\)/g)].map((m) => m[1]);
   assert.ok(lifetimes.length > 0);
   for (const life of lifetimes) assert.ok(["catalog", "minutes"].includes(life), `catalog data cached with "${life}": use "catalog"`);
-  assert.match(read("next.config.ts"), /catalog:\s*{[^}]*revalidate:\s*300/, "the catalog profile revalidates every 5 minutes");
+  const revalidate = Number(/catalog:\s*{[^}]*revalidate:\s*(\d+)/.exec(read("next.config.ts"))?.[1]);
+  assert.ok(revalidate > 0 && revalidate <= 60, "the catalog profile revalidates every minute (a discount by date sends no webhook)");
 });

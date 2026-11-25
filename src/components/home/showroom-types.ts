@@ -8,6 +8,9 @@ export interface ShowroomItem {
   price: string;
   priceAmount: number;
   currencyCode: string;
+  /** On sale: the usual price, formatted, and the label ("10% off"). */
+  was?: string;
+  sale?: string;
   href: string;
   image: string;
   imageAlt: string;

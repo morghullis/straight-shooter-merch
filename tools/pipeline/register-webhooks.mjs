@@ -23,6 +23,8 @@ const TOPICS = [
   "COLLECTIONS_DELETE",
   "INVENTORY_LEVELS_UPDATE",
 ];
+// Need the app's read_discounts scope; without it the site still notices a discount within a minute or two.
+const DISCOUNT_TOPICS = ["DISCOUNTS_CREATE", "DISCOUNTS_UPDATE", "DISCOUNTS_DELETE"];
 
 async function registered() {
   const data = await gql(`{ webhookSubscriptions(first: 100) { nodes { id topic uri } } }`);
@@ -39,6 +41,10 @@ const site = new URL(arg);
 if (site.protocol !== "https:") throw new Error("The site must be served over https");
 const uri = new URL("/api/revalidate", site).toString();
 const existing = await registered();
+
+const { currentAppInstallation } = await gql(`{ currentAppInstallation { accessScopes { handle } } }`);
+if (currentAppInstallation.accessScopes.some((s) => /^(read|write)_discounts$/.test(s.handle))) TOPICS.push(...DISCOUNT_TOPICS);
+else console.log(`skipped  ${DISCOUNT_TOPICS.join(", ")}: the app needs the read_discounts scope`);
 
 for (const topic of TOPICS) {
   if (existing.some((w) => w.topic === topic && w.uri === uri)) {

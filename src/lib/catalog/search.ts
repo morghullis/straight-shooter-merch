@@ -19,13 +19,15 @@ export interface SearchItem {
   /** The lowest price; `from` when other options cost more. */
   price: Money;
   from: boolean;
+  /** The "was" price when it is on sale. */
+  compareAt: Money | null;
   image: { url: string; alt: string };
   /** Normalised text the query is matched against. */
   text: string;
 }
 
 export function toSearchItem(p: Product, womensLabel = "Women's"): SearchItem {
-  const { price, from } = listPrice(p);
+  const { price, from, compareAt } = listPrice(p);
   return {
     handle: p.handle,
     title: p.title,
@@ -33,6 +35,7 @@ export function toSearchItem(p: Product, womensLabel = "Women's"): SearchItem {
     productType: p.productType,
     price,
     from,
+    compareAt,
     image: { url: p.featuredImage.url, alt: p.featuredImage.altText || p.title },
     text: searchText(p),
   };

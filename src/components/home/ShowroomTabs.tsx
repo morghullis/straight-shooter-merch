@@ -9,6 +9,7 @@ import { ModelViewer } from "@/components/three/ModelViewer";
 import { copy } from "@/config/copy";
 import { cn } from "@/lib/cn";
 
+import { ShowroomSale } from "./ShowroomSale";
 import type { ShowroomItem } from "./showroom-types";
 
 /**
@@ -54,7 +55,10 @@ export function ShowroomTabs({ items }: { items: ShowroomItem[] }) {
             <span className="text-white/40">/{String(items.length).padStart(2, "0")}</span>
           </p>
           <h3 className="mt-2 font-display text-[clamp(2.375rem,6vw,3.5rem)] leading-[0.92] font-extrabold uppercase">{item.title}</h3>
-          <p className="mt-2 text-[1.0625rem] text-white/85">{item.price}</p>
+          <p className="mt-2 flex items-center gap-3 text-[1.0625rem] text-white/85">
+            {item.price}
+            <ShowroomSale was={item.was} sale={item.sale} row />
+          </p>
           <Button href={item.href} className="mt-5 self-start">
             {copy.showroom.shop}
           </Button>
