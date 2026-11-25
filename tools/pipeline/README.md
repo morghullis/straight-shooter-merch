@@ -37,7 +37,7 @@ the tag `featured` puts a product in the home page's featured row. The 3D showro
 So about **54 credits per product**. A product runs when:
 
 - it is new (has photos and no 3D model yet);
-- **a photo is added to it**: the pipeline records which of the merchant's photos it used (its own images do not count), so a new one makes it redo the product with it;
+- **a photo is added to it**: the pipeline records which of the merchant's photos it used (its own images do not count), so a new one makes it redo the product with it. The same file uploaded again does not count, and it waits until the photos have been left alone for 10 minutes, so a product still being edited is made once;
 - it is tagged **`regenerate-assets`** (the tag is removed when done).
 
 Editing a title, price, stock or description never spends credits, and removing a photo does not
@@ -69,6 +69,12 @@ For the immediate start (without it a new photo can wait hours for the schedule)
 `GITHUB_DISPATCH_TOKEN` (a fine-grained token with *Contents: read and write* on this repository) and
 `GITHUB_DISPATCH_REPO` (`owner/name`).
 
+## Discount stickers: automatic
+
+`stickers.mjs` gives every automatic discount its own sticker, in the colours of a product it covers: Meshy (nano-banana-pro, 9 credits) makes the art without text on a flat magenta background, the script cuts it out, checks it (whole, round, with an empty black centre) and puts it in Shopify Files; the store's field `custom.discount_stickers` keeps it by the discount's name. The site writes the percentage on it, so changing the percentage costs nothing. A picture that fails the checks is made once more (9 more credits); after two the site keeps its plain label. Remove an entry from the field to have it made again.
+
+It reads the discounts from the site (`/api/discounts`) and runs in the same Action, with the same `MESHY_MIN_BALANCE` reserve: on any product change, on the schedule, and at once when a discount changes if the app has the `read_discounts` scope (its webhook).
+
 ## Scripts
 
 Run from this folder with Node 20+, after `npm install` in `../3d` and at the repository root. Locally the
@@ -83,6 +89,7 @@ credentials come from `PIPELINE_ENV_FILE` (default `./.env`, ignored by git): `S
 | `node generate.mjs [handle ...] [--max n]` | Processes the products that need it (or exactly these). |
 | `node generate.mjs <handle> --from-glb file.glb --local out/` | Optimises and renders a GLB into `out/` without Meshy or Shopify: a free test. |
 | `node generate.mjs <handle> --from-glb file.glb` | Redoes a product's art from a GLB you made or fixed by hand (no credits). |
+| `node stickers.mjs [--check]` | Makes the stickers of the discounts that have none (`--check` only counts them). |
 | `node import-site-assets.mjs site-assets.json` | Moved the site's existing art into Shopify (done once; `site-assets.json` is what it imported). |
 | `node register-webhooks.mjs https://your-site` | Points the store's product and collection webhooks at the site. `--list` shows them. |
 

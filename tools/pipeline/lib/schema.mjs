@@ -39,6 +39,12 @@ export const PRODUCT_FIELDS = {
     description: "This product's own shipping line, e.g. Made to order, ships in 3 to 5 business days. Shown first in Shipping & returns." },
 };
 
+/** Store-wide (owner: the shop). */
+export const SHOP_FIELDS = {
+  discountStickers: { key: "discount_stickers", name: "Discount stickers", type: "json", storefront: true,
+    description: "Written by the asset pipeline: the sticker of each discount, by name. Remove an entry to have it made again." },
+};
+
 export const COLLECTION_FIELDS = {
   shortTitle: { key: "short_title", name: "Short title", type: "single_line_text_field", storefront: true,
     description: "Name in the navigation and on the home tile label (defaults to the title)." },

@@ -67,6 +67,9 @@ export async function POST(request: Request) {
   if ((topic === "products/create" || topic === "products/update") && handle) {
     const product = handle;
     after(() => startAssetPipeline(product));
+  } else if (topic.startsWith("discounts/")) {
+    // A new discount gets its sticker.
+    after(() => startAssetPipeline("discounts"));
   }
   return Response.json({ revalidated: true, tags: [...tags] });
 }

@@ -3,7 +3,7 @@
 //   node define-metafields.mjs
 import { loadEnvFile } from "./lib/env.mjs";
 import { check, gql } from "./lib/shopify.mjs";
-import { COLLECTION_FIELDS, NAMESPACE, PRODUCT_FIELDS } from "./lib/schema.mjs";
+import { COLLECTION_FIELDS, NAMESPACE, PRODUCT_FIELDS, SHOP_FIELDS } from "./lib/schema.mjs";
 
 loadEnvFile();
 
@@ -57,3 +57,4 @@ async function define(ownerType, fields) {
 
 await define("PRODUCT", PRODUCT_FIELDS);
 await define("COLLECTION", COLLECTION_FIELDS);
+await define("SHOP", SHOP_FIELDS);

@@ -35,8 +35,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { loadEnvFile } from "./lib/env.mjs";
+import { loadEnvFile, sleep } from "./lib/env.mjs";
 import * as meshy from "./lib/meshy.mjs";
+import { fingerprint, newPhotos as photosNotUsed, quietIn } from "./lib/photos.mjs";
 import { NAMESPACE, PRODUCT_FIELDS as F } from "./lib/schema.mjs";
 import { attachToProduct, createFiles, detachFromProduct, gql, setMetafields, setTag } from "./lib/shopify.mjs";
 
@@ -44,6 +45,8 @@ loadEnvFile();
 
 const MAX_ATTEMPTS = 3;
 const STALE_RUN_MS = 2 * 60 * 60 * 1000;
+// The merchant is still adding photos: wait until they have been left alone this long.
+const QUIET_MS = 10 * 60 * 1000;
 // Two images (12 each) and the 3D model (see meshy.modelSettings).
 const CREDITS_PER_PRODUCT = 24 + meshy.modelSettings().credits;
 const MIN_BALANCE = Number(process.env.MESHY_MIN_BALANCE ?? 100);
@@ -74,7 +77,7 @@ const log = (...m) => console.log(...m);
 
 const FIELDS = `
   id handle title productType tags
-  media(first: 50) { nodes { id mediaContentType ... on MediaImage { image { url } } } }
+  media(first: 50) { nodes { id mediaContentType ... on MediaImage { createdAt image { url width height } originalSource { fileSize } } } }
   model: metafield(namespace: "${NAMESPACE}", key: "${F.model.key}") { id }
   turntable: metafield(namespace: "${NAMESPACE}", key: "${F.turntable.key}") { value }
   onModel: metafield(namespace: "${NAMESPACE}", key: "${F.onModel.key}") { value }
@@ -120,6 +123,7 @@ const parse = (value, fallback) => {
 const stateOf = (p) => parse(p.pipeline?.value, {});
 /** The merchant photos the last run started from (a list of media ids), or null if never recorded. */
 const photosUsed = (state) => (Array.isArray(state.photos) ? state.photos : null);
+const fingerprintsUsed = (state) => (Array.isArray(state.fingerprints) ? state.fingerprints : []);
 const hasTag = (p, tag) => p.tags.some((t) => t.toLowerCase() === tag);
 
 /** The images the pipeline made for the product (recorded, or still referenced by its fields). */
@@ -138,27 +142,35 @@ function merchantPhotos(p) {
 }
 
 /**
- * What to do with a product: { action: "run" | "adopt" | "skip", reason }. "adopt" records the photos
- * of a product that got its assets before photos were tracked, so only photos added later count.
+ * What to do with a product: { action: "run" | "wait" | "adopt" | "skip", reason }. "adopt" records the
+ * photos without spending: of a product that got its assets before photos were tracked, or the same photos
+ * uploaded again. "wait": the merchant added photos minutes ago and may still be at it.
  */
 function plan(p) {
   const state = stateOf(p);
-  const photos = merchantPhotos(p).map((m) => m.id);
-  const usedBefore = new Set(photosUsed(state) ?? []);
-  const newPhotos = photos.filter((id) => !usedBefore.has(id));
+  const merchant = merchantPhotos(p);
+  const photos = merchant.map((m) => m.id);
+  const newPhotos = photosNotUsed(merchant, photosUsed(state) ?? [], fingerprintsUsed(state));
   if (hasTag(p, TAG.skip)) return { action: "skip", reason: `tagged "${TAG.skip}"` };
   if (state.state === "running" && Date.now() - Date.parse(state.startedAt ?? 0) < STALE_RUN_MS) return { action: "skip", reason: "already running" };
   if (args.targets.length) return { action: "run", reason: "asked for" };
   if (p.model && !photosUsed(state)) return { action: "adopt", reason: "has its assets; recording its photos" };
   if (!photos.length && !args.fromGlb) return { action: "skip", reason: "no photo yet" };
   if (hasTag(p, TAG.redo)) return { action: "run", reason: `tagged "${TAG.redo}"` };
-  if (p.model && !newPhotos.length) return { action: "skip", reason: "up to date" };
+  if (p.model && !newPhotos.length) {
+    // The same photos uploaded again: remember their new ids, spend nothing.
+    if (photos.some((id) => !(photosUsed(state) ?? []).includes(id))) return { action: "adopt", reason: "the same photos, uploaded again" };
+    if (!Array.isArray(state.fingerprints)) return { action: "adopt", reason: "recording what its photos are" };
+    return { action: "skip", reason: "up to date" };
+  }
   // The same photos failed too often: wait for new photos (or the tag) instead of spending again.
   const failedWith = Array.isArray(state.failedPhotos) ? state.failedPhotos : [];
   const samePhotos = photos.length === failedWith.length && photos.every((id) => failedWith.includes(id));
   if (state.state === "failed" && samePhotos && (state.attempts ?? 0) >= MAX_ATTEMPTS) {
     return { action: "skip", reason: `failed ${state.attempts} times with these photos (add a photo or tag it "${TAG.redo}")` };
   }
+  const wait = quietIn(merchant, QUIET_MS);
+  if (wait > 0) return { action: "wait", reason: `photos just added; waiting ${Math.ceil(wait / 60_000)} min of quiet`, wait };
   return { action: "run", reason: p.model ? `${newPhotos.length} new photo(s)` : "no assets yet" };
 }
 
@@ -192,6 +204,7 @@ async function processProduct(p, tools) {
     // The photos of the last good run: they change only when this run succeeds, so a failed run
     // with a new photo is tried again.
     photos: photosUsed(before) ?? [],
+    fingerprints: fingerprintsUsed(before),
     generated: Array.isArray(before.generated) ? before.generated : [],
   };
   if (!args.local) await setPipeline(p.id, record);
@@ -278,7 +291,7 @@ async function processProduct(p, tools) {
     await detachFromProduct(p.id, old);
     await attachToProduct(p.id, lead);
     if (hasTag(p, TAG.redo)) await setTag(p.id, TAG.redo, false);
-    await setPipeline(p.id, { ...record, state: "done", finishedAt: new Date().toISOString(), tasks, photos: source, generated: lead });
+    await setPipeline(p.id, { ...record, state: "done", finishedAt: new Date().toISOString(), tasks, photos: source, fingerprints: photos.map(fingerprint), generated: lead });
     progress("done");
   } catch (err) {
     if (!args.local) {
@@ -290,11 +303,21 @@ async function processProduct(p, tools) {
   }
 }
 
-const products = await loadProducts();
+let products = await loadProducts();
+// Photos still arriving: stay until they settle (another edit starts no second run: the Action does one
+// at a time), then look again. `--check` counts them as work to do.
+const waiting = () => Math.max(0, ...products.map((p) => plan(p).wait ?? 0));
+for (let waited = 0; !args.check && !args.dryRun && waiting() > 0 && waited < 6; waited++) {
+  log(`photos just added: looking again in ${Math.ceil(waiting() / 60_000)} min`);
+  await sleep(waiting() + 5000);
+  products = await loadProducts();
+}
 const queue = [];
 const adopt = [];
 for (const p of products) {
-  const { action, reason } = plan(p);
+  const planned = plan(p);
+  const { reason } = planned;
+  const action = planned.action === "wait" && args.check ? "run" : planned.action;
   if (action === "run") queue.push(p);
   else if (action === "adopt") adopt.push(p);
   if (args.targets.length || args.dryRun || action !== "skip") log(`${action.padEnd(5)} ${p.handle}: ${reason}`);
@@ -304,7 +327,8 @@ for (const p of products) {
 if (!args.dryRun && !args.local) {
   for (const p of adopt) {
     const state = stateOf(p);
-    await setPipeline(p.id, { ...state, photos: merchantPhotos(p).map((m) => m.id), generated: [...generatedIds(p)] });
+    const merchant = merchantPhotos(p);
+    await setPipeline(p.id, { ...state, photos: merchant.map((m) => m.id), fingerprints: merchant.map(fingerprint), generated: [...generatedIds(p)] });
   }
 }
 

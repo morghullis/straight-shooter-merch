@@ -75,11 +75,29 @@ jobs:
           set -f
           node tools/pipeline/generate.mjs $PRODUCTS --check
 
+      # Discounts without a sticker: asks the site, installs nothing. Sets `stickers`. Never stops the rest.
+      - name: Check stickers
+        id: stickers
+        continue-on-error: true
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: node tools/pipeline/stickers.mjs --check
+
       # three.js comes from the storefront's dependencies; the 3D tools have their own.
       - if: steps.check.outputs.pending != '0'
         run: npm ci --ignore-scripts
-      - if: steps.check.outputs.pending != '0'
+      - if: steps.check.outputs.pending != '0' || (steps.stickers.outputs.stickers || '0') != '0'
         run: npm ci --prefix tools/3d
+
+      - name: Stickers
+        if: (steps.stickers.outputs.stickers || '0') != '0' && env.SMOKE == ''
+        continue-on-error: true
+        env:
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          MESHY_API_KEY: ${{ secrets.MESHY_API_KEY }}
+        run: node tools/pipeline/stickers.mjs
 
       - name: Generate
         if: steps.check.outputs.pending != '0'
