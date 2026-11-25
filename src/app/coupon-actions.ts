@@ -12,8 +12,11 @@ import { allow } from "@/lib/rate-limit";
 
 export type ClaimResult = { ok: true } | { ok: false; field?: "name" | "email" | "consent"; message: string };
 
-const PER_VISITOR = 5;
 const HOUR = 3_600_000;
+/** Goes an hour: from one connection, for one email address, and in all (a flood stops here). */
+const PER_VISITOR = 5;
+const PER_EMAIL = 2;
+const IN_ALL = 300;
 
 /**
  * Someone asks for the coupon: their own code is added to the discount in Shopify, they are saved as a
@@ -29,9 +32,10 @@ export async function claimCoupon(input: { popup: string; name: string; email: s
   if (input.consent !== true) return { ok: false, field: "consent", message: t.consent };
   if (!isCouponConfigured) return { ok: false, message: t.ended };
 
-  const h = await headers();
-  const visitor = h.get("x-nf-client-connection-ip") ?? h.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  if (!(await allow("coupon", visitor, PER_VISITOR, HOUR))) return { ok: false, message: t.tooMany };
+  // Only the address Netlify itself sees: the other headers are whatever the sender writes. Without it, everyone shares one count.
+  const visitor = (await headers()).get("x-nf-client-connection-ip") ?? "unknown";
+  if (!(await allow("coupon-visitor", visitor, PER_VISITOR, HOUR))) return { ok: false, message: t.tooMany };
+  if (!(await allow("coupon-all", "all", IN_ALL, HOUR))) return { ok: false, message: t.tooMany };
 
   try {
     // Asked of Shopify now, not of the cache: the discount may have ended a second ago.
@@ -40,9 +44,11 @@ export async function claimCoupon(input: { popup: string; name: string; email: s
     const discount = base ? await fetchCouponDiscount(base) : null;
     if (!base || !discount || discount.status !== "ACTIVE" || !isOn(discount, Date.now())) return { ok: false, message: t.ended };
 
+    // The form does not prove whose address it is, so from here on the answer is always the same, an
+    // address gets one email per discount, and someone who unsubscribed is never signed up again by it.
+    if (!(await allow("coupon-email", `${discount.id}:${lead.email}`, PER_EMAIL, HOUR))) return { ok: true };
     const known = await findCustomer(lead.email);
-    // One code per person and discount: asking again changes nothing.
-    if (known && existingCode(known.tags, base)) return { ok: true };
+    if (known && (known.unsubscribed || existingCode(known.tags, base))) return { ok: true };
 
     const code = personalCode(base, randomBytes(8));
     await addCode(discount.id, code);

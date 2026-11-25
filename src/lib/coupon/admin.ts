@@ -126,29 +126,28 @@ export async function addCode(discountId: string, code: string): Promise<void> {
 
 export const FIND_CUSTOMER = /* GraphQL */ `
   query CouponCustomer($email: String!) {
-    customerByIdentifier(identifier: { emailAddress: $email }) { id firstName tags defaultEmailAddress { marketingState } }
+    customerByIdentifier(identifier: { emailAddress: $email }) { id tags defaultEmailAddress { marketingState } }
   }
 `;
 
 export interface KnownCustomer {
   id: string;
-  firstName: string | null;
   tags: string[];
   subscribed: boolean;
+  /** They asked to be left alone. */
+  unsubscribed: boolean;
 }
 
 export async function findCustomer(email: string): Promise<KnownCustomer | null> {
   const { customerByIdentifier: c } = await admin<{
-    customerByIdentifier: { id: string; firstName: string | null; tags: string[]; defaultEmailAddress: { marketingState: string } | null } | null;
+    customerByIdentifier: { id: string; tags: string[]; defaultEmailAddress: { marketingState: string } | null } | null;
   }>(FIND_CUSTOMER, { email });
-  return c && { id: c.id, firstName: c.firstName, tags: c.tags, subscribed: c.defaultEmailAddress?.marketingState === "SUBSCRIBED" };
+  const state = c?.defaultEmailAddress?.marketingState;
+  return c && { id: c.id, tags: c.tags, subscribed: state === "SUBSCRIBED", unsubscribed: state === "UNSUBSCRIBED" };
 }
 
 export const CREATE_CUSTOMER = /* GraphQL */ `
   mutation CouponLead($input: CustomerInput!) { customerCreate(input: $input) { customer { id } userErrors { message } } }
-`;
-export const NAME_CUSTOMER = /* GraphQL */ `
-  mutation CouponLeadName($input: CustomerInput!) { customerUpdate(input: $input) { userErrors { message } } }
 `;
 export const CONSENT = /* GraphQL */ `
   mutation CouponConsent($input: CustomerEmailMarketingConsentUpdateInput!) { customerEmailMarketingConsentUpdate(input: $input) { userErrors { message } } }
@@ -161,7 +160,7 @@ const consent = () => ({ marketingState: "SUBSCRIBED", marketingOptInLevel: "SIN
 
 /**
  * The lead in Shopify: a customer with their name, their consent to marketing emails and their code as a
- * tag. The tag goes on last: it is what starts the email in Shopify (docs/COUPON-POPUP.md).
+ * tag. An existing customer keeps their own name (the form proves nothing about who fills it in). The tag goes on last: it is what starts the email in Shopify (docs/COUPON-POPUP.md).
  */
 export async function saveLead(lead: { name: string; email: string }, known: KnownCustomer | null, tags: string[]): Promise<void> {
   let id = known?.id;
@@ -171,10 +170,6 @@ export async function saveLead(lead: { name: string; email: string }, known: Kno
     });
     check(customerCreate.userErrors, "customer");
     id = customerCreate.customer?.id;
-  }
-  if (known && !known.firstName) {
-    const { customerUpdate } = await admin<{ customerUpdate: { userErrors: { message: string }[] } }>(NAME_CUSTOMER, { input: { id: known.id, firstName: lead.name } });
-    check(customerUpdate.userErrors, "customer name");
   }
   if (known && !known.subscribed) {
     const { customerEmailMarketingConsentUpdate: r } = await admin<{ customerEmailMarketingConsentUpdate: { userErrors: { message: string }[] } }>(CONSENT, {
