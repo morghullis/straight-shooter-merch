@@ -16,6 +16,7 @@ import { copy } from "@/config/copy";
 import { modelSpecFor } from "@/config/models";
 import { site } from "@/config/site";
 import { getProduct, getProducts, getRelatedProducts } from "@/lib/catalog";
+import { pickerPhotos } from "@/lib/catalog/options";
 import { isWomens } from "@/lib/catalog/order";
 import { isSafeHandle } from "@/lib/format";
 
@@ -139,6 +140,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
               <ProductMedia
                 title={product.title}
                 images={product.images.map((i) => ({ url: i.url, alt: i.altText }))}
+                inPicker={[...pickerPhotos(product)]}
                 model={modelSpecFor(product)}
               />
             </div>

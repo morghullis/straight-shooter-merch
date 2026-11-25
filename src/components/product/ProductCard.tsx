@@ -3,6 +3,7 @@ import Link from "next/link";
 import { copy } from "@/config/copy";
 import type { Product } from "@/lib/catalog";
 import { saleOf } from "@/lib/catalog/discounts";
+import { galleryPhotos, pickerPhotos } from "@/lib/catalog/options";
 import { isWomens } from "@/lib/catalog/order";
 import { Price } from "@/components/ui/Price";
 import { listPrice, numericId } from "@/lib/catalog/variants";
@@ -51,7 +52,8 @@ export function ProductCard({ product, priority = false, size = "sm", rail = fal
     : "(min-width: 1326px) 13vw, (min-width: 1024px) 173px, (min-width: 640px) 33vw, 50vw";
 
   // The carousel is the product's own angles; the on-model shot lives on hover, so it is left out here.
-  const angles = product.images
+  // A product with one photo per value of an option (seven quotes) shows one of them, not all.
+  const angles = galleryPhotos(product.images, pickerPhotos(product), product.variants[0]?.image?.url ?? null)
     .filter((image) => image.url !== hover?.url)
     .slice(0, MAX_ANGLES)
     .map((image) => ({ url: image.url, alt: image.altText || product.title }));
