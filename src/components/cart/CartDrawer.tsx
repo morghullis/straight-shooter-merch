@@ -15,13 +15,12 @@ import { formatMoney } from "@/lib/format";
 import { lockPageScroll } from "@/lib/scroll-lock";
 
 import { useCart } from "./CartProvider";
-import { CouponField } from "./CouponField";
 
 const stepper =
   "grid h-full w-11 place-items-center text-white/80 transition-colors hover:text-gold sm:w-8";
 
 export function CartDrawer() {
-  const { lines, count, quote, quoting, code, isOpen, close, setQuantity, remove } = useCart();
+  const { lines, count, quote, quoting, isOpen, close, setQuantity, remove } = useCart();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -51,7 +50,6 @@ export function CartDrawer() {
     startTransition(async () => {
       const result = await createCheckout(
         lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
-        code,
       );
       if ("url" in result) {
         window.location.assign(result.url);
@@ -198,7 +196,6 @@ export function CartDrawer() {
             </ul>
 
             <footer className="border-t border-white/10 px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-              <CouponField />
               <Totals quote={quote} pending={quoting} />
               <p className="mt-1 text-xs text-white/45">{copy.cart.note}</p>
 

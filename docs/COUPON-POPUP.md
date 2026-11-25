@@ -7,15 +7,16 @@ visitor fills in the popup
   -> the site adds a code of theirs to your discount       (Shopify: discountRedeemCodeBulkAdd)
   -> saves them as a customer: name, consent, tag coupon:CODE
   -> Shopify Flow sees the tag and sends the email          (Shopify Messaging, template below)
-  -> the email's button opens straightshootershop.com/?coupon=CODE
-  -> the code sits in the cart, Shopify says if it applies, checkout opens with it in
+  -> they type it at Shopify's checkout, which validates it
 ```
+
+**Nothing of this is in the browser.** The codes (the discount's and everyone's) exist only in Shopify and in the email: the site's server asks Shopify, and the page only ever receives "ok" or an error. The popup's entry is closed to the storefront API. The browser keeps one thing, that this popup was closed or answered (no name, no email, no code).
 
 Why a tag: Shopify Messaging can print a customer's **tags** in an email but not their metafields or a generated code ([supported variables](https://help.shopify.com/en/manual/promoting-marketing/create-marketing/shopify-messaging/email/create-email/custom-liquid)). Each code is redeemable `usageLimit` times *per code* ([DiscountCodeBasicInput](https://shopify.dev/docs/api/admin-graphql/2026-10/input-objects/DiscountCodeBasicInput)).
 
 ## Set it up (once)
 
-1. **App.** dev.shopify.com > Apps > Create app, named *Coupon popup*. Version scopes: `read_discounts`, `write_discounts`, `read_customers`, `write_customers`, and nothing else. In its API access, request **protected customer data** (name and email; reason: marketing). Release the version and install it on the store. A separate app, so the website never holds the keys to products or orders.
+1. **App.** dev.shopify.com > Apps > Create app, named *Coupon popup*. Version scopes: `read_discounts`, `write_discounts`, `read_customers`, `write_customers`, `read_metaobjects`, and nothing else. In its API access, request **protected customer data** (name and email; reason: marketing). Release the version and install it on the store. A separate app, so the website never holds the keys to products or orders.
 2. **Keys.** On Netlify (Site configuration > Environment variables) add the app's `SHOPIFY_COUPON_CLIENT_ID` and `SHOPIFY_COUPON_CLIENT_SECRET` (mark the secret as secret), then deploy again. Without them the popup is off and nothing is saved.
 3. **Email.** Shopify > Messaging > create an email from *Code your own* with the template below, save it as a template.
 4. **Flow.** Shopify Flow > Create workflow: trigger *Customer tags added*; condition *any added tag starts with* `coupon:`; action *Send marketing email* (that template). Turn it on and test it with your own address before anything else.
@@ -42,9 +43,9 @@ Change `WELCOME10` to your code when you make a new campaign (a customer may hav
       <tr><td style="background:#0b0b0b;padding:28px;color:#f0ab27;font-size:12px;letter-spacing:2px;text-transform:uppercase">{{ shop.name }}</td></tr>
       <tr><td style="padding:32px 28px;color:#14110a">
         <p style="margin:0;font-size:38px;line-height:1;font-weight:900;text-transform:uppercase">{% if customer.first_name != blank %}{{ customer.first_name }}, your code is in.{% else %}Your code is in.{% endif %}</p>
-        <p style="margin:18px 0 0;font-size:16px;line-height:1.5">It is yours only and good for one order.</p>
+        <p style="margin:18px 0 0;font-size:16px;line-height:1.5">It is yours only and good for one order. Type it in at checkout.</p>
         <p style="margin:22px 0;padding:16px;border:2px dashed #14110a;font-size:24px;font-weight:700;letter-spacing:2px;text-align:center">{{ code }}</p>
-        <p style="margin:0;text-align:center"><a href="https://straightshootershop.com/?coupon={{ code }}" style="display:inline-block;background:#14110a;color:#fff;padding:16px 28px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-decoration:none">Shop with my code</a></p>
+        <p style="margin:0;text-align:center"><a href="https://straightshootershop.com/collections/all" style="display:inline-block;background:#14110a;color:#fff;padding:16px 28px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-decoration:none">Shop now</a></p>
       </td></tr>
       <tr><td style="background:#0b0b0b;padding:20px 28px;color:#999;font-size:12px">{{ unsubscribe_link }}</td></tr>
     </table>

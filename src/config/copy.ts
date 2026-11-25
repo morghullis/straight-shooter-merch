@@ -70,7 +70,7 @@ export const copy = {
     no: "No thanks",
     company: "Company",
     successTitle: "Check your inbox.",
-    successText: "Your code is on its way. Open the email on any device: the link puts the code in your cart.",
+    successText: "Your code is on its way. Type it in at checkout.",
     successButton: "Keep shopping",
     errors: {
       name: "Add your first name.",
@@ -97,18 +97,6 @@ export const copy = {
     /** A discount Shopify gives no name to. */
     discount: "Discount",
     regularPrice: "Regular price",
-    coupon: {
-      have: "Have a discount code?",
-      label: "Discount code",
-      placeholder: "Enter your code",
-      apply: "Apply",
-      wrong: "That does not look like a code.",
-      checking: "Checking it…",
-      saved: "Saved. It is checked in your cart.",
-      applied: "Applied to your order",
-      notApplied: "Not valid for this cart. It may have ended, been used, or be for other items.",
-      remove: (code: string) => `Remove code ${code}`,
-    },
     note: "Shipping and taxes are calculated at checkout.",
     checkout: "Checkout",
     checkingOut: "Starting checkout…",

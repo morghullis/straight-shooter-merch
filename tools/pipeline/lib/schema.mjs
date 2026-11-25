@@ -42,7 +42,8 @@ export const PRODUCT_FIELDS = {
 /** Content > Metaobjects in the admin. */
 export const METAOBJECTS = {
   couponPopup: {
-    type: "coupon_popup", name: "Coupon popup", displayNameKey: "discount_code",
+    // Never readable from the storefront: it names the discount's code.
+    type: "coupon_popup", storefront: false, name: "Coupon popup", displayNameKey: "discount_code",
     description: "The popup that asks for an email and sends a discount code. It shows while its discount is active in Shopify.",
     fields: [
       { key: "discount_code", name: "Discount code", type: "single_line_text_field", required: true,

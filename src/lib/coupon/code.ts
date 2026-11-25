@@ -11,7 +11,7 @@ export interface CouponOffer {
   endsAt: string | null;
 }
 
-/** Any Shopify code the site passes on (typed by the shopper or taken from the email's link). */
+/** A Shopify discount code, as typed in the popup's entry. */
 const CODE = /^[A-Za-z0-9][A-Za-z0-9_-]{2,59}$/;
 export const cleanCode = (value: unknown): string | null => {
   const code = typeof value === "string" ? value.trim().toUpperCase() : "";

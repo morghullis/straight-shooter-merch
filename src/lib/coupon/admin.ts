@@ -1,11 +1,13 @@
 import "server-only";
 
+import type { CatalogImage } from "@/lib/catalog/types";
+
 import type { CouponOffer } from "./code";
 
 /**
  * The store's Admin API, for the coupon popup only. It has its own app, with no more than it needs
- * (read_discounts, write_discounts, read_customers, write_customers), so the site never holds the keys
- * to products, files or orders. Without its credentials the popup is off.
+ * (read_discounts, write_discounts, read_customers, write_customers, read_metaobjects), so the site never
+ * holds the keys to products, files or orders. Without its credentials the popup is off.
  */
 const domain = process.env.SHOPIFY_STORE_DOMAIN;
 const clientId = process.env.SHOPIFY_COUPON_CLIENT_ID;
@@ -48,6 +50,59 @@ async function admin<T>(query: string, variables: Record<string, unknown>): Prom
 
 function check(errors: { message: string }[], what: string) {
   if (errors.length) throw new Error(`${what}: ${errors.map((e) => e.message).join("; ")}`);
+}
+
+/** One "Coupon popup" entry (metaobject `coupon_popup`), as typed in Shopify. Only the Admin API can read it. */
+export interface CouponPopupEntry {
+  id: string;
+  /** The code of the discount it offers. It never leaves the server. */
+  code: string | null;
+  kicker: string | null;
+  title: string | null;
+  text: string | null;
+  button: string | null;
+  successTitle: string | null;
+  successText: string | null;
+  image: CatalogImage | null;
+  delay: number;
+}
+
+export const POPUPS_QUERY = /* GraphQL */ `
+  query CouponPopups {
+    metaobjects(type: "coupon_popup", first: 10) {
+      nodes {
+        id
+        capabilities { publishable { status } }
+        fields { key value reference { ... on MediaImage { alt image { url width height } } } }
+      }
+    }
+  }
+`;
+
+/** The entries set to Active. */
+export async function fetchCouponPopups(): Promise<CouponPopupEntry[]> {
+  type Field = { key: string; value: string | null; reference?: { alt?: string | null; image?: { url: string; width: number | null; height: number | null } | null } | null };
+  const data = await admin<{ metaobjects: { nodes: { id: string; capabilities: { publishable: { status: string } }; fields: Field[] }[] } }>(POPUPS_QUERY, {});
+  return data.metaobjects.nodes
+    .filter((n) => n.capabilities.publishable.status === "ACTIVE")
+    .map((n) => {
+      const field = (key: string) => n.fields.find((f) => f.key === key);
+      const text = (key: string) => field(key)?.value?.trim() || null;
+      const photo = field("image")?.reference;
+      const delay = Number.parseInt(text("delay_seconds") ?? "", 10);
+      return {
+        id: n.id,
+        code: text("discount_code"),
+        kicker: text("kicker"),
+        title: text("title"),
+        text: text("text"),
+        button: text("button"),
+        successTitle: text("success_title"),
+        successText: text("success_text"),
+        image: photo?.image ? { url: photo.image.url, altText: photo.alt ?? "", width: photo.image.width ?? 1200, height: photo.image.height ?? 900 } : null,
+        delay: Number.isFinite(delay) ? Math.min(120, Math.max(2, delay)) : 8,
+      };
+    });
 }
 
 export const DISCOUNT_QUERY = /* GraphQL */ `
@@ -121,6 +176,8 @@ export async function addCode(discountId: string, code: string): Promise<void> {
     const { discountRedeemCodeBulkCreation: now } = await admin<{ discountRedeemCodeBulkCreation: Omit<Bulk, "id"> | null }>(CODE_STATUS, { id: bulk.id });
     bulk = now ? { id: bulk.id, ...now } : null;
   }
+  // Not imported because it is already there: an earlier try got through.
+  if (bulk?.done && bulk.importedCount < 1 && (await fetchCouponDiscount(code))?.id === discountId) return;
   if (!bulk?.done || bulk.importedCount < 1) throw new Error("coupon code: Shopify did not take it");
 }
 

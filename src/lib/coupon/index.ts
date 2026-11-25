@@ -1,12 +1,16 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { cacheLife, cacheTag } from "next/cache";
 
-import { fetchCouponPopups } from "@/lib/catalog/shopify";
 import type { CatalogImage } from "@/lib/catalog/types";
 
-import { fetchCouponDiscount, isCouponConfigured } from "./admin";
+import { fetchCouponDiscount, fetchCouponPopups, isCouponConfigured } from "./admin";
 import { cleanCode, type CouponOffer } from "./code";
+
+/** What the browser knows the popup by: nothing that means anything in Shopify. */
+export const publicId = (id: string) => createHash("sha256").update(id).digest("hex").slice(0, 16);
 
 /** What the popup says: the active "Coupon popup" entry in Shopify (Content > Metaobjects). Empty texts use the site's own. */
 export interface CouponTexts {
@@ -38,11 +42,11 @@ export async function getCouponPopup(): Promise<CouponPopupData | null> {
 
   if (!isCouponConfigured) return null;
   try {
-    for (const { code, ...texts } of await fetchCouponPopups()) {
+    for (const { code, id, ...texts } of await fetchCouponPopups()) {
       const base = cleanCode(code);
       const discount = base ? await fetchCouponDiscount(base) : null;
       if (discount && discount.status !== "EXPIRED") {
-        return { label: discount.label, startsAt: discount.startsAt, endsAt: discount.endsAt, texts };
+        return { label: discount.label, startsAt: discount.startsAt, endsAt: discount.endsAt, texts: { ...texts, id: publicId(id) } };
       }
     }
   } catch (error) {

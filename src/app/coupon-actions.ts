@@ -6,9 +6,8 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 
 import { copy } from "@/config/copy";
-import { fetchCouponPopups } from "@/lib/catalog/shopify";
-import { getCouponPopup } from "@/lib/coupon";
-import { addCode, fetchCouponDiscount, findCustomer, isCouponConfigured, saveLead, type CouponDiscount } from "@/lib/coupon/admin";
+import { getCouponPopup, publicId } from "@/lib/coupon";
+import { addCode, fetchCouponDiscount, fetchCouponPopups, findCustomer, isCouponConfigured, saveLead, type CouponDiscount } from "@/lib/coupon/admin";
 import { cleanCode, cleanLead, codeTag, existingCode, isOn, personalCode } from "@/lib/coupon/code";
 import { allow } from "@/lib/rate-limit";
 
@@ -47,7 +46,7 @@ export async function claimCoupon(input: { popup: string; name: string; email: s
   let discount: CouponDiscount | null;
   try {
     // Asked of Shopify now: the discount may have ended a second ago.
-    const entry = (await fetchCouponPopups()).find((p) => p.id === input.popup);
+    const entry = (await fetchCouponPopups()).find((p) => publicId(p.id) === input.popup);
     base = cleanCode(entry?.code);
     discount = base ? await fetchCouponDiscount(base) : null;
   } catch (error) {
@@ -56,30 +55,35 @@ export async function claimCoupon(input: { popup: string; name: string; email: s
   }
   if (!base || !discount || discount.status !== "ACTIVE" || !isOn(discount, Date.now())) return { ok: false, message: t.ended };
   if (!(await allow("coupon-email", `${discount.id}:${lead.email}`, PER_EMAIL, HOUR))) return { ok: true };
-  if (!(await allow("coupon-new", discount.id, NEW_CODES, HOUR))) {
-    console.error("[coupon] too many codes asked for in an hour: paused");
-    return { ok: false, message: t.failed };
-  }
 
   const [discountId, prefix] = [discount.id, base];
   after(() => deliver(lead, discountId, prefix));
   return { ok: true };
 }
 
-/** Their own code in the discount, then the lead in Shopify (which emails it). Once per person and discount. */
+/**
+ * Their own code in the discount, then the lead in Shopify (which emails it). Once per person and
+ * discount: one code is made, and a second try only does what is left. The code is never sent to the
+ * browser, nor written to the log.
+ */
 async function deliver(lead: { name: string; email: string }, discountId: string, base: string): Promise<void> {
+  const code = personalCode(base, randomBytes(8));
+  let added = false;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const known = await findCustomer(lead.email);
       // Someone who unsubscribed is never signed up again by a form that proves nothing about who fills it in.
       if (known && (known.unsubscribed || existingCode(known.tags, base))) return;
-      const code = personalCode(base, randomBytes(8));
-      await addCode(discountId, code);
+      if (!added) {
+        if (!(await allow("coupon-new", discountId, NEW_CODES, HOUR))) throw new Error("too many new codes in an hour: paused");
+        await addCode(discountId, code);
+        added = true;
+      }
       await saveLead(lead, known, ["coupon-popup", codeTag(code)]);
       return;
     } catch (error) {
       console.error(`[coupon] delivery, try ${attempt}: ${error instanceof Error ? error.message : error}`);
-      await new Promise((r) => setTimeout(r, 1500));
+      if (attempt === 1) await new Promise((r) => setTimeout(r, 1500));
     }
   }
 }

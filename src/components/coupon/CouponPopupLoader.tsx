@@ -36,15 +36,15 @@ function remember(value: Seen) {
 
 function Loader({ popup }: { popup: CouponPopupData }) {
   const pathname = usePathname();
-  const { code, isOpen: cartOpen } = useCart();
+  const { isOpen: cartOpen } = useCart();
   const [open, setOpen] = useState(false);
   const { id, delay } = popup.texts;
   const quiet = QUIET.test(pathname);
 
-  // After a moment on the page, or halfway down it, whichever comes first; never over another panel, never
-  // for someone who already has a code, and only between the discount's dates.
+  // After a moment on the page, or halfway down it, whichever comes first; never over another panel,
+  // and only between the discount's dates.
   useEffect(() => {
-    if (open || quiet || code || cartOpen) return;
+    if (open || quiet || cartOpen) return;
     const before = seen();
     if (before?.id === id && (before.done || Date.now() - before.at < AGAIN_AFTER_MS)) return;
 
@@ -72,7 +72,7 @@ function Loader({ popup }: { popup: CouponPopupData }) {
       clearTimeout(timer);
       window.removeEventListener("scroll", onScroll);
     };
-  }, [open, quiet, code, cartOpen, id, delay, popup]);
+  }, [open, quiet, cartOpen, id, delay, popup]);
 
   // It goes the second the discount ends.
   useEffect(() => {
