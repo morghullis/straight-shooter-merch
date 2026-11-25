@@ -25,10 +25,10 @@ const IN_ALL = 3000;
  * at; the rest happens after the answer. So the answer, and how long it takes, is the same for everyone
  * and never tells whether an address is a customer's.
  */
-export async function claimCoupon(input: { popup: string; name: string; email: string; consent: boolean; company: string }): Promise<ClaimResult> {
+export async function claimCoupon(input: { popup: string; name: string; email: string; consent: boolean; trap: boolean }): Promise<ClaimResult> {
   const t = copy.coupon.errors;
-  // Honeypot: people never see this field.
-  if (input.company) return { ok: true };
+  // Honeypot: people never see this box.
+  if (input.trap) return { ok: true };
   const lead = cleanLead(input);
   if ("wrong" in lead) return { ok: false, field: lead.wrong, message: lead.wrong === "name" ? t.name : t.email };
   if (input.consent !== true) return { ok: false, field: "consent", message: t.consent };

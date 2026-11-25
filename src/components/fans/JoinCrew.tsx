@@ -75,11 +75,11 @@ export function JoinCrew() {
               aria-invalid={state.status === "error"}
               className="mt-1 h-12 w-full border-0 border-b-[0.1875rem] border-[#14110a] bg-transparent px-0 text-[1.125rem] font-medium placeholder:text-[#14110a]/45 focus:border-b-[0.3125rem] focus:outline-none"
             />
-            {/* Honeypot: real people never see or fill it. */}
+            {/* Honeypot, a box nobody sees (browsers fill text fields in by themselves). */}
             <div aria-hidden="true" className="absolute -left-[624.9375rem] h-0 w-0 overflow-hidden">
               <label>
                 {copy.crew.honeypot}
-                <input type="text" name="company" tabIndex={-1} autoComplete="off" />
+                <input type="checkbox" name="extra" tabIndex={-1} autoComplete="off" />
               </label>
             </div>
             <Button type="submit" variant="ink" size="lg" disabled={pending} className="mt-4 w-full sm:w-auto">

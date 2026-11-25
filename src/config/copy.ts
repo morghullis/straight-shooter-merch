@@ -68,7 +68,7 @@ export const copy = {
     consent: "Email me offers and drops too. I can unsubscribe any time.",
     endsIn: (left: string) => `Ends in ${left}`,
     no: "No thanks",
-    company: "Company",
+    trap: "Leave this box empty",
     successTitle: "Check your inbox.",
     successText: "Your code is on its way. Type it in at checkout.",
     successButton: "Keep shopping",
