@@ -27,18 +27,33 @@ const stop = (why) => {
 const domain = netlify("env:get", "SHOPIFY_STORE_DOMAIN", "--site", SITE, "--context", "production").stdout.trim();
 if (!/^[a-z0-9-]+\.myshopify\.com$/.test(domain)) stop("Could not read the store from Netlify. Is the netlify command signed in?");
 
-const id = await ask("Client ID: ", false);
-const secret = await ask("Client secret (it does not show): ", true);
+// Asked again until Shopify takes them: a wrong paste must not end the script (the next paste would land in the shell).
+let res;
+let id;
+let secret;
+for (;;) {
+  id ??= await ask("Client ID: ", false);
+  if (!/^[0-9a-f]{32}$/.test(id)) {
+    console.log("That is not a Client ID (32 letters and numbers). Try again.");
+    id = undefined;
+    continue;
+  }
+  secret = await ask("Client secret (it does not show): ", true);
+  if (!/^shpss_[0-9a-f]{32}$/.test(secret)) {
+    console.log("That is not the Client secret (it starts with shpss_). Copy it again and paste it here.");
+    continue;
+  }
+  res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+  });
+  if (res.ok) break;
+  const why = (await res.text()).match(/(application_cannot_be_found|invalid_client|shop_not_permitted|app_not_installed|[a-z]+(?:_[a-z]+)+)/)?.[0] ?? res.status;
+  console.log(`Shopify did not accept them (${why}). Try again, or Ctrl-C to leave.`);
+  id = undefined;
+}
 rl.close();
-if (!/^[0-9a-f]{32}$/.test(id)) stop("That is not a Client ID (32 characters).");
-if (secret.length < 30 || /\s/.test(secret)) stop("That is not a Client secret.");
-
-const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
-  method: "POST",
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
-});
-if (!res.ok) stop(`Shopify did not accept the keys (${res.status}).`);
 const { access_token, scope = "" } = await res.json();
 const has = scope.split(",");
 const missing = SCOPES.filter((s) => !has.includes(s));

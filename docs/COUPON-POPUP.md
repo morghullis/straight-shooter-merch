@@ -49,10 +49,9 @@ Why a tag: Shopify Messaging can print a customer's **tags** in an email but not
 
 ### The coupon email's code
 
-Change `WELCOME10` to your code when you make a new campaign (a customer may have codes from earlier ones).
+Shopify only takes it with `<!DOCTYPE html>` on the first line (the code that reads the tag goes inside the body). Change `WELCOME10` to your code, in the template **and** in the Flow's email, when you make a new campaign (a customer may have codes from earlier ones).
 
 ```liquid
-{% assign code = "" %}{% assign tags = customer.tags | join: "," | split: "," %}{% for tag in tags %}{% if tag contains "coupon:WELCOME10-" %}{% assign code = tag | strip | remove: "coupon:" %}{% endif %}{% endfor %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,6 +61,7 @@ Change `WELCOME10` to your code when you make a new campaign (a customer may hav
 <title>{{ email.subject }}</title>
 </head>
 <body style="margin:0;padding:0;background:#0a0a0c;font-family:Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%">
+{% assign code = "" %}{% assign tags = customer.tags | join: "," | split: "," %}{% for tag in tags %}{% if tag contains "coupon:WELCOME10-" %}{% assign code = tag | strip | remove: "coupon:" %}{% endif %}{% endfor %}
 <div style="display:none;max-height:0;overflow:hidden">{{ email.preview_text }}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0a0a0c" style="background:#0a0a0c">
 <tr><td align="center">
