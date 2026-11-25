@@ -204,7 +204,7 @@ export const copy = {
     signIn: "Sign in",
     createAccount: "Create account",
     howItWorks: "No password to remember: enter your email and we send you a code. New here? The same step creates your account.",
-    notConnected: "Customer accounts are not connected yet: set SHOPIFY_STORE_DOMAIN (see docs/SHOPIFY.md).",
+    notConnected: "Accounts are not available right now. Please try again later.",
     signInErrors: {
       cancelled: "Sign in was cancelled. Try again whenever you like.",
       expired: "That sign-in took too long. Please try again.",
