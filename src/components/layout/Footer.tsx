@@ -53,8 +53,8 @@ export async function Footer() {
         <div className="col-span-2 lg:col-span-1">
           <h2 className={columnTitle}>{copy.footer.officialTitle}</h2>
           <p className="mt-4 max-w-[44ch] text-sm leading-relaxed text-white/60">{copy.footer.officialBody}</p>
-          <Button href="/account" variant="outline" size="sm" className="mt-5">
-            {copy.footer.account}
+          <Button href="/contact" variant="outline" size="sm" className="mt-5">
+            {copy.footer.contact}
           </Button>
         </div>
       </Container>

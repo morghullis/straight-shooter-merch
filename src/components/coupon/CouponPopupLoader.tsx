@@ -20,7 +20,7 @@ const KEY = "ssm-coupon-popup";
 /** A closed popup stays away this long; one that was answered never comes back for that offer. */
 const AGAIN_AFTER_MS = 5 * 86_400_000;
 /** Pages where it would be in the way. */
-const QUIET = /^\/account(\/|$)/;
+const QUIET = /^\/(account|contact)(\/|$)/;
 
 type Seen = { id: string; done?: boolean; at: number };
 

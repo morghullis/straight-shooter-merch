@@ -5,9 +5,9 @@ import type { CatalogImage } from "@/lib/catalog/types";
 import { termsOf, type CouponOffer } from "./code";
 
 /**
- * The store's Admin API, for the coupon popup only. It has its own app, with no more than it needs
+ * The store's Admin API, for the coupon popup and the contact form. It has its own app, with no more than it needs
  * (read_discounts, write_discounts, read_customers, write_customers, read_metaobjects), so the site never
- * holds the keys to products, files or orders. Without its credentials the popup is off.
+ * holds the keys to products, files or orders. Without its credentials both are off.
  */
 const domain = process.env.SHOPIFY_STORE_DOMAIN;
 const clientId = process.env.SHOPIFY_COUPON_CLIENT_ID;
@@ -35,7 +35,7 @@ async function accessToken(): Promise<string> {
   return token.value;
 }
 
-async function admin<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+export async function admin<T>(query: string, variables: Record<string, unknown>): Promise<T> {
   if (!isCouponConfigured) throw new Error("The coupon app is not configured");
   const res = await fetch(`https://${domain}/admin/api/${apiVersion}/graphql.json`, {
     method: "POST",
@@ -50,7 +50,7 @@ async function admin<T>(query: string, variables: Record<string, unknown>): Prom
   return json.data;
 }
 
-function check(errors: { message: string }[], what: string) {
+export function check(errors: { message: string }[], what: string) {
   if (errors.length) throw new Error(`${what}: ${errors.map((e) => e.message).join("; ")}`);
 }
 
