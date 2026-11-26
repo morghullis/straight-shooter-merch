@@ -18,6 +18,8 @@ export const art = {
   stampOnAir: { src: "/images/art/stamp-on-air.webp", width: 700, height: 424 },
   stampBlasphemous: { src: "/images/art/stamp-blasphemous.webp", width: 700, height: 312 },
   stickerOfficial: { src: "/images/art/sticker-official.webp", width: 600, height: 604 },
+  // Meshy (nano-banana-pro, 2026-11): an empty gold ticket with a torn-off stub; the coupon's side tab writes on it.
+  ticket: { src: "/images/art/ticket-gold.webp", width: 320, height: 491 },
   mic: { src: "/images/art/art-mic.webp", width: 394, height: 805 },
   capitol: { src: "/images/art/art-capitol.webp", width: 800, height: 788 },
   table: { src: "/images/art/art-table.webp", width: 800, height: 776 },

@@ -70,7 +70,9 @@ export const copy = {
     no: "No thanks",
     trap: "Leave this box empty",
     successTitle: "Check your inbox.",
-    successText: "Your code is on its way. Type it in at checkout.",
+    successText: "Your code is on its way. Not there in a minute? Look in Promotions or spam. Type it in at checkout.",
+    tab: (label: string) => `Get ${label} your first order`,
+    tabStub: "Your code",
     successButton: "Keep shopping",
     errors: {
       name: "Add your first name.",
