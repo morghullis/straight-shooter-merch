@@ -45,8 +45,10 @@ function Loader({ popup }: { popup: CouponPopupData }) {
   const pathname = usePathname();
   const { isOpen: cartOpen } = useCart();
   const [open, setOpen] = useState(false);
-  // The side tab: once this browser's answer is known (it stays away after a code was asked for).
+  // The side tab: on every page while the offer is on, also for someone who already asked for a code
+  // (for them the popup opens on "Check your inbox").
   const [tab, setTab] = useState(false);
+  const [answered, setAnswered] = useState(false);
   const tabButton = useRef<HTMLButtonElement>(null);
   const fromTab = useRef(false);
   const { id, delay } = popup.texts;
@@ -95,7 +97,8 @@ function Loader({ popup }: { popup: CouponPopupData }) {
   useEffect(() => {
     const show = setTimeout(() => {
       const before = seen();
-      setTab(!(before?.id === id && before.done) && isOn(popup, Date.now()));
+      setAnswered(Boolean(before?.id === id && before.done));
+      setTab(isOn(popup, Date.now()));
     }, 800);
     const left = popup.endsAt
       ? Date.parse(popup.endsAt) - Date.now()
@@ -137,9 +140,10 @@ function Loader({ popup }: { popup: CouponPopupData }) {
       {open && (
         <CouponPopup
           popup={popup}
+          answered={answered}
           onDone={() => {
             remember({ id, done: true, at: Date.now() });
-            setTab(false);
+            setAnswered(true);
           }}
           onClose={() => {
             const before = seen();

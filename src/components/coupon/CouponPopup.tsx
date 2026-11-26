@@ -23,7 +23,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([tabindex="-1"]):n
  * big screen, a sheet from the bottom on a phone. Focus stays inside; Escape, the backdrop, the cross
  * and "No thanks" close it.
  */
-export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData; onClose: () => void; onDone: () => void }) {
+export function CouponPopup({ popup, onClose, onDone, answered = false }: { popup: CouponPopupData; onClose: () => void; onDone: () => void; answered?: boolean }) {
   const { texts, label, terms, endsAt } = popup;
   const t = copy.coupon;
   const motionOn = useMotionEnabled();
@@ -31,7 +31,8 @@ export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData
   const dialog = useRef<HTMLDivElement>(null);
   const nameField = useRef<HTMLInputElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const [sent, setSent] = useState(false);
+  // Someone who already asked for their code sees "Check your inbox" instead of the form.
+  const [sent, setSent] = useState(answered);
   const [error, setError] = useState<{ field?: "name" | "email" | "consent"; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const [left, setLeft] = useState(() => timeLeft(endsAt, Date.now()));
@@ -40,7 +41,7 @@ export function CouponPopup({ popup, onClose, onDone }: { popup: CouponPopupData
     const before = document.activeElement as HTMLElement | null;
     const unlock = lockPageScroll();
     // A phone's keyboard must not jump up by itself: there the cross gets the focus.
-    const first = window.matchMedia("(hover: hover) and (pointer: fine)").matches ? nameField.current : closeButton.current;
+    const first = (window.matchMedia("(hover: hover) and (pointer: fine)").matches ? nameField.current : null) ?? closeButton.current;
     first?.focus({ preventScroll: true });
     return () => {
       unlock();
