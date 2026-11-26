@@ -233,7 +233,8 @@ export const copy = {
     shippingTitle: "Shipping & returns",
     shippingBody: "Shipping options and delivery estimates are shown at checkout. Replace this text with your store policy.",
     contactTitle: "Contact",
-    contactBody: (brand: string) => `Questions about an order? Reach out to ${brand} support from your order confirmation email.`,
+    contactBody: (brand: string) => `Questions about an order? Write to ${brand} and a real person answers by email.`,
+    contactCta: "Write to us",
   },
 
   errors: {
@@ -250,8 +251,8 @@ export const copy = {
   footer: {
     tagline: "Straight talk. Real fans. Official merch.",
     officialTitle: "Official merch",
-    officialBody: "Every order ships from our fulfilment partner. Questions about an order? Reach out from your account page.",
-    account: "My account",
+    officialBody: "Every order ships from our fulfilment partner. Questions about an order? Write to us and a real person answers.",
+    contact: "Contact us",
     rights: "All rights reserved.",
   },
 
@@ -293,6 +294,43 @@ export const copy = {
     yourLane: "Your lane",
     result: "Official result",
     retake: "Retake the quiz",
+  },
+
+  contact: {
+    title: "Contact",
+    description: "Questions about an order, sizes or a return? Write to the Straight Shooter Shop team.",
+    kicker: "Customer service",
+    heading: ["Talk", "to us."],
+    lead: "An order, a size, a return or anything else: write to us and a real person answers by email.",
+    points: [
+      { title: "Orders", text: "Add your order number (it is in your confirmation email) and we find it faster." },
+      { title: "Returns", text: "Tell us the item and why. We answer with the next steps." },
+      { title: "Your data", text: "We use your email only to answer you." },
+    ],
+    name: "Name",
+    namePlaceholder: "Your name",
+    email: "Email",
+    emailPlaceholder: "you@email.com",
+    topic: "What is it about",
+    order: "Order number (optional)",
+    orderPlaceholder: "#1001",
+    message: "Message",
+    messagePlaceholder: "Tell us what happened…",
+    send: "Send message",
+    sending: "Sending…",
+    trap: "Leave this box empty",
+    sentTitle: "Message sent.",
+    sentText: (email: string) => (email ? `We'll answer at ${email}. Keep an eye on your inbox (and Promotions or spam).` : "We'll answer by email."),
+    another: "Send another message",
+    errors: {
+      name: "Add your name.",
+      email: "That email doesn't look right. Check it and try again.",
+      topic: "Choose what it is about.",
+      order: "That order number doesn't look right. Leave it empty if you don't have one.",
+      message: "Write a message of 10 to 2,000 characters.",
+      tooMany: "Too many messages from here. Please try again later.",
+      failed: "We couldn't send it right now. Please try again in a moment.",
+    },
   },
 
   crew: {

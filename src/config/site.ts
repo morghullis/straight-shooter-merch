@@ -69,7 +69,7 @@ export const footerHelp = {
     { label: "Search", href: "/search" },
     { label: "My Account", href: "/account" },
     { label: "Shipping & Returns", href: "/account#shipping" },
-    { label: "Contact", href: "/account#contact" },
+    { label: "Contact", href: "/contact" },
   ],
 } as const;
 

@@ -54,6 +54,9 @@ export default function AccountPage({ searchParams }: { searchParams: Promise<{ 
               <p className="mt-3 text-[0.9375rem] leading-relaxed text-black/70">
                 {copy.account.contactBody(site.shortName)}
               </p>
+              <Button href="/contact" variant="ink" size="sm" className="mt-4">
+                {copy.account.contactCta}
+              </Button>
             </div>
           </div>
         </div>
