@@ -155,7 +155,6 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     media(first: 10) { nodes { ... on Model3d { sources { url mimeType } } } }
     model3d: metafield(namespace: "custom", key: "model_3d") { reference { ... on GenericFile { url } } }
     model3dHd: metafield(namespace: "custom", key: "model_3d_hd") { reference { ... on GenericFile { url } } }
-    model3dShowroom: metafield(namespace: "custom", key: "model_3d_showroom") { reference { ... on GenericFile { url } } }
     model3dView: metafield(namespace: "custom", key: "model_3d_view") { value }
   }
 `;
@@ -355,7 +354,6 @@ interface RawProduct {
   media?: { nodes: { sources?: { url: string; mimeType: string }[] }[] };
   model3d?: RawFileRef | null;
   model3dHd?: RawFileRef | null;
-  model3dShowroom?: RawFileRef | null;
   model3dView?: RawValue | null;
 }
 
@@ -417,7 +415,6 @@ function resolveModel(raw: RawProduct): Model3D | null {
   return {
     src,
     hd: raw.model3dHd?.reference?.url ?? null,
-    showroom: raw.model3dShowroom?.reference?.url ?? null,
     ...parseView(raw.model3dView?.value),
   };
 }

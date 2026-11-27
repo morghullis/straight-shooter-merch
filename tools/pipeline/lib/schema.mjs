@@ -14,8 +14,6 @@ export const PRODUCT_FIELDS = {
     description: "Light GLB for phones and the 3D viewer." },
   modelHd: { key: "model_3d_hd", name: "3D model (detail)", type: "file_reference", storefront: true,
     description: "Detailed GLB for the product page on a big screen." },
-  modelShowroom: { key: "model_3d_showroom", name: "3D model (showroom)", type: "file_reference", storefront: true,
-    description: "Optional GLB for the home showroom (defaults to the web model)." },
   view: { key: "model_3d_view", name: "3D framing", type: "json", storefront: true,
     description: 'How the model sits on the stage: {"fit": 2.35, "yaw": 0} (yaw in degrees, 0 = front faces the camera).' },
   pipeline: { key: "asset_pipeline", name: "Asset pipeline", type: "json", storefront: false,

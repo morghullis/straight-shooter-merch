@@ -35,14 +35,12 @@ export interface ProductOption {
   values: string[];
 }
 
-/** A product's 3D model (Shopify custom fields `model_3d`, `model_3d_hd`, `model_3d_showroom`, `model_3d_view`). */
+/** A product's 3D model (Shopify custom fields `model_3d`, `model_3d_hd`, `model_3d_view`). The showroom shows the same one. */
 export interface Model3D {
   /** Light GLB: phones, the showroom and the 3D viewer. */
   src: string;
   /** Detailed GLB for the product page on a big screen with a mouse. */
   hd?: string | null;
-  /** GLB for the home showroom, when it differs from `src`. */
-  showroom?: string | null;
   /** Size of the model's longest side, in scene units. */
   fit?: number;
   /** Resting turn in degrees (0 = the front faces the camera). */
