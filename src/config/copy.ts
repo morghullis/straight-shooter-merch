@@ -254,6 +254,16 @@ export const copy = {
         RESTOCKED: "Returned",
       },
     },
+    /** The account page's sign-up for the store's emails (Shopify's email marketing consent). */
+    drops: {
+      title: "New drops by email",
+      off: "Get an email when new merch or a new collection lands, plus the occasional offer. You can stop them any time.",
+      on: "You're on the list: we email you when new merch or a new collection lands.",
+      pending: "Almost there: confirm the email we just sent you to start getting them.",
+      start: "Email me new drops",
+      stop: "Stop these emails",
+      failed: "We couldn't update that just now. Please try again.",
+    },
     manage: "Addresses & details",
     signOut: "Sign out",
     shippingTitle: "Shipping & returns",
