@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { textureStyle } from "@/components/ui/Art";
 import { Button } from "@/components/ui/Button";
@@ -8,7 +9,10 @@ import { copy } from "@/config/copy";
 import { getPolicies, getPolicy } from "@/lib/catalog";
 
 export async function generateStaticParams() {
-  return (await getPolicies()).map((p) => ({ handle: p.handle }));
+  const handles = (await getPolicies()).map((p) => ({ handle: p.handle }));
+  // Cache Components needs one page to check at build time, even before any policy is written
+  // (or without Shopify): Shopify's own handle for the refund policy, a 404 until it exists.
+  return handles.length ? handles : [{ handle: "refund-policy" }];
 }
 
 export async function generateMetadata({
@@ -24,9 +28,16 @@ export async function generateMetadata({
 }
 
 /** A store policy (returns, shipping, privacy, terms) exactly as written in Shopify > Settings > Policies. */
-export default async function PolicyPage({
-  params,
-}: PageProps<"/policies/[handle]">) {
+export default function PolicyPage({ params }: PageProps<"/policies/[handle]">) {
+  // The handle is read inside Suspense, so a policy written after the deploy renders on demand.
+  return (
+    <Suspense>
+      <Policy params={params} />
+    </Suspense>
+  );
+}
+
+async function Policy({ params }: Pick<PageProps<"/policies/[handle]">, "params">) {
   const policy = await getPolicy((await params).handle);
   if (!policy) notFound();
 
