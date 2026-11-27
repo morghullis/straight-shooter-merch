@@ -49,6 +49,8 @@ Why a tag: Shopify Messaging can print a customer's **tags** in an email but not
 
 ### The coupon email's code
 
+Plain, like a personal letter (few images): Gmail is less likely to file it under Promotions, though marketing emails from Shopify Messaging can still land there. **Editing it in Messaging puts it back to Draft and nothing is sent until *Set to active*: edit and reactivate at once.** If runs failed meanwhile, Flow > Recent runs > each failed run > *Retry* sends those people their code.
+
 Shopify only takes it with `<!DOCTYPE html>` on the first line (the code that reads the tag goes inside the body). Change `WELCOME10` to your code, in the template **and** in the Flow's email, when you make a new campaign (a customer may have codes from earlier ones).
 
 ```liquid
@@ -57,36 +59,30 @@ Shopify only takes it with `<!DOCTYPE html>` on the first line (the code that re
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
 <title>{{ email.subject }}</title>
 </head>
-<body style="margin:0;padding:0;background:#0a0a0c;font-family:Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%">
+<body style="margin:0;padding:0;background:#ffffff;font-family:Helvetica,Arial,sans-serif;color:#14110a;-webkit-text-size-adjust:100%">
 {% assign code = "" %}{% assign tags = customer.tags | join: "," | split: "," %}{% for tag in tags %}{% if tag contains "coupon:WELCOME10-" %}{% assign code = tag | strip | remove: "coupon:" %}{% endif %}{% endfor %}
 <div style="display:none;max-height:0;overflow:hidden">{{ email.preview_text }}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0a0a0c" style="background:#0a0a0c">
-<tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="max-width:600px;background:#000000">
-<tr><td align="center" style="padding:28px 24px 12px"><a href="https://straightshootershop.com"><img src="https://cdn.shopify.com/s/files/1/0828/6266/9894/files/straight-shooter-email-logo.png" width="220" alt="The Stephen A. Smith Straight Shooter Shop" style="display:block;width:220px;height:auto;border:0"></a></td></tr>
-<tr><td><img src="https://cdn.shopify.com/s/files/1/0828/6266/9894/files/email-code-header.jpg" width="600" alt="Your code is in." style="display:block;width:100%;height:auto;border:0;color:#f0ac28;font-size:40px;font-weight:bold"></td></tr>
-<tr><td style="padding:24px 28px 0;color:#ffffff;font-size:18px;line-height:1.5">{% if customer.first_name != blank %}<strong>{{ customer.first_name }},</strong> thanks for signing up.{% else %}Thanks for signing up.{% endif %} This code is yours only and it is good for your first order.</td></tr>
-<tr><td style="padding:24px 28px 0">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0ac28" style="background:#f0ac28">
-<tr><td align="center" style="padding:10px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="border:2px dashed #14110a;padding:20px 8px 22px">
-<div style="color:#14110a;font-size:13px;line-height:1;font-weight:bold;letter-spacing:2px;text-transform:uppercase">Your code</div>
-<div style="padding-top:12px;color:#14110a;font-family:'Courier New',Courier,monospace;font-size:26px;line-height:1.1;font-weight:bold;letter-spacing:1px">{{ code }}</div>
-</td></tr></table>
-</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff">
+<tr><td align="center" style="padding:28px 20px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px">
+<tr><td style="font-size:16px;line-height:1.6">
+<p style="margin:0 0 16px">Hi {% if customer.first_name != blank %}{{ customer.first_name }}{% else %}there{% endif %},</p>
+<p style="margin:0 0 16px">Thanks for joining the Straight Shooter Shop. Here is your personal code for <strong>10% off your first order</strong>:</p>
+<p style="margin:0 0 16px;padding:14px 16px;border-left:4px solid #f0ac28;background:#fbf6e9;font-family:'Courier New',Courier,monospace;font-size:22px;font-weight:bold;letter-spacing:1px">{{ code }}</p>
+<p style="margin:0 0 16px">Type it in at checkout with this same email. No minimum. It works once, on your first order. Items already on sale, like the HBCU Life collection, are not included.</p>
+<p style="margin:0 0 24px"><a href="https://straightshootershop.com/collections/all" style="color:#14110a;font-weight:bold">Shop the official merch &rarr;</a></p>
+<p style="margin:0">Talk soon,<br>The Straight Shooter Shop team</p>
 </td></tr>
-<tr><td align="center" style="padding:28px 28px 0"><a href="https://straightshootershop.com/collections/all" style="display:block;background:#ffffff;color:#000000;padding:18px 24px;font-size:16px;line-height:1;font-weight:bold;letter-spacing:1px;text-transform:uppercase;text-decoration:none">Shop the gear</a></td></tr>
-<tr><td style="padding:24px 28px 32px;color:#b5b5b5;font-size:14px;line-height:1.6">Type it in at checkout with this same email. No minimum. One use, first order only. Items already on sale, like the HBCU Life collection, are not included.</td></tr>
-<tr><td style="border-top:1px solid #28282c;padding:22px 28px 32px;color:#8c8c8c;font-size:12px;line-height:1.7">{{ shop.name }} &middot; {{ shop.address.address1 }}, {{ shop.address.city }}, {{ shop.address.province }} {{ shop.address.zip }}, {{ shop.address.country }}<br>{{ unsubscribe_link }}</td></tr>
+<tr><td style="padding-top:32px;border-top:1px solid #eeeeee;font-size:12px;line-height:1.6;color:#888888">{{ shop.name }} &middot; {{ shop.address.address1 }}, {{ shop.address.city }}, {{ shop.address.province }} {{ shop.address.zip }}<br>{{ unsubscribe_link }}</td></tr>
 </table>
 {{ open_tracking_block }}
 </td></tr>
 </table>
 </body>
 </html>
+
 ```
 
 ## What it does with people's data
