@@ -117,6 +117,16 @@ Shopify only accepts HTTPS callbacks, so sign-in works on the deployed site (not
 
 **Reminders** (abandoned checkout and others) are Shopify's own automations: **Marketing → Automations** (for example *Abandoned checkout*). They reach shoppers who left checkout after giving their email, or who were signed in.
 
+### New drop emails
+
+Subscribers hear about new products and collections from **Shopify Messaging**, in the store's colours, with Shopify handling the list, the unsubscribe link and the sending (free up to Shopify's monthly allowance):
+
+- **Who gets them**: customers subscribed to email marketing (segment *Email subscribers*). They subscribe at checkout, in the coupon form, or on `/account` (*New drops by email*: `customerEmailMarketingSubscribe` / `Unsubscribe` of the Customer Account API, `src/app/account/actions.ts`). Creating an account alone does not subscribe anyone: Shopify only sends marketing to people who said yes.
+- **Templates** (Messaging → Create message → Your templates): *New drop (latest products)* shows the four most recently published products of the *Shop All* collection, picked when the email is sent; *New collection (pick the collection)*: click its product section and choose the new collection. Each has a *Shop all merch* button to `/collections/all`.
+- **Reminders** (Flow, emails to the store): *New drop reminder: product goes Active*, *New drop reminder: product created as Active* and *New collection reminder: collection created* send the store a note with the steps; the email itself goes out when someone presses **Send**, so a drop of several products is one email, not one each.
+- A product appears in these emails only if it is in *Shop All* and available on the **Online Store** sales channel (Shopify's emails link through it; the redirect theme forwards to the site).
+- Why not fully automatic: Flow's *Send marketing email* reaches at most 100 customers per run, fewer than the store already has. Past that, a sending service (for example Resend on the store's domain) would be the next step.
+
 ## 7. Your own domain
 
 One domain, two jobs (live since 2026-11-17 UTC with `straightshootershop.com`, registered at GoDaddy):

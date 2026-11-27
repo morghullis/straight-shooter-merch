@@ -266,10 +266,14 @@ export interface Shipment {
   trackingInformation: { company: string | null; number: string | null; url: string | null }[];
 }
 
+/** Whether the shopper gets the store's marketing emails (new drops, offers), as Shopify keeps it. */
+export type EmailMarketingState = "SUBSCRIBED" | "PENDING" | "NOT_SUBSCRIBED" | "UNSUBSCRIBED" | "REDACTED" | "INVALID";
+
 export interface Customer {
   firstName: string | null;
   lastName: string | null;
   email: string | null;
+  emailMarketing: EmailMarketingState | null;
   orders: CustomerOrder[];
 }
 
@@ -278,7 +282,7 @@ const CUSTOMER_QUERY = /* GraphQL */ `
     customer {
       firstName
       lastName
-      emailAddress { emailAddress }
+      emailAddress { emailAddress marketingState }
       orders(first: 20, sortKey: PROCESSED_AT, reverse: true) {
         nodes {
           id name processedAt financialStatus fulfillmentStatus cancelledAt totalPrice { amount currencyCode } statusPageUrl
@@ -290,26 +294,59 @@ const CUSTOMER_QUERY = /* GraphQL */ `
   }
 `;
 
-/** The shopper's name, email and recent orders. Null when the token is no longer accepted. */
-export async function fetchCustomer(accessToken: string): Promise<Customer | null> {
+/** A Customer Account API call with the shopper's token. Null when the token is no longer accepted. */
+async function customerApi<T>(accessToken: string, query: string): Promise<{ data?: T; errors?: { message: string }[] } | null> {
   const res = await fetch((await endpoints()).graphql, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: accessToken },
-    body: JSON.stringify({ query: CUSTOMER_QUERY }),
+    body: JSON.stringify({ query }),
     cache: "no-store",
   });
   if (res.status === 401 || res.status === 403) return null;
   if (!res.ok) throw new Error(`Customer Account API ${res.status}`);
-  const json = (await res.json()) as {
-    data?: { customer?: { firstName: string | null; lastName: string | null; emailAddress?: { emailAddress: string } | null; orders: { nodes: CustomerOrder[] } } };
-    errors?: { message: string }[];
-  };
-  const c = json.data?.customer;
+  return res.json();
+}
+
+/** The shopper's name, email and recent orders. Null when the token is no longer accepted. */
+export async function fetchCustomer(accessToken: string): Promise<Customer | null> {
+  const json = await customerApi<{
+    customer?: {
+      firstName: string | null;
+      lastName: string | null;
+      emailAddress?: { emailAddress: string; marketingState: EmailMarketingState } | null;
+      orders: { nodes: CustomerOrder[] };
+    };
+  }>(accessToken, CUSTOMER_QUERY);
+  const c = json?.data?.customer;
   if (!c) {
-    if (json.errors?.length) throw new Error(json.errors.map((e) => e.message).join("; "));
+    if (json?.errors?.length) throw new Error(json.errors.map((e) => e.message).join("; "));
     return null;
   }
-  return { firstName: c.firstName, lastName: c.lastName, email: c.emailAddress?.emailAddress ?? null, orders: c.orders.nodes };
+  return {
+    firstName: c.firstName,
+    lastName: c.lastName,
+    email: c.emailAddress?.emailAddress ?? null,
+    emailMarketing: c.emailAddress?.marketingState ?? null,
+    orders: c.orders.nodes,
+  };
+}
+
+/**
+ * Signs the shopper up for the store's marketing emails, or stops them (Shopify keeps the consent, so
+ * its emails and unsubscribe links agree with this). False when the token is no longer accepted.
+ */
+export async function setEmailMarketing(accessToken: string, subscribe: boolean): Promise<boolean> {
+  const field = subscribe ? "customerEmailMarketingSubscribe" : "customerEmailMarketingUnsubscribe";
+  type Payload = { userErrors: { code: string | null; message: string }[] };
+  const json = await customerApi<Record<string, Payload | null>>(
+    accessToken,
+    `mutation { ${field} { emailAddress { marketingState } userErrors { code message } } }`,
+  );
+  if (!json) return false;
+  // Already in the state asked for is fine: the page shows Shopify's state either way.
+  const errors = [...(json.errors ?? []), ...(json.data?.[field]?.userErrors ?? []).filter((e) => !e.code?.includes("ALREADY"))];
+  if (errors.length || !json.data?.[field]) throw new Error(errors.map((e) => e.message).join("; ") || `${field} failed`);
+  return true;
 }
 
 export { safeReturnPath } from "./safe-path";

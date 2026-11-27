@@ -17,10 +17,13 @@ import {
   shopAccountsAvailable,
   type Customer,
   type CustomerOrder,
+  type EmailMarketingState,
   type Shipment,
 } from "@/lib/customer-account";
 import { getPolicies } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
+
+import { setDropEmails } from "./actions";
 
 export const metadata: Metadata = {
   title: copy.account.title,
@@ -31,8 +34,9 @@ const sectionTitle =
   "font-display text-[1.8125rem] leading-none font-extrabold tracking-[-0.045em] [word-spacing:0.08em] uppercase";
 
 type SignInError = keyof typeof copy.account.signInErrors;
+type AccountParams = Promise<{ signin?: string; drops?: string }>;
 
-export default function AccountPage({ searchParams }: { searchParams: Promise<{ signin?: string }> }) {
+export default function AccountPage({ searchParams }: { searchParams: AccountParams }) {
   return (
     <>
       <Container className="pt-8 pb-8 lg:pt-12">
@@ -89,8 +93,8 @@ async function PolicyLinks() {
   );
 }
 
-async function AccountPanel({ searchParams }: { searchParams: Promise<{ signin?: string }> }) {
-  const { signin } = await searchParams;
+async function AccountPanel({ searchParams }: { searchParams: AccountParams }) {
+  const { signin, drops } = await searchParams;
   const error = signin && signin in copy.account.signInErrors ? (signin as SignInError) : null;
   if (!accountsConnected) return <SignedOut error={error} />;
 
@@ -104,7 +108,7 @@ async function AccountPanel({ searchParams }: { searchParams: Promise<{ signin?:
   const customer = await fetchCustomer(session.accessToken).catch(() => undefined);
   if (customer === null) redirect(`${ACCOUNT_PATHS.refresh}?to=/account`);
   if (!customer) return <SignedOut error="failed" />;
-  return <SignedIn customer={customer} />;
+  return <SignedIn customer={customer} dropsFailed={drops === "failed"} />;
 }
 
 /** Sign in or create an account: both on Shopify's page (an emailed code; new emails get an account). */
@@ -232,7 +236,37 @@ function shipmentStatus(f: Shipment): string {
   return (f.latestShipmentStatus && carrier[f.latestShipmentStatus]) || copy.account.status.fulfillment.FULFILLED;
 }
 
-function SignedIn({ customer }: { customer: Customer }) {
+/**
+ * Sign up for (or stop) the store's emails about new drops. Shopify keeps the consent, so its own emails
+ * (New drop / New collection, sent from Shopify Messaging) go to exactly the shoppers who said yes here,
+ * at checkout or in the coupon form.
+ */
+function DropEmails({ state, failed }: { state: EmailMarketingState | null; failed: boolean }) {
+  if (!state || state === "REDACTED" || state === "INVALID") return null;
+  const on = state === "SUBSCRIBED" || state === "PENDING";
+  const text = state === "SUBSCRIBED" ? copy.account.drops.on : state === "PENDING" ? copy.account.drops.pending : copy.account.drops.off;
+  return (
+    <section id="drops" aria-labelledby="drops-title" className="mt-8 scroll-mt-24 border border-black/15 bg-white/60 px-5 py-4">
+      <h3 id="drops-title" className="font-nav text-[0.8125rem] font-semibold tracking-[0.08em] uppercase">
+        {copy.account.drops.title}
+      </h3>
+      <p className="mt-2 max-w-[48ch] text-[0.9375rem] leading-relaxed text-black/70">{text}</p>
+      {failed && (
+        <p role="alert" className="mt-2 text-[0.8125rem] text-black/80">
+          {copy.account.drops.failed}
+        </p>
+      )}
+      <form action={setDropEmails} className="mt-3">
+        <input type="hidden" name="subscribe" value={on ? "0" : "1"} />
+        <Button type="submit" variant={on ? "ghost" : "ink"} size={on ? "none" : "sm"} className={on ? "text-[0.8125rem] text-black" : undefined}>
+          {on ? copy.account.drops.stop : copy.account.drops.start}
+        </Button>
+      </form>
+    </section>
+  );
+}
+
+function SignedIn({ customer, dropsFailed }: { customer: Customer; dropsFailed: boolean }) {
   const name = customer.firstName || customer.email || "";
   return (
     <div>
@@ -251,6 +285,8 @@ function SignedIn({ customer }: { customer: Customer }) {
       ) : (
         <p className="mt-3 text-[0.9375rem] text-black/70">{copy.account.noOrders}</p>
       )}
+
+      <DropEmails state={customer.emailMarketing} failed={dropsFailed} />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {shopAccountsAvailable && (
