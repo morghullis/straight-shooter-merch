@@ -3,6 +3,7 @@ import "server-only";
 import { balancedRows } from "@/lib/format";
 
 import { cleanDescriptionHtml } from "./description";
+import { parseSizeTable } from "./size-table";
 import { toConfirm, unitDiscount, type Discounts, type PricedLine } from "./discounts";
 import type {
   CatalogImage,
@@ -13,6 +14,7 @@ import type {
   ProductColor,
   ProductDetails,
   ProductVariant,
+  SizeGuide,
   TileTheme,
 } from "./types";
 
@@ -102,6 +104,16 @@ async function shopifyFetch<T>(
 /* Queries                                                             */
 /* ------------------------------------------------------------------ */
 
+const SIZE_GUIDE_FIELDS = /* GraphQL */ `
+  fragment SizeGuideFields on Metaobject {
+    productTypes: field(key: "product_types") { value }
+    unit: field(key: "unit") { value }
+    table: field(key: "table") { value }
+    note: field(key: "note") { value }
+    chart: field(key: "chart") { reference { ... on MediaImage { image { url altText width height } } } }
+  }
+`;
+
 const PRODUCT_FIELDS = /* GraphQL */ `
   fragment ProductFields on Product {
     id
@@ -140,9 +152,7 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     material: metafield(namespace: "custom", key: "material") { value }
     fit: metafield(namespace: "custom", key: "fit") { value }
     care: metafield(namespace: "custom", key: "care") { value }
-    sizeChart: metafield(namespace: "custom", key: "size_chart") {
-      reference { ... on MediaImage { image { url altText width height } } }
-    }
+    sizeGuide: metafield(namespace: "custom", key: "size_guide") { reference { ...SizeGuideFields } }
     shippingNote: metafield(namespace: "custom", key: "shipping_note") { value }
     audience: metafield(namespace: "shopify", key: "target-gender") {
       references(first: 5) { nodes { ... on Metaobject { label: field(key: "label") { value } } } }
@@ -157,6 +167,7 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     model3dHd: metafield(namespace: "custom", key: "model_3d_hd") { reference { ... on GenericFile { url } } }
     model3dView: metafield(namespace: "custom", key: "model_3d_view") { value }
   }
+  ${SIZE_GUIDE_FIELDS}
 `;
 
 const COLLECTION_FIELDS = /* GraphQL */ `
@@ -305,6 +316,14 @@ interface RawImageRef {
   reference: { image?: RawImage | null } | null;
 }
 
+interface RawSizeGuide {
+  productTypes?: RawValue | null;
+  unit?: RawValue | null;
+  table?: RawValue | null;
+  note?: RawValue | null;
+  chart?: RawImageRef | null;
+}
+
 interface RawFileRef {
   reference: { url?: string } | null;
 }
@@ -347,7 +366,7 @@ interface RawProduct {
   material?: RawValue | null;
   fit?: RawValue | null;
   care?: RawValue | null;
-  sizeChart?: RawImageRef | null;
+  sizeGuide?: { reference: RawSizeGuide | null } | null;
   shippingNote?: RawValue | null;
   audience?: RawMetaobjectList | null;
   colorPattern?: RawMetaobjectList | null;
@@ -434,19 +453,46 @@ function list(v: RawValue | null | undefined): string[] {
   return lines(v.value);
 }
 
+/** A size guide from Shopify; null when it has neither a table nor a picture. */
+function mapSizeGuide(raw: RawSizeGuide | null | undefined): SizeGuide | null {
+  if (!raw) return null;
+  const { columns, rows } = parseSizeTable(raw.table?.value);
+  const image = raw.chart?.reference?.image;
+  const chart = image ? mapImage(image, "Size chart") : null;
+  if (!rows.length && !chart) return null;
+  return {
+    productTypes: list(raw.productTypes).map((t) => t.toLowerCase()),
+    unit: text(raw.unit),
+    columns,
+    rows,
+    note: text(raw.note),
+    chart,
+  };
+}
+
+/** Every size guide in the store (Content > Metaobjects > Size guide). */
+export async function fetchSizeGuides(): Promise<SizeGuide[]> {
+  const data = await shopifyFetch<{ metaobjects: { nodes: RawSizeGuide[] } }>(/* GraphQL */ `
+    query SizeGuides {
+      metaobjects(type: "size_guide", first: 50) { nodes { ...SizeGuideFields } }
+    }
+    ${SIZE_GUIDE_FIELDS}
+  `);
+  return data.metaobjects.nodes.map(mapSizeGuide).filter((g): g is SizeGuide => g !== null);
+}
+
 /** The product page's extra fields; null when none is filled in. */
 function mapDetails(raw: RawProduct): ProductDetails | null {
-  const chart = raw.sizeChart?.reference?.image;
   const details: ProductDetails = {
     tagline: text(raw.tagline),
     highlights: list(raw.highlights),
     material: text(raw.material),
     fit: text(raw.fit),
     care: lines(raw.care?.value),
-    sizeChart: chart ? mapImage(chart, `${raw.title} size chart`) : null,
+    sizeGuide: mapSizeGuide(raw.sizeGuide?.reference),
     shippingNote: text(raw.shippingNote),
   };
-  const empty = !details.tagline && !details.highlights.length && !details.material && !details.fit && !details.care.length && !details.sizeChart && !details.shippingNote;
+  const empty = !details.tagline && !details.highlights.length && !details.material && !details.fit && !details.care.length && !details.sizeGuide && !details.shippingNote;
   return empty ? null : details;
 }
 

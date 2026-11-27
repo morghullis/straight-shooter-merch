@@ -20,13 +20,14 @@ import {
   fetchProductHandles,
   fetchProducts,
   fetchSellableVariants,
+  fetchSizeGuides,
   isShopifyConfigured,
 } from "./shopify";
 import { cleanDescriptionHtml } from "./description";
 import type { ShopPolicy } from "./shopify";
-import type { Collection, Product } from "./types";
+import type { Collection, Product, SizeGuide } from "./types";
 
-export type { Collection, Product, ProductColor, ProductDetails } from "./types";
+export type { Collection, Product, ProductColor, ProductDetails, SizeGuide } from "./types";
 export type { ShopPolicy } from "./shopify";
 
 /**
@@ -306,4 +307,21 @@ export async function getPolicies(): Promise<ShopPolicy[]> {
 export async function getPolicy(handle: string): Promise<ShopPolicy | null> {
   if (!isSafeHandle(handle)) return null;
   return (await getPolicies()).find((p) => p.handle === handle) ?? null;
+}
+
+async function getSizeGuides(): Promise<SizeGuide[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("size-guides");
+
+  if (!isShopifyConfigured) return [];
+  return fetchSizeGuides();
+}
+
+/** The product's own size guide, or the one that lists its product type; null for products without sizes. */
+export async function getSizeGuide(product: Product): Promise<SizeGuide | null> {
+  if (product.details?.sizeGuide) return product.details.sizeGuide;
+  const type = product.productType.trim().toLowerCase();
+  if (!type) return null;
+  return (await getSizeGuides()).find((g) => g.productTypes.includes(type)) ?? null;
 }

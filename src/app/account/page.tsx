@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -15,6 +17,7 @@ import {
   shopAccountsAvailable,
   type Customer,
   type CustomerOrder,
+  type Shipment,
 } from "@/lib/customer-account";
 import { getPolicies } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
@@ -93,6 +96,8 @@ async function AccountPanel({ searchParams }: { searchParams: Promise<{ signin?:
 
   const session = await readSession();
   if (!session) return <SignedOut error={error} />;
+  // Signed in: everything below is this request's (the token's age is checked against the clock).
+  await connection();
   // Cookies can only be rewritten by a route, so an expired token is renewed there and comes back.
   if (!isFresh(session)) redirect(`${ACCOUNT_PATHS.refresh}?to=/account`);
 
@@ -142,6 +147,91 @@ function statusOf(order: CustomerOrder): string {
   return s[order.fulfillmentStatus] ?? order.fulfillmentStatus.replace(/_/g, " ").toLowerCase();
 }
 
+const small = "font-nav text-[0.6875rem] font-semibold tracking-[0.1em] text-black/50 uppercase";
+
+/** One order: a folding row (number, date, status, total) with its items and shipments inside. */
+function OrderRow({ order }: { order: CustomerOrder }) {
+  const money = (m: { amount: string; currencyCode: string }) => formatMoney(m.amount, m.currencyCode);
+  return (
+    <details className="group [&_summary::-webkit-details-marker]:hidden">
+      <summary
+        aria-label={copy.account.orderDetails(order.name)}
+        className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-[0.9375rem] select-none"
+      >
+        <span className="font-semibold">{order.name}</span>
+        <span className="text-black/60">{dateFormat.format(new Date(order.processedAt))}</span>
+        <span className="capitalize text-black/70">{statusOf(order)}</span>
+        <span className="flex items-center gap-3 font-semibold">
+          {money(order.totalPrice)}
+          <span aria-hidden="true" className="relative size-2.5 transition-transform duration-500 group-open:rotate-45">
+            <span className="absolute inset-x-0 top-1/2 h-[0.09375rem] -translate-y-1/2 bg-current" />
+            <span className="absolute inset-y-0 left-1/2 w-[0.09375rem] -translate-x-1/2 bg-current" />
+          </span>
+        </span>
+      </summary>
+
+      <div className="space-y-5 pb-5">
+        <div>
+          <h4 className={small}>{copy.account.items}</h4>
+          <ul className="mt-2 space-y-3">
+            {order.lineItems.nodes.map((line) => (
+              <li key={line.id} className="flex items-center gap-3 text-[0.875rem]">
+                <span className="relative size-14 flex-none overflow-hidden rounded-[0.1875rem] bg-sand">
+                  {line.image && <Image src={line.image.url} alt={line.image.altText ?? ""} fill sizes="56px" className="object-cover" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{line.name}</span>
+                  <span className="block text-black/60">
+                    {[line.variantTitle, copy.account.quantity(line.quantity)].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+                {line.totalPrice && <span className="font-semibold">{money(line.totalPrice)}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h4 className={small}>{copy.account.shipments}</h4>
+          {order.fulfillments.nodes.length ? (
+            <ul className="mt-2 space-y-2 text-[0.875rem]">
+              {order.fulfillments.nodes.map((f) => (
+                <li key={f.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-semibold">{shipmentStatus(f)}</span>
+                  <span className="text-black/50">{dateFormat.format(new Date(f.updatedAt))}</span>
+                  {f.trackingInformation.map((t, i) => (
+                    <span key={t.number ?? i} className="text-black/70">
+                      {[t.company, t.number && `${copy.account.trackingNumber} ${t.number}`].filter(Boolean).join(" · ")}
+                      {t.url && (
+                        <a href={t.url} target="_blank" rel="noopener noreferrer" className="ml-2 font-semibold underline underline-offset-4 hover:text-gold-soft">
+                          {copy.account.trackPackage}
+                        </a>
+                      )}
+                    </span>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-[0.875rem] text-black/60">{order.cancelledAt ? copy.account.status.cancelled : copy.account.noShipments}</p>
+          )}
+        </div>
+
+        <a href={order.statusPageUrl} className="inline-block text-[0.875rem] font-semibold underline underline-offset-4 hover:text-gold-soft">
+          {copy.account.trackOrder}
+        </a>
+      </div>
+    </details>
+  );
+}
+
+function shipmentStatus(f: Shipment): string {
+  if (f.status === "CANCELLED") return copy.account.status.cancelled;
+  const carrier = copy.account.shipment as Record<string, string>;
+  // Without a carrier update yet, it has left the store: "Shipped".
+  return (f.latestShipmentStatus && carrier[f.latestShipmentStatus]) || copy.account.status.fulfillment.FULFILLED;
+}
+
 function SignedIn({ customer }: { customer: Customer }) {
   const name = customer.firstName || customer.email || "";
   return (
@@ -153,14 +243,8 @@ function SignedIn({ customer }: { customer: Customer }) {
       {customer.orders.length ? (
         <ul className="mt-3 divide-y divide-black/10 border-y border-black/10">
           {customer.orders.map((order) => (
-            <li key={order.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-[0.9375rem]">
-              <span className="font-semibold">{order.name}</span>
-              <span className="text-black/60">{dateFormat.format(new Date(order.processedAt))}</span>
-              <span className="capitalize text-black/70">{statusOf(order)}</span>
-              <span className="font-semibold">{formatMoney(order.totalPrice.amount, order.totalPrice.currencyCode)}</span>
-              <a href={order.statusPageUrl} className="underline underline-offset-4 hover:text-gold-soft">
-                {copy.account.trackOrder}
-              </a>
+            <li key={order.id}>
+              <OrderRow order={order} />
             </li>
           ))}
         </ul>

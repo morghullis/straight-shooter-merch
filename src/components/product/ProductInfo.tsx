@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 
 import { copy } from "@/config/copy";
@@ -61,7 +60,7 @@ export function ProductHighlights({ product }: { product: Product }) {
 
 /**
  * Everything else about the product, in folding blocks: description (as written in Shopify),
- * details, size guide, care, shipping. A block shows only when the product has content for it, so
+ * details, care, shipping (the size guide opens from the size picker). A block shows only when the product has content for it, so
  * a field filled in later in Shopify appears on its own, already styled.
  */
 export function ProductInfo({ product }: { product: Product }) {
@@ -109,21 +108,6 @@ export function ProductInfo({ product }: { product: Product }) {
               </div>
             ))}
           </dl>
-        </Section>
-      )}
-
-      {d?.sizeChart && (
-        <Section title={s.sizeGuide}>
-          <a href={d.sizeChart.url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-[0.25rem] bg-white">
-            <Image
-              src={d.sizeChart.url}
-              alt={d.sizeChart.altText || copy.product.sizeChartAlt(product.title)}
-              width={d.sizeChart.width}
-              height={d.sizeChart.height}
-              sizes="(min-width: 1326px) 36vw, (min-width: 1024px) 470px, 100vw"
-              className="h-auto w-full object-contain"
-            />
-          </a>
         </Section>
       )}
 

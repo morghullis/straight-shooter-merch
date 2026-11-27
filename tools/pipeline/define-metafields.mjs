@@ -20,12 +20,16 @@ async function existing(ownerType) {
 async function define(ownerType, fields) {
   const have = await existing(ownerType);
   for (const f of Object.values(fields)) {
+    // A metaobject field points at its definition, made above.
+    const validations = f.metaobject
+      ? [{ name: "metaobject_definition_id", value: (await metaobjectDefinition(f.metaobject)).id }]
+      : (f.validations ?? []);
     const storefront = f.storefront ? "PUBLIC_READ" : "NONE";
     const current = have.get(f.key);
     if (!current) {
       const data = await gql(
         `mutation($d: MetafieldDefinitionInput!) { metafieldDefinitionCreate(definition: $d) { createdDefinition { id } userErrors { field message } } }`,
-        { d: { name: f.name, namespace: NAMESPACE, key: f.key, type: f.type, ownerType, description: f.description, validations: f.validations ?? [], access: { storefront } } },
+        { d: { name: f.name, namespace: NAMESPACE, key: f.key, type: f.type, ownerType, description: f.description, validations, access: { storefront } } },
       );
       check(data.metafieldDefinitionCreate, `define ${ownerType} ${f.key}`);
       console.log(`created  ${ownerType.toLowerCase()} ${NAMESPACE}.${f.key}`);
@@ -55,12 +59,14 @@ async function define(ownerType, fields) {
   }
 }
 
-await define("PRODUCT", PRODUCT_FIELDS);
-await define("COLLECTION", COLLECTION_FIELDS);
-await define("SHOP", SHOP_FIELDS);
+async function metaobjectDefinition(type) {
+  const data = await gql(`query($t: String!) { metaobjectDefinitionByType(type: $t) { id access { storefront } } }`, { t: type });
+  return data.metaobjectDefinitionByType;
+}
 
+// Metaobjects first: product fields can point at them.
 for (const m of Object.values(METAOBJECTS)) {
-  const { metaobjectDefinitionByType: current } = await gql(`query($t: String!) { metaobjectDefinitionByType(type: $t) { id access { storefront } } }`, { t: m.type });
+  const current = await metaobjectDefinition(m.type);
   if (current) {
     const storefront = m.storefront ? "PUBLIC_READ" : "NONE";
     if (current.access.storefront !== storefront) {
@@ -83,3 +89,7 @@ for (const m of Object.values(METAOBJECTS)) {
   check(data.metaobjectDefinitionCreate, `define metaobject ${m.type}`);
   console.log(`created  metaobject ${m.type}`);
 }
+
+await define("PRODUCT", PRODUCT_FIELDS);
+await define("COLLECTION", COLLECTION_FIELDS);
+await define("SHOP", SHOP_FIELDS);

@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { ProductForm } from "@/components/product/ProductForm";
 import { ProductHighlights, ProductInfo, ProductTagline } from "@/components/product/ProductInfo";
 import { ProductMedia } from "@/components/product/ProductMedia";
+import { SizeGuideTable } from "@/components/product/SizeGuide";
 import { TrackProductView } from "@/components/product/TrackProductView";
 import { VariantProvider } from "@/components/product/VariantContext";
 import { Carousel } from "@/components/ui/Carousel";
@@ -15,7 +16,7 @@ import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
 import { modelSpecFor } from "@/config/models";
 import { site } from "@/config/site";
-import { getProduct, getProducts, getRelatedProducts } from "@/lib/catalog";
+import { getProduct, getProducts, getRelatedProducts, getSizeGuide } from "@/lib/catalog";
 import { pickerPhotos } from "@/lib/catalog/options";
 import { isWomens } from "@/lib/catalog/order";
 import { isSafeHandle } from "@/lib/format";
@@ -83,7 +84,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
   const product = await getProduct(handle);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product, 4);
+  const [related, sizeGuide] = await Promise.all([getRelatedProducts(product, 4), getSizeGuide(product)]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -157,7 +158,7 @@ async function ProductDetails({ params }: Pick<PageProps<"/products/[handle]">, 
                 <ProductTagline product={product} />
 
                 <div className="mt-5">
-                  <ProductForm product={product} />
+                  <ProductForm product={product} sizeGuide={sizeGuide && <SizeGuideTable guide={sizeGuide} title={product.title} />} />
                 </div>
 
                 <ProductHighlights product={product} />

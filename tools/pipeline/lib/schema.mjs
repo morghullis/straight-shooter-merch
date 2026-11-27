@@ -31,14 +31,30 @@ export const PRODUCT_FIELDS = {
     description: "How it fits, e.g. Unisex, true to size; size up for a relaxed fit. Shown in Details." },
   care: { key: "care", name: "Care", type: "multi_line_text_field", storefront: true, pin: true,
     description: "Care instructions, one per line. Shown in Care." },
-  sizeChart: { key: "size_chart", name: "Size chart", type: "file_reference", validations: images, storefront: true, pin: true,
-    description: "Picture of the size table. Shown in Size guide." },
+  sizeGuide: { key: "size_guide", name: "Size guide", type: "metaobject_reference", metaobject: "size_guide", storefront: true, pin: true,
+    description: "Only for a product that does not use its type's guide (Content > Metaobjects > Size guide). Shown in Size guide." },
   shippingNote: { key: "shipping_note", name: "Shipping note", type: "single_line_text_field", storefront: true, pin: true,
     description: "This product's own shipping line, e.g. Made to order, ships in 3 to 5 business days. Shown first in Shipping & returns." },
 };
 
 /** Content > Metaobjects in the admin. */
 export const METAOBJECTS = {
+  // Read by the product page (src/lib/catalog: getSizeGuide): a product uses the guide that lists its
+  // product type, unless its own Size guide field picks another one.
+  sizeGuide: {
+    type: "size_guide", storefront: true, name: "Size guide", displayNameKey: "name",
+    description: "Size table shown on the product page. One guide per kind of garment: list the product types that use it.",
+    fields: [
+      { key: "name", name: "Name", type: "single_line_text_field", required: true, description: "e.g. Tees. Only for the admin." },
+      { key: "product_types", name: "Product types", type: "list.single_line_text_field",
+        description: "Products of these types use this guide, as written in the product's Type: Tee, Crop Tee, Hoodie..." },
+      { key: "unit", name: "Unit", type: "single_line_text_field", description: "e.g. Inches. Shown above the table." },
+      { key: "table", name: "Table", type: "multi_line_text_field",
+        description: "One row per line, cells split by |. First line = column names. e.g.\nSize | Chest | Length\nS | 18 | 28" },
+      { key: "note", name: "Fit note", type: "multi_line_text_field", description: "Under the table, e.g. how it fits or how to measure." },
+      { key: "chart", name: "Picture", type: "file_reference", validations: images, description: "Optional: a picture of the chart or how to measure." },
+    ],
+  },
   couponPopup: {
     // Never readable from the storefront: it names the discount's code.
     type: "coupon_popup", storefront: false, name: "Coupon popup", displayNameKey: "discount_code",

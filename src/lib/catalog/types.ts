@@ -58,6 +58,19 @@ export interface ProductColor {
  * The product page's extra fields (custom fields in Shopify, pinned on every product). Each one is
  * optional: the page shows a block only when its field is filled in.
  */
+/** A size table from Shopify (Content > Metaobjects > Size guide), for the product types it lists. */
+export interface SizeGuide {
+  /** Lower-cased product types that use it. */
+  productTypes: string[];
+  /** e.g. "Inches". */
+  unit: string | null;
+  /** Column names, then one row per size. */
+  columns: string[];
+  rows: string[][];
+  note: string | null;
+  chart: CatalogImage | null;
+}
+
 export interface ProductDetails {
   /** Short line under the product name (custom field `tagline`). */
   tagline: string | null;
@@ -69,8 +82,8 @@ export interface ProductDetails {
   fit: string | null;
   /** Care instructions, one per line (`care`). */
   care: string[];
-  /** Size chart picture (`size_chart`). */
-  sizeChart: CatalogImage | null;
+  /** This product's own size guide, instead of its type's (`size_guide`). */
+  sizeGuide: SizeGuide | null;
   /** This product's own shipping line, instead of the site's (`shipping_note`). */
   shippingNote: string | null;
 }

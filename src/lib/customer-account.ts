@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { fetchPrimaryDomainUrl } from "./catalog/shopify";
+import { ACCOUNT_PATHS, SIGNED_IN_COOKIE } from "./account-paths";
 import { safeReturnPath } from "./safe-path";
 
 /**
@@ -31,14 +32,7 @@ export const accountsConnected = Boolean(domain && clientId);
 /** The store has Shopify's own account pages (profile, addresses; sign-in when not connected). False in demo mode. */
 export const shopAccountsAvailable = Boolean(domain);
 
-export const ACCOUNT_PATHS = {
-  login: "/account/login",
-  callback: "/account/authorize",
-  refresh: "/account/refresh",
-  logout: "/account/logout",
-  /** Off to Shopify's account pages, through this site: pages never link to a Shopify address. */
-  manage: "/account/manage",
-};
+export { ACCOUNT_PATHS } from "./account-paths";
 
 /** The primary domain's account address, cached for a few hours (it only changes in Settings > Domains). */
 async function primaryAccountUrl(): Promise<string> {
@@ -69,6 +63,18 @@ const SCOPE = "openid email customer-account-api:full";
 const secure = process.env.NODE_ENV === "production";
 
 export const sessionCookie = { name: SESSION_COOKIE, options: { httpOnly: true, secure, sameSite: "lax" as const, path: "/", maxAge: 60 * 60 * 24 * 30 } };
+/** Signs the response in with this session (and sets the page's signed-in hint), or out with null. */
+export function setSession(res: NextResponse, session: CustomerSession | null): NextResponse {
+  if (session) {
+    res.cookies.set(sessionCookie.name, JSON.stringify(session), sessionCookie.options);
+    res.cookies.set(SIGNED_IN_COOKIE, "1", { ...sessionCookie.options, httpOnly: false });
+  } else {
+    res.cookies.delete({ name: sessionCookie.name, path: sessionCookie.options.path });
+    res.cookies.delete({ name: SIGNED_IN_COOKIE, path: sessionCookie.options.path });
+  }
+  return res;
+}
+
 export const loginCookie = { name: LOGIN_COOKIE, options: { httpOnly: true, secure, sameSite: "lax" as const, path: "/account", maxAge: 60 * 10 } };
 
 interface Endpoints {
@@ -229,8 +235,35 @@ export interface CustomerOrder {
   financialStatus: string | null;
   fulfillmentStatus: string;
   cancelledAt: string | null;
-  totalPrice: { amount: string; currencyCode: string };
+  totalPrice: Money;
+  /** Shopify's order status page (the one in the order emails). */
   statusPageUrl: string;
+  lineItems: { nodes: OrderLine[] };
+  fulfillments: { nodes: Shipment[] };
+}
+
+interface Money {
+  amount: string;
+  currencyCode: string;
+}
+
+export interface OrderLine {
+  id: string;
+  name: string;
+  variantTitle: string | null;
+  quantity: number;
+  image: { url: string; altText: string | null } | null;
+  totalPrice: Money | null;
+}
+
+/** A parcel sent for the order, with the carrier's tracking when Shopify has it. */
+export interface Shipment {
+  id: string;
+  status: string | null;
+  /** The carrier's latest status (IN_TRANSIT, DELIVERED...), when the carrier reports it. */
+  latestShipmentStatus: string | null;
+  updatedAt: string;
+  trackingInformation: { company: string | null; number: string | null; url: string | null }[];
 }
 
 export interface Customer {
@@ -247,7 +280,11 @@ const CUSTOMER_QUERY = /* GraphQL */ `
       lastName
       emailAddress { emailAddress }
       orders(first: 20, sortKey: PROCESSED_AT, reverse: true) {
-        nodes { id name processedAt financialStatus fulfillmentStatus cancelledAt totalPrice { amount currencyCode } statusPageUrl }
+        nodes {
+          id name processedAt financialStatus fulfillmentStatus cancelledAt totalPrice { amount currencyCode } statusPageUrl
+          lineItems(first: 50) { nodes { id name variantTitle quantity image { url altText } totalPrice { amount currencyCode } } }
+          fulfillments(first: 10) { nodes { id status latestShipmentStatus updatedAt trackingInformation { company number url } } }
+        }
       }
     }
   }
