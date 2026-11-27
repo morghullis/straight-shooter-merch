@@ -6,7 +6,7 @@
 //
 // The manifest maps product handles to public URLs (or existing Shopify file ids, gid://...):
 //   { "<handle>": { "turntable": [{ "url", "alt" }], "onModel": { "url", "alt" }, "model": url,
-//                   "modelHd": url, "modelShowroom": url, "view": { "fit", "yaw" } } }
+//                   "modelHd": url, "view": { "fit", "yaw" } } }
 import fs from "node:fs";
 import path from "node:path";
 
@@ -58,7 +58,6 @@ for (const [handle, art] of Object.entries(manifest)) {
   const glbs = [
     ["model", art.model, ""],
     ["modelHd", art.modelHd, "-hd"],
-    ["modelShowroom", art.modelShowroom, "-showroom"],
   ].filter(([, src]) => src);
   const glbIds = await files(glbs.map(([, src, suffix]) => ({ source: src, kind: "file", alt: `${product.title} 3D model${suffix ? ` (${suffix.slice(1)})` : ""}`, filename: `${handle}${suffix}.glb` })));
   const glb = Object.fromEntries(glbs.map(([field], i) => [field, glbIds[i]]));

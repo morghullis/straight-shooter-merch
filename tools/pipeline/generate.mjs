@@ -277,8 +277,6 @@ async function processProduct(p, tools) {
       ...(onModelId ? [mf("onModel", onModelId)] : []),
       mf("model", webId),
       mf("modelHd", hdId),
-      // A new model replaces any older showroom model too, so the showroom shows the same product.
-      mf("modelShowroom", webId),
       // How the model faces the 3D viewer: its graphic towards the camera. Re-rendering a given GLB
       // keeps the framing set before.
       mf("view", args.fromGlb && p.view?.value ? p.view.value : JSON.stringify({ fit: 2.35, yaw: backPrint ? 180 : 0 })),

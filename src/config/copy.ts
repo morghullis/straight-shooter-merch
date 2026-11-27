@@ -91,6 +91,9 @@ export const copy = {
     emptyTitle: "Your cart is empty",
     emptyBody: "Straight talk, real fans. Go find something to wear.",
     emptyCta: "Shop all merch",
+    /** Under the empty cart: the account's way in, or the shopper's orders when signed in. */
+    accountPrompt: "Have an account? Sign in to track your orders.",
+    myOrders: "View my orders",
     remove: "Remove",
     decrease: (title: string) => `Decrease quantity of ${title}`,
     increase: (title: string) => `Increase quantity of ${title}`,
@@ -163,6 +166,7 @@ export const copy = {
       sizes: "Sizes",
     },
     sizeChartAlt: (title: string) => `${title} size chart`,
+    closeSizeGuide: "Close size guide",
     details: [
       "Official licensed merch",
       "Ships from our fulfilment partner",
@@ -215,7 +219,29 @@ export const copy = {
     greeting: (name: string) => (name ? `Hi, ${name}` : "Your account"),
     ordersHeading: "Your orders",
     noOrders: "No orders yet. Your first one will show up here.",
-    trackOrder: "Track order",
+    trackOrder: "Order status page",
+    orderDetails: (name: string) => `Details of order ${name}`,
+    items: "Items",
+    quantity: (n: number) => `Qty ${n}`,
+    shipments: "Shipments",
+    noShipments: "Not shipped yet. You get an email with the tracking number when it ships.",
+    trackingNumber: "Tracking",
+    trackPackage: "Track package",
+    /** Shopify's latest carrier status for a shipment. */
+    shipment: {
+      LABEL_PRINTED: "Label printed",
+      LABEL_PURCHASED: "Label created",
+      CONFIRMED: "Confirmed by carrier",
+      CARRIER_PICKED_UP: "Picked up by carrier",
+      IN_TRANSIT: "In transit",
+      OUT_FOR_DELIVERY: "Out for delivery",
+      ATTEMPTED_DELIVERY: "Delivery attempted",
+      DELAYED: "Delayed",
+      READY_FOR_PICKUP: "Ready for pickup",
+      PICKED_UP: "Picked up",
+      DELIVERED: "Delivered",
+      FAILURE: "Delivery problem",
+    },
     status: {
       cancelled: "Cancelled",
       fulfillment: {
@@ -231,7 +257,7 @@ export const copy = {
     manage: "Addresses & details",
     signOut: "Sign out",
     shippingTitle: "Shipping & returns",
-    shippingBody: "Shipping options and delivery estimates are shown at checkout. Replace this text with your store policy.",
+    shippingBody: "Delivery options and dates are shown at checkout. How returns and exchanges work:",
     contactTitle: "Contact",
     contactBody: (brand: string) => `Questions about an order? Write to ${brand} and a real person answers by email.`,
     contactCta: "Write to us",
@@ -294,6 +320,12 @@ export const copy = {
     yourLane: "Your lane",
     result: "Official result",
     retake: "Retake the quiz",
+  },
+
+  policies: {
+    kicker: "Store policy",
+    question: "Still have a question?",
+    contact: "Contact us",
   },
 
   contact: {

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { useCart } from "@/components/cart/CartProvider";
 import { PriceRoll } from "@/components/motion/PriceRoll";
@@ -20,13 +20,15 @@ import { formatMoney } from "@/lib/format";
 
 import { SaleSticker } from "./SaleSticker";
 import { SaleTag } from "./SaleTag";
+import { SizeGuideDialog } from "./SizeGuideDialog";
 import { useVariant } from "./VariantContext";
 
 /**
  * Option pickers, quantity stepper and the Add to cart button. On phones a bar pinned to
  * the bottom takes over the button as soon as the real one scrolls out of view.
  */
-export function ProductForm({ product }: { product: Product }) {
+/** `sizeGuide`: the product's size guide, opened from a link next to the sizes. */
+export function ProductForm({ product, sizeGuide }: { product: Product; sizeGuide?: ReactNode }) {
   const { add } = useCart();
 
   // Hide Shopify's placeholder "Title / Default Title" option.
@@ -139,9 +141,14 @@ export function ProductForm({ product }: { product: Product }) {
           const photos = optionPhotos(product, selection, option.name);
           return (
             <div key={option.id} role="group" aria-labelledby={labelId}>
-              <p id={labelId} className="font-nav text-[0.8125rem] font-semibold tracking-[0.1em] uppercase">
-                {option.name}: <span className="font-normal text-black/60">{selection[option.name]}</span>
-              </p>
+              <div className="flex items-baseline justify-between gap-4">
+                <p id={labelId} className="font-nav text-[0.8125rem] font-semibold tracking-[0.1em] uppercase">
+                  {option.name}: <span className="font-normal text-black/60">{selection[option.name]}</span>
+                </p>
+                {sizeGuide && option.name.toLowerCase() === "size" && (
+                  <SizeGuideDialog title={product.title}>{sizeGuide}</SizeGuideDialog>
+                )}
+              </div>
               <div className={photos ? "mt-3 grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2.5" : "mt-2 flex flex-wrap gap-2"}>
                 {option.values.map((value) => {
                   const selected = selection[option.name] === value;

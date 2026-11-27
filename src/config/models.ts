@@ -38,17 +38,6 @@ export const models: Record<string, ModelSpec> = {
   "theres-right-theres-wrongs-theres-reality": { src: "/models/reality-crop.glb", hd: "/models/reality-crop-hd.glb", label: "Reality Crop", fit: 2.3, rotation: [0, Math.PI, 0] },
 };
 
-/**
- * The original showroom models (Meshy, 2K texture, colour only, about 0.4-0.65 MB each), lighter
- * than the 8K ones the product pages use. In Shopify they are these products' `model_3d_showroom`.
- */
-export const showroomModels: Record<string, ModelSpec> = {
-  "blasphemous-hat": { src: "/models/showroom/hat.glb", label: "Cap", fit: 2.45, rotation: [0, 0.5, 0] },
-  "straight-shooter-tee": { src: "/models/showroom/tee.glb", label: "Tee", fit: 2.35, rotation: [0, 0, 0] },
-  "culture-table-hoodie": { src: "/models/showroom/hoodie.glb", label: "Hoodie", fit: 2.4, rotation: [0, 0, 0] },
-  "culture-table-tumbler": { src: "/models/showroom/tumbler.glb", label: "Tumbler", fit: 2.4, rotation: [0, 0, 0] },
-};
-
 export type StageArt = { art: ArtKey; className: string };
 
 /** The sticker on a product's stage in the showroom (positions are Tailwind classes). */
@@ -74,8 +63,8 @@ const DEFAULT_FIT = 2.35;
 export const yawOf = (spec: ModelSpec) => Math.round((spec.rotation[1] * 180) / Math.PI);
 
 /**
- * The stage spec of a product's 3D model: the light one for the showroom, or the web one plus the
- * detailed one for the product page. Labelled with the product's category ("Hoodie"), or its title.
+ * The stage spec of a product's 3D model: the same model on the product page and in the showroom (the
+ * detailed one is added on the product page only). Labelled with the product's category ("Hoodie"), or its title.
  */
 export function modelSpecFor(
   product: { title: string; productType?: string; model3d?: Model3D | null },
@@ -84,7 +73,7 @@ export function modelSpecFor(
   const m = product.model3d;
   if (!m) return null;
   return {
-    src: use === "showroom" ? (m.showroom ?? m.src) : m.src,
+    src: m.src,
     hd: use === "page" ? (m.hd ?? undefined) : undefined,
     label: product.productType || product.title,
     fit: m.fit ?? DEFAULT_FIT,

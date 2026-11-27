@@ -61,14 +61,13 @@ export const hero = {
   ],
 } as const;
 
-/** The footer's "Shop" column lists the navigation (without Home); then this one. */
+/** The footer's "Shop" column lists the navigation (without Home); then this one, with the store's policies from Shopify after these links. */
 export const footerShopTitle = "Shop";
 export const footerHelp = {
   title: "Help",
   links: [
     { label: "Search", href: "/search" },
     { label: "My Account", href: "/account" },
-    { label: "Shipping & Returns", href: "/account#shipping" },
     { label: "Contact", href: "/contact" },
   ],
 } as const;

@@ -35,14 +35,12 @@ export interface ProductOption {
   values: string[];
 }
 
-/** A product's 3D model (Shopify custom fields `model_3d`, `model_3d_hd`, `model_3d_showroom`, `model_3d_view`). */
+/** A product's 3D model (Shopify custom fields `model_3d`, `model_3d_hd`, `model_3d_view`). The showroom shows the same one. */
 export interface Model3D {
   /** Light GLB: phones, the showroom and the 3D viewer. */
   src: string;
   /** Detailed GLB for the product page on a big screen with a mouse. */
   hd?: string | null;
-  /** GLB for the home showroom, when it differs from `src`. */
-  showroom?: string | null;
   /** Size of the model's longest side, in scene units. */
   fit?: number;
   /** Resting turn in degrees (0 = the front faces the camera). */
@@ -60,6 +58,19 @@ export interface ProductColor {
  * The product page's extra fields (custom fields in Shopify, pinned on every product). Each one is
  * optional: the page shows a block only when its field is filled in.
  */
+/** A size table from Shopify (Content > Metaobjects > Size guide), for the product types it lists. */
+export interface SizeGuide {
+  /** Lower-cased product types that use it. */
+  productTypes: string[];
+  /** e.g. "Inches". */
+  unit: string | null;
+  /** Column names, then one row per size. */
+  columns: string[];
+  rows: string[][];
+  note: string | null;
+  chart: CatalogImage | null;
+}
+
 export interface ProductDetails {
   /** Short line under the product name (custom field `tagline`). */
   tagline: string | null;
@@ -71,8 +82,8 @@ export interface ProductDetails {
   fit: string | null;
   /** Care instructions, one per line (`care`). */
   care: string[];
-  /** Size chart picture (`size_chart`). */
-  sizeChart: CatalogImage | null;
+  /** This product's own size guide, instead of its type's (`size_guide`). */
+  sizeGuide: SizeGuide | null;
   /** This product's own shipping line, instead of the site's (`shipping_note`). */
   shippingNote: string | null;
 }

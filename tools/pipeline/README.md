@@ -9,7 +9,6 @@ site with the site's look, without touching the code.
 | `turntable` (list of images) | product | a record of the views the pipeline made, front and back (they are also added to the product's images, which is what the site shows) |
 | `on_model_image` (image) | product | a record of the on-model photo the pipeline made (the site's hover is the product's **second image**, where the pipeline puts it) |
 | `model_3d`, `model_3d_hd` (GLB files) | product | 3D viewer on the product page (light / detailed) |
-| `model_3d_showroom` (GLB, optional) | product | the home showroom (defaults to `model_3d`) |
 | `model_3d_view` (JSON `{ "fit": 2.35, "yaw": 0 }`) | product | how the model sits on stage |
 | `asset_pipeline` (JSON, private) | product | written by the pipeline: state, the merchant photos it started from, the images it made, attempts, last error |
 | `short_title` | collection | name in the navigation and on the home tile |

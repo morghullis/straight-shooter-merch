@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 
 import { createCheckout } from "@/app/actions";
 import { SaleTag } from "@/components/product/SaleTag";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon, MinusIcon, PlusIcon, TagIcon } from "@/components/ui/Icons";
 import { copy } from "@/config/copy";
+import { ACCOUNT_PATHS, signedInHint } from "@/lib/account-paths";
 import { percentOff, type CartQuote } from "@/lib/catalog/discounts";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
@@ -105,6 +106,7 @@ export function CartDrawer() {
             <Button href="/collections/all" onClick={close}>
               {copy.cart.emptyCta}
             </Button>
+            <EmptyCartAccount onLeave={close} />
           </div>
         ) : (
           <>
@@ -256,3 +258,33 @@ function Totals({ quote, pending }: { quote: CartQuote; pending: boolean }) {
     </div>
   );
 }
+
+const noSubscribe = () => () => {};
+
+/** The account's way in under the empty cart: sign in or create one (Shopify's page), or the shopper's orders. */
+function EmptyCartAccount({ onLeave }: { onLeave: () => void }) {
+  const signedIn = useSyncExternalStore(noSubscribe, signedInHint, () => false);
+  return (
+    <div className="mt-4 w-full max-w-[19rem] border-t border-white/10 pt-6">
+      {signedIn ? (
+        <Button href="/account" variant="outline" size="sm" onClick={onLeave}>
+          {copy.cart.myOrders}
+        </Button>
+      ) : (
+        <>
+          <p className="text-[0.8125rem] text-white/60">{copy.cart.accountPrompt}</p>
+          {/* A form, not a link: the browser goes to Shopify's page for real, no prefetching. */}
+          <form action={ACCOUNT_PATHS.login} method="get" className="mt-4 flex flex-wrap justify-center gap-3">
+            <Button type="submit" variant="outline" size="sm">
+              {copy.account.signIn}
+            </Button>
+            <Button type="submit" variant="ghost" size="sm" className="text-white">
+              {copy.account.createAccount}
+            </Button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+

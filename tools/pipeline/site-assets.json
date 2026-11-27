@@ -32,7 +32,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/blasphemous-hoodie.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/blasphemous-hoodie-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.35,
       "yaw": 0
@@ -71,7 +70,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/blasphemous-tee.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/blasphemous-tee-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.3,
       "yaw": 0
@@ -110,7 +108,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/busdriver-crop.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/busdriver-crop-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.3,
       "yaw": 180
@@ -149,7 +146,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/edible-crop.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/edible-crop-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.3,
       "yaw": 180
@@ -188,7 +184,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/reality-crop.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/reality-crop-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.3,
       "yaw": 180
@@ -227,7 +222,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/silhouette.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/silhouette-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.35,
       "yaw": 157
@@ -266,7 +260,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/hat.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/hat-hd.glb",
-    "modelShowroom": "gid://shopify/GenericFile/46432986202182",
     "view": {
       "fit": 2.45,
       "yaw": 29
@@ -305,7 +298,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/sas.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/sas-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.35,
       "yaw": 0
@@ -344,7 +336,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/tumbler.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/tumbler-hd.glb",
-    "modelShowroom": "https://straight-shooter-merch.netlify.app/models/showroom/tumbler.glb",
     "view": {
       "fit": 2.4,
       "yaw": 0
@@ -383,7 +374,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/hoodie.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/hoodie-hd.glb",
-    "modelShowroom": "https://straight-shooter-merch.netlify.app/models/showroom/hoodie.glb",
     "view": {
       "fit": 2.4,
       "yaw": 0
@@ -422,7 +412,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/tee.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/tee-hd.glb",
-    "modelShowroom": "https://straight-shooter-merch.netlify.app/models/showroom/tee.glb",
     "view": {
       "fit": 2.35,
       "yaw": 0
@@ -461,7 +450,6 @@
     },
     "model": "https://straight-shooter-merch.netlify.app/models/potus.glb",
     "modelHd": "https://straight-shooter-merch.netlify.app/models/potus-hd.glb",
-    "modelShowroom": null,
     "view": {
       "fit": 2.35,
       "yaw": 0

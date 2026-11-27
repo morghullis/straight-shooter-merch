@@ -1,5 +1,5 @@
 import { copy } from "@/config/copy";
-import { models, showroomModels, yawOf } from "@/config/models";
+import { models, yawOf } from "@/config/models";
 import { ANGLE_IMAGE_SIZE, angleUrl, anglesFor } from "@/config/product-media";
 
 import type { CatalogImage, Collection, Model3D, Product, ProductOption } from "./types";
@@ -39,8 +39,7 @@ interface Seed {
 function model3dFor(handle: string): Model3D | null {
   const page = models[handle];
   if (!page) return null;
-  const showroom = showroomModels[handle];
-  return { src: page.src, hd: page.hd, showroom: showroom?.src ?? null, fit: showroom?.fit ?? page.fit, yaw: yawOf(page) };
+  return { src: page.src, hd: page.hd, fit: page.fit, yaw: yawOf(page) };
 }
 
 function build(seed: Seed, index: number): Product {

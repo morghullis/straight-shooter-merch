@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { finishLogin, localRedirect, loginCookie, parseLogin, publicOrigin, sessionCookie } from "@/lib/customer-account";
+import { finishLogin, localRedirect, loginCookie, parseLogin, publicOrigin, setSession } from "@/lib/customer-account";
 
 /** Shopify sends the shopper back here after signing in: trade the code for their tokens. */
 export async function GET(request: NextRequest) {
@@ -21,6 +21,5 @@ export async function GET(request: NextRequest) {
 
   const res = localRedirect("/account");
   res.cookies.delete({ name: loginCookie.name, path: loginCookie.options.path });
-  res.cookies.set(sessionCookie.name, JSON.stringify(session), sessionCookie.options);
-  return res;
+  return setSession(res, session);
 }

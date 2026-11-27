@@ -3,6 +3,7 @@ import "server-only";
 import { balancedRows } from "@/lib/format";
 
 import { cleanDescriptionHtml } from "./description";
+import { parseSizeTable } from "./size-table";
 import { toConfirm, unitDiscount, type Discounts, type PricedLine } from "./discounts";
 import type {
   CatalogImage,
@@ -13,6 +14,7 @@ import type {
   ProductColor,
   ProductDetails,
   ProductVariant,
+  SizeGuide,
   TileTheme,
 } from "./types";
 
@@ -102,6 +104,16 @@ async function shopifyFetch<T>(
 /* Queries                                                             */
 /* ------------------------------------------------------------------ */
 
+const SIZE_GUIDE_FIELDS = /* GraphQL */ `
+  fragment SizeGuideFields on Metaobject {
+    productTypes: field(key: "product_types") { value }
+    unit: field(key: "unit") { value }
+    table: field(key: "table") { value }
+    note: field(key: "note") { value }
+    chart: field(key: "chart") { reference { ... on MediaImage { image { url altText width height } } } }
+  }
+`;
+
 const PRODUCT_FIELDS = /* GraphQL */ `
   fragment ProductFields on Product {
     id
@@ -140,9 +152,7 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     material: metafield(namespace: "custom", key: "material") { value }
     fit: metafield(namespace: "custom", key: "fit") { value }
     care: metafield(namespace: "custom", key: "care") { value }
-    sizeChart: metafield(namespace: "custom", key: "size_chart") {
-      reference { ... on MediaImage { image { url altText width height } } }
-    }
+    sizeGuide: metafield(namespace: "custom", key: "size_guide") { reference { ...SizeGuideFields } }
     shippingNote: metafield(namespace: "custom", key: "shipping_note") { value }
     audience: metafield(namespace: "shopify", key: "target-gender") {
       references(first: 5) { nodes { ... on Metaobject { label: field(key: "label") { value } } } }
@@ -155,9 +165,9 @@ const PRODUCT_FIELDS = /* GraphQL */ `
     media(first: 10) { nodes { ... on Model3d { sources { url mimeType } } } }
     model3d: metafield(namespace: "custom", key: "model_3d") { reference { ... on GenericFile { url } } }
     model3dHd: metafield(namespace: "custom", key: "model_3d_hd") { reference { ... on GenericFile { url } } }
-    model3dShowroom: metafield(namespace: "custom", key: "model_3d_showroom") { reference { ... on GenericFile { url } } }
     model3dView: metafield(namespace: "custom", key: "model_3d_view") { value }
   }
+  ${SIZE_GUIDE_FIELDS}
 `;
 
 const COLLECTION_FIELDS = /* GraphQL */ `
@@ -306,6 +316,14 @@ interface RawImageRef {
   reference: { image?: RawImage | null } | null;
 }
 
+interface RawSizeGuide {
+  productTypes?: RawValue | null;
+  unit?: RawValue | null;
+  table?: RawValue | null;
+  note?: RawValue | null;
+  chart?: RawImageRef | null;
+}
+
 interface RawFileRef {
   reference: { url?: string } | null;
 }
@@ -348,14 +366,13 @@ interface RawProduct {
   material?: RawValue | null;
   fit?: RawValue | null;
   care?: RawValue | null;
-  sizeChart?: RawImageRef | null;
+  sizeGuide?: { reference: RawSizeGuide | null } | null;
   shippingNote?: RawValue | null;
   audience?: RawMetaobjectList | null;
   colorPattern?: RawMetaobjectList | null;
   media?: { nodes: { sources?: { url: string; mimeType: string }[] }[] };
   model3d?: RawFileRef | null;
   model3dHd?: RawFileRef | null;
-  model3dShowroom?: RawFileRef | null;
   model3dView?: RawValue | null;
 }
 
@@ -417,7 +434,6 @@ function resolveModel(raw: RawProduct): Model3D | null {
   return {
     src,
     hd: raw.model3dHd?.reference?.url ?? null,
-    showroom: raw.model3dShowroom?.reference?.url ?? null,
     ...parseView(raw.model3dView?.value),
   };
 }
@@ -437,19 +453,46 @@ function list(v: RawValue | null | undefined): string[] {
   return lines(v.value);
 }
 
+/** A size guide from Shopify; null when it has neither a table nor a picture. */
+function mapSizeGuide(raw: RawSizeGuide | null | undefined): SizeGuide | null {
+  if (!raw) return null;
+  const { columns, rows } = parseSizeTable(raw.table?.value);
+  const image = raw.chart?.reference?.image;
+  const chart = image ? mapImage(image, "Size chart") : null;
+  if (!rows.length && !chart) return null;
+  return {
+    productTypes: list(raw.productTypes).map((t) => t.toLowerCase()),
+    unit: text(raw.unit),
+    columns,
+    rows,
+    note: text(raw.note),
+    chart,
+  };
+}
+
+/** Every size guide in the store (Content > Metaobjects > Size guide). */
+export async function fetchSizeGuides(): Promise<SizeGuide[]> {
+  const data = await shopifyFetch<{ metaobjects: { nodes: RawSizeGuide[] } }>(/* GraphQL */ `
+    query SizeGuides {
+      metaobjects(type: "size_guide", first: 50) { nodes { ...SizeGuideFields } }
+    }
+    ${SIZE_GUIDE_FIELDS}
+  `);
+  return data.metaobjects.nodes.map(mapSizeGuide).filter((g): g is SizeGuide => g !== null);
+}
+
 /** The product page's extra fields; null when none is filled in. */
 function mapDetails(raw: RawProduct): ProductDetails | null {
-  const chart = raw.sizeChart?.reference?.image;
   const details: ProductDetails = {
     tagline: text(raw.tagline),
     highlights: list(raw.highlights),
     material: text(raw.material),
     fit: text(raw.fit),
     care: lines(raw.care?.value),
-    sizeChart: chart ? mapImage(chart, `${raw.title} size chart`) : null,
+    sizeGuide: mapSizeGuide(raw.sizeGuide?.reference),
     shippingNote: text(raw.shippingNote),
   };
-  const empty = !details.tagline && !details.highlights.length && !details.material && !details.fit && !details.care.length && !details.sizeChart && !details.shippingNote;
+  const empty = !details.tagline && !details.highlights.length && !details.material && !details.fit && !details.care.length && !details.sizeGuide && !details.shippingNote;
   return empty ? null : details;
 }
 
@@ -799,4 +842,26 @@ export async function createShopifyCart(
     }
   }
   return create(null);
+}
+
+/** One of the store's policies (Shopify admin > Settings > Policies). Body is the editor's HTML. */
+export interface ShopPolicy {
+  handle: string;
+  title: string;
+  body: string;
+}
+
+/** The store's policies that have a text: returns, shipping, privacy, terms (in that order). */
+export async function fetchPolicies(): Promise<ShopPolicy[]> {
+  const data = await shopifyFetch<{ shop: Record<string, ShopPolicy | null> }>(
+    /* GraphQL */ `query Policies {
+      shop {
+        refundPolicy { handle title body }
+        shippingPolicy { handle title body }
+        privacyPolicy { handle title body }
+        termsOfService { handle title body }
+      }
+    }`,
+  );
+  return Object.values(data.shop).flatMap((p) => (p?.body.trim() ? [p] : []));
 }
