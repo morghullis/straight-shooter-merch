@@ -15,15 +15,19 @@ import {
   fetchCollections,
   fetchDiscounts,
   fetchDiscountStickers,
+  fetchPolicies,
   fetchProduct,
   fetchProductHandles,
   fetchProducts,
   fetchSellableVariants,
   isShopifyConfigured,
 } from "./shopify";
+import { cleanDescriptionHtml } from "./description";
+import type { ShopPolicy } from "./shopify";
 import type { Collection, Product } from "./types";
 
 export type { Collection, Product, ProductColor, ProductDetails } from "./types";
+export type { ShopPolicy } from "./shopify";
 
 /**
  * Data access used by every page. All functions are cached with the Cache
@@ -284,4 +288,22 @@ export async function getRelatedProducts(product: Product, limit = 4): Promise<P
   );
   const rest = others.filter((p) => !sameCollection.includes(p));
   return [...sameCollection, ...rest].slice(0, limit);
+}
+
+/**
+ * The store's policies as written in Shopify (Settings > Policies), cleaned like a description. Only
+ * those with a text: one left empty there has no page and no link.
+ */
+export async function getPolicies(): Promise<ShopPolicy[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("policies");
+
+  if (!isShopifyConfigured) return [];
+  return (await fetchPolicies()).map((p) => ({ ...p, body: cleanDescriptionHtml(p.body) }));
+}
+
+export async function getPolicy(handle: string): Promise<ShopPolicy | null> {
+  if (!isSafeHandle(handle)) return null;
+  return (await getPolicies()).find((p) => p.handle === handle) ?? null;
 }

@@ -231,7 +231,7 @@ export const copy = {
     manage: "Addresses & details",
     signOut: "Sign out",
     shippingTitle: "Shipping & returns",
-    shippingBody: "Shipping options and delivery estimates are shown at checkout. Replace this text with your store policy.",
+    shippingBody: "Delivery options and dates are shown at checkout. How returns and exchanges work:",
     contactTitle: "Contact",
     contactBody: (brand: string) => `Questions about an order? Write to ${brand} and a real person answers by email.`,
     contactCta: "Write to us",
@@ -294,6 +294,12 @@ export const copy = {
     yourLane: "Your lane",
     result: "Official result",
     retake: "Retake the quiz",
+  },
+
+  policies: {
+    kicker: "Store policy",
+    question: "Still have a question?",
+    contact: "Contact us",
   },
 
   contact: {

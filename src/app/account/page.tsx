@@ -16,6 +16,7 @@ import {
   type Customer,
   type CustomerOrder,
 } from "@/lib/customer-account";
+import { getPolicies } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -48,6 +49,9 @@ export default function AccountPage({ searchParams }: { searchParams: Promise<{ 
             <div id="shipping" className="scroll-mt-24">
               <h2 className={sectionTitle}>{copy.account.shippingTitle}</h2>
               <p className="mt-3 text-[0.9375rem] leading-relaxed text-black/70">{copy.account.shippingBody}</p>
+              <Suspense>
+                <PolicyLinks />
+              </Suspense>
             </div>
             <div id="contact" className="scroll-mt-24">
               <h2 className={sectionTitle}>{copy.account.contactTitle}</h2>
@@ -62,6 +66,23 @@ export default function AccountPage({ searchParams }: { searchParams: Promise<{ 
         </div>
       </section>
     </>
+  );
+}
+
+/** The store's policies from Shopify, as links. */
+async function PolicyLinks() {
+  const policies = await getPolicies();
+  if (!policies.length) return null;
+  return (
+    <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[0.9375rem]">
+      {policies.map((p) => (
+        <li key={p.handle}>
+          <a href={`/policies/${p.handle}`} className="font-semibold underline underline-offset-4 hover:text-gold-soft">
+            {p.title}
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }
 

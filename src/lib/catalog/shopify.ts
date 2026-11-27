@@ -797,3 +797,25 @@ export async function createShopifyCart(
   }
   return create(null);
 }
+
+/** One of the store's policies (Shopify admin > Settings > Policies). Body is the editor's HTML. */
+export interface ShopPolicy {
+  handle: string;
+  title: string;
+  body: string;
+}
+
+/** The store's policies that have a text: returns, shipping, privacy, terms (in that order). */
+export async function fetchPolicies(): Promise<ShopPolicy[]> {
+  const data = await shopifyFetch<{ shop: Record<string, ShopPolicy | null> }>(
+    /* GraphQL */ `query Policies {
+      shop {
+        refundPolicy { handle title body }
+        shippingPolicy { handle title body }
+        privacyPolicy { handle title body }
+        termsOfService { handle title body }
+      }
+    }`,
+  );
+  return Object.values(data.shop).flatMap((p) => (p?.body.trim() ? [p] : []));
+}

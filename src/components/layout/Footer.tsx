@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { copy } from "@/config/copy";
 import { FOOTER_END_ID, footerHelp, footerShopTitle, site } from "@/config/site";
+import { getPolicies } from "@/lib/catalog";
 import { getNavLinks } from "@/lib/navigation";
 
 async function CurrentYear() {
@@ -20,7 +21,9 @@ const columnTitle =
 export async function Footer() {
   // The shop column is the navigation (collections come from Shopify), without "Home".
   const shop = { title: footerShopTitle, links: (await getNavLinks()).filter((l) => l.href !== "/") };
-  const columns = [shop, footerHelp];
+  // The store's policies (returns, shipping, privacy, terms), as many as have a text in Shopify.
+  const policies = (await getPolicies()).map((p) => ({ label: p.title, href: `/policies/${p.handle}` }));
+  const columns = [shop, { ...footerHelp, links: [...footerHelp.links, ...policies] }];
 
   return (
     <footer className="mt-[0.625rem] border-t border-white/10 bg-black">
