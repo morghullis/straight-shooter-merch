@@ -20,7 +20,7 @@ import {
   type EmailMarketingState,
   type Shipment,
 } from "@/lib/customer-account";
-import { getPolicies } from "@/lib/catalog";
+import { getFaqs, getPolicies } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
 
 import { setDropEmails } from "./actions";
@@ -78,14 +78,18 @@ export default function AccountPage({ searchParams }: { searchParams: AccountPar
 
 /** The store's policies from Shopify, as links. */
 async function PolicyLinks() {
-  const policies = await getPolicies();
-  if (!policies.length) return null;
+  const [policies, faqs] = await Promise.all([getPolicies(), getFaqs()]);
+  const links = [
+    ...(faqs.length ? [{ href: "/faq", label: copy.faq.title }] : []),
+    ...policies.map((p) => ({ href: `/policies/${p.handle}`, label: p.title })),
+  ];
+  if (!links.length) return null;
   return (
     <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[0.9375rem]">
-      {policies.map((p) => (
-        <li key={p.handle}>
-          <a href={`/policies/${p.handle}`} className="font-semibold underline underline-offset-4 hover:text-gold-soft">
-            {p.title}
+      {links.map((l) => (
+        <li key={l.href}>
+          <a href={l.href} className="font-semibold underline underline-offset-4 hover:text-gold-soft">
+            {l.label}
           </a>
         </li>
       ))}

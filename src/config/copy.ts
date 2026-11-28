@@ -332,6 +332,12 @@ export const copy = {
     retake: "Retake the quiz",
   },
 
+  faq: {
+    title: "FAQ",
+    kicker: "Straight answers",
+    description: "Answers about orders, shipping, returns and lost packages at the Straight Shooter Shop.",
+  },
+
   policies: {
     kicker: "Store policy",
     question: "Still have a question?",
