@@ -3,6 +3,7 @@ import "server-only";
 import { balancedRows } from "@/lib/format";
 
 import { cleanDescriptionHtml } from "./description";
+import type { FaqEntry } from "./faq";
 import { parseSizeTable } from "./size-table";
 import { toConfirm, unitDiscount, type Discounts, type PricedLine } from "./discounts";
 import type {
@@ -842,6 +843,29 @@ export async function createShopifyCart(
     }
   }
   return create(null);
+}
+
+/** The FAQ page's questions (Content > Metaobjects > FAQ), only the active ones. */
+export async function fetchFaqs(): Promise<FaqEntry[]> {
+  type Field = { value: string } | null;
+  const data = await shopifyFetch<{ metaobjects: { nodes: Record<"section" | "question" | "answer" | "position", Field>[] } }>(
+    /* GraphQL */ `query Faqs {
+      metaobjects(type: "faq", first: 100) {
+        nodes {
+          section: field(key: "section") { value }
+          question: field(key: "question") { value }
+          answer: field(key: "answer") { value }
+          position: field(key: "position") { value }
+        }
+      }
+    }`,
+  );
+  return data.metaobjects.nodes.map((n) => ({
+    section: n.section?.value ?? "",
+    question: n.question?.value ?? "",
+    answer: n.answer?.value ?? "",
+    position: n.position?.value ? Number(n.position.value) : null,
+  }));
 }
 
 /** One of the store's policies (Shopify admin > Settings > Policies). Body is the editor's HTML. */

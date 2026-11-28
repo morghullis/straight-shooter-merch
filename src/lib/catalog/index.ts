@@ -15,6 +15,7 @@ import {
   fetchCollections,
   fetchDiscounts,
   fetchDiscountStickers,
+  fetchFaqs,
   fetchPolicies,
   fetchProduct,
   fetchProductHandles,
@@ -24,11 +25,13 @@ import {
   isShopifyConfigured,
 } from "./shopify";
 import { cleanDescriptionHtml } from "./description";
+import { groupFaqs, type FaqSection } from "./faq";
 import type { ShopPolicy } from "./shopify";
 import type { Collection, Product, SizeGuide } from "./types";
 
 export type { Collection, Product, ProductColor, ProductDetails, SizeGuide } from "./types";
 export type { ShopPolicy } from "./shopify";
+export type { FaqSection } from "./faq";
 
 /**
  * Data access used by every page. All functions are cached with the Cache
@@ -307,6 +310,16 @@ export async function getPolicies(): Promise<ShopPolicy[]> {
 export async function getPolicy(handle: string): Promise<ShopPolicy | null> {
   if (!isSafeHandle(handle)) return null;
   return (await getPolicies()).find((p) => p.handle === handle) ?? null;
+}
+
+/** The FAQ page's questions from Shopify, grouped by section; empty until some are written. */
+export async function getFaqs(): Promise<FaqSection[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag("faqs");
+
+  if (!isShopifyConfigured) return [];
+  return groupFaqs(await fetchFaqs());
 }
 
 async function getSizeGuides(): Promise<SizeGuide[]> {

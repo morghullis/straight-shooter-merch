@@ -55,6 +55,18 @@ export const METAOBJECTS = {
       { key: "chart", name: "Picture", type: "file_reference", validations: images, description: "Optional: a picture of the chart or how to measure." },
     ],
   },
+  // Read by /faq (src/lib/catalog: getFaqs): grouped by section, in the order of their numbers.
+  faq: {
+    type: "faq", storefront: true, name: "FAQ", displayNameKey: "question",
+    description: "One question of the FAQ page. Questions are grouped by section and ordered by their number.",
+    fields: [
+      { key: "question", name: "Question", type: "single_line_text_field", required: true },
+      { key: "answer", name: "Answer", type: "multi_line_text_field", required: true, description: "Each line shows as its own line." },
+      { key: "section", name: "Section", type: "single_line_text_field", required: true,
+        description: "e.g. Orders, Shipping & Returns. Questions with the same section show together." },
+      { key: "position", name: "Order", type: "number_integer", description: "Lower first, e.g. 10, 20, 30 (leaves room to add one between)." },
+    ],
+  },
   couponPopup: {
     // Never readable from the storefront: it names the discount's code.
     type: "coupon_popup", storefront: false, name: "Coupon popup", displayNameKey: "discount_code",
